@@ -136,22 +136,64 @@ let lastFocus = null
 
 const canSearchPasien = computed(() => auth.hasRole('pendaftaran', 'perawat', 'dokter'))
 
+/**
+ * Verifikasi ketat apakah pengguna berhak mengakses modul/item pencarian.
+ * Mengecek:
+ * 1. Properti `roles` eksplisit pada item
+ * 2. `meta.roles` dari route tujuan Vue Router
+ * 3. Hak akses pencarian data pasien
+ */
+function canAccess(item) {
+  if (!item) return false
+  if (item.action === 'logout') return true
+
+  // 1. Cek peran eksplisit pada item jika didefinisikan
+  if (Array.isArray(item.roles) && item.roles.length > 0) {
+    if (!auth.hasRole(...item.roles)) {
+      return false
+    }
+  }
+
+  // 2. Pasien hanya dapat diakses oleh role yang diizinkan (pendaftaran, perawat, dokter, admin)
+  if (item.kind === 'pasien' && !canSearchPasien.value) {
+    return false
+  }
+
+  // 3. Cek meta.roles rute Vue Router jika memiliki path 'to'
+  if (item.to) {
+    try {
+      const cleanPath = String(item.to).split('?')[0]
+      const resolved = router.resolve(cleanPath)
+      const routeRoles = resolved?.matched?.flatMap((r) => r.meta?.roles ?? []) ?? []
+      if (routeRoles.length > 0 && !auth.hasRole(...routeRoles)) {
+        return false
+      }
+    } catch {
+      return false
+    }
+  }
+
+  return true
+}
+
 // Daftar semua menu yang dapat diakses oleh user saat ini
 const menuEntries = computed(() =>
-  visibleMenu(auth.hasRole).flatMap((group) =>
-    group.items.map((item) => ({
-      ...item,
-      id: `menu:${item.to}`,
-      kind: 'menu',
-      category: item.category || group.label || 'Menu',
-      description: item.description || item.hint || '',
-    })),
-  ),
+  visibleMenu(auth.hasRole)
+    .flatMap((group) =>
+      group.items.map((item) => ({
+        ...item,
+        id: `menu:${item.to}`,
+        kind: 'menu',
+        category: item.category || group.label || 'Menu',
+        description: item.description || item.hint || '',
+      })),
+    )
+    .filter(canAccess),
 )
 
 // Aksi cepat yang diizinkan sesuai role
 const actionEntries = computed(() =>
-  ACTIONS.filter((a) => !a.roles || auth.hasRole(...a.roles)).map((a) => ({
+  ACTIONS.filter(canAccess).map((a) => ({
     ...a,
     kind: 'action',
     description: a.hint,
@@ -159,36 +201,40 @@ const actionEntries = computed(() =>
 )
 
 // Pasien hasil pencarian langsung
-const pasienEntries = computed(() =>
-  pasiens.value.map((p) => ({
-    id: `pasien:${p.id}`,
-    kind: 'pasien',
-    category: 'Pasien Terdaftar',
-    label: p.nama,
-    description: [`RM: ${p.no_rm}`, jenisKelamin(p.jenis_kelamin), p.umur, p.nik ? `NIK: ${p.nik}` : null]
-      .filter(Boolean)
-      .join(' · '),
-    to: `/pasien/${p.id}`,
-    icon: ICON.user,
-  })),
-)
+const pasienEntries = computed(() => {
+  if (!canSearchPasien.value) return []
+  return pasiens.value
+    .map((p) => ({
+      id: `pasien:${p.id}`,
+      kind: 'pasien',
+      category: 'Pasien Terdaftar',
+      label: p.nama,
+      description: [`RM: ${p.no_rm}`, jenisKelamin(p.jenis_kelamin), p.umur, p.nik ? `NIK: ${p.nik}` : null]
+        .filter(Boolean)
+        .join(' · '),
+      to: `/pasien/${p.id}`,
+      icon: ICON.user,
+    }))
+    .filter(canAccess)
+})
 
 // Bagian / Section hasil pencarian Algolia
 const sections = computed(() => {
   const trimmed = query.value.trim()
 
-  // Saat input kosong: tampilkan Riwayat Pencarian Terkini & Modul Populer
+  // Saat input kosong: tampilkan Riwayat Pencarian Terkini & Modul Populer yang berizin
   if (!trimmed) {
     const list = []
-    if (recents.value.length) {
+    const validRecents = recents.value.filter(canAccess)
+    if (validRecents.length) {
       list.push({
         title: 'Pencarian Terkini',
         isRecent: true,
-        items: recents.value,
+        items: validRecents,
       })
     }
-    // Modul Rekomendasi/Utama sesuai role
-    const popularItems = menuEntries.value.slice(0, 6)
+    // Modul Rekomendasi/Utama sesuai role yang diizinkan
+    const popularItems = menuEntries.value.filter(canAccess).slice(0, 6)
     if (popularItems.length) {
       list.push({
         title: 'Modul & Navigasi Populer',
@@ -199,13 +245,14 @@ const sections = computed(() => {
   }
 
   // Pencarian aktif menggunakan algoritma Algolia fuzzy match
-  const rankedMenu = algoliaRank(menuEntries.value, trimmed)
-  const rankedActions = algoliaRank(actionEntries.value, trimmed)
+  const rankedMenu = algoliaRank(menuEntries.value, trimmed).filter(canAccess)
+  const rankedActions = algoliaRank(actionEntries.value, trimmed).filter(canAccess)
+  const rankedPatients = canSearchPasien.value && trimmed.length >= 2 ? pasienEntries.value.filter(canAccess) : []
 
   const list = [
     { title: 'Menu & Modul', items: rankedMenu },
     { title: 'Aksi Cepat', items: rankedActions },
-    { title: 'Data Pasien', items: trimmed.length >= 2 ? pasienEntries.value : [] },
+    { title: 'Data Pasien', items: rankedPatients },
   ].filter((s) => s.items.length)
 
   // Jika input berupa angka murni (No RM atau NIK), prioritaskan Pasien di atas
@@ -260,7 +307,7 @@ watch(open, async (value) => {
     lastFocus = document.activeElement
     query.value = ''
     pasiens.value = []
-    recents.value = getRecentSearches()
+    refreshRecents()
     active.value = 0
     await nextTick()
     inputEl.value?.focus()
@@ -270,10 +317,13 @@ watch(open, async (value) => {
   }
 })
 
+// Sinkronkan riwayat jika role pengguna berganti
+watch(() => auth.user?.role, () => refreshRecents())
+
 onBeforeUnmount(() => controller?.abort())
 
 function refreshRecents() {
-  recents.value = getRecentSearches()
+  recents.value = getRecentSearches().filter(canAccess)
 }
 
 function handleRemoveRecent(e, item) {
@@ -289,7 +339,7 @@ function handleClearAllRecents(e) {
 }
 
 async function select(entry) {
-  if (!entry) return
+  if (!entry || !canAccess(entry)) return
   saveRecentSearch(entry)
   open.value = false
 
