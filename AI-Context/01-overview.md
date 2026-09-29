@@ -29,12 +29,29 @@ npm run preview
 
 | Key | Default | Catatan |
 |-----|---------|---------|
-| `VITE_API_URL` | `http://localhost:8000/api` | base URL API. Origin frontend harus terdaftar di `FRONTEND_URL` backend (CORS). |
+| `VITE_API_URL` | `http://localhost:8000/api` | base URL API, dibaca saat build. Untuk dev: origin frontend harus terdaftar di `FRONTEND_URL` backend (CORS). Di image Docker gabungan diisi `/api` (satu origin). |
 
-## Deploy
+## Docker / deploy
 
-Hasil `npm run build` adalah static files (`dist/`). Karena memakai `createWebHistory`, web server harus
-mengarahkan semua path ke `index.html` (SPA fallback), mis. Nginx `try_files $uri /index.html;`.
+Repo ini **tidak punya file Docker sendiri**. Seluruh konfigurasi Docker ada di repo backend (`backend/docker/app/`):
+`backend/docker-compose.yml` membuild frontend ini (`npm ci && npm run build` dengan `VITE_API_URL=/api`) lalu
+menyajikan `dist/` dari Nginx di container yang sama dengan API, di http://localhost:8000.
+
+Syarat: repo ini berada di folder `frontend/` sejajar dengan `backend/`:
+
+```
+e-klinik/
+├── backend/    klinik-backend (docker-compose.yml di sini)
+└── frontend/   repo ini
+```
+
+```bash
+cd ../backend && docker compose up -d --build   # rebuild setiap ada perubahan frontend
+```
+
+Karena build produksi memakai `createWebHistory`, Nginx di image tersebut sudah melakukan SPA fallback
+(`try_files $uri $uri/ /index.html`). Untuk development tetap pakai `npm run dev` (hot reload) dengan
+backend dari `backend/docker-compose.dev.yml`.
 
 ## Akun demo
 
