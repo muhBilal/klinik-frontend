@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import MasterCrud from '@/components/MasterCrud.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
-import api from '@/lib/api'
+import { cachedGet } from '@/lib/cache'
 import { ROLES } from '@/lib/format'
 
 const polis = ref([])
@@ -26,12 +26,12 @@ const fields = computed(() => [
 ])
 
 onMounted(async () => {
-  polis.value = (await api.get('/polis')).data
+  polis.value = await cachedGet('/polis')
 })
 </script>
 
 <template>
-  <MasterCrud title="Pengguna" subtitle="Akun petugas klinik dan hak aksesnya" endpoint="/users" item-label="pengguna" :columns="columns" :fields="fields" :defaults="{ role: 'pendaftaran' }">
+  <MasterCrud title="Pengguna" subtitle="Akun petugas klinik dan hak aksesnya" endpoint="/users" item-label="pengguna" :columns="columns" :fields="fields" :defaults="{ role: 'pendaftaran' }" :invalidates="['/dokters']">
     <template #cell-is_active="{ row }"><StatusBadge :status="row.is_active ? 'aktif' : 'nonaktif'" /></template>
   </MasterCrud>
 </template>

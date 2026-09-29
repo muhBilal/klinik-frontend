@@ -2,8 +2,10 @@
 import { onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
 import AppPagination from '@/components/AppPagination.vue'
+import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useList } from '@/composables/useList'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { angka, rupiah, waktu } from '@/lib/format'
@@ -32,11 +34,15 @@ async function simpanObat() {
   saving.value = true
   errors.value = {}
   try {
-    if (editing.value) await api.put(`/obats/${editing.value.id}`, form)
-    else await api.post('/obats', form)
+    if (editing.value) {
+      // Perbarui baris di tempat, tanpa memuat ulang tabel
+      Object.assign(editing.value, (await api.put(`/obats/${editing.value.id}`, form)).data)
+    } else {
+      await api.post('/obats', form)
+      reload()
+    }
     toast.success('Data obat tersimpan.')
     formOpen.value = false
-    reload()
   } catch (e) {
     errors.value = validationErrors(e)
     toast.error(errorMessage(e))
@@ -64,7 +70,7 @@ async function simpanMutasi() {
     const { data } = await api.post(`/obats/${mutasiObat.value.id}/mutasi`, mutasi)
     toast.success(`Stok ${data.obat.nama} sekarang ${data.obat.stok} ${data.obat.satuan}.`)
     mutasiOpen.value = false
-    reload()
+    Object.assign(mutasiObat.value, data.obat)
   } catch (e) {
     errors.value = validationErrors(e)
     toast.error(errorMessage(e))
@@ -77,25 +83,35 @@ async function simpanMutasi() {
 const kartuOpen = ref(false)
 const kartuObat = ref(null)
 const kartu = ref({ data: [] })
+const kartuLoading = ref(false)
 
 async function bukaKartu(obat, page = 1) {
+  if (kartuObat.value?.id !== obat.id) kartu.value = { data: [] } // jangan tampilkan kartu obat sebelumnya
   kartuObat.value = obat
   kartuOpen.value = true
+  kartuLoading.value = true
   try {
     kartu.value = (await api.get(`/obats/${obat.id}/mutasi`, { params: { page } })).data
   } catch (e) {
     toast.error(errorMessage(e))
+  } finally {
+    kartuLoading.value = false
   }
 }
 
+const deleting = ref(null)
+
 async function hapus(obat) {
   if (!confirm(`Hapus obat ${obat.nama}?`)) return
+  deleting.value = obat.id
   try {
     await api.delete(`/obats/${obat.id}`)
     toast.success('Obat dihapus.')
     reload()
   } catch (e) {
     toast.error(errorMessage(e))
+  } finally {
+    deleting.value = null
   }
 }
 
@@ -115,14 +131,15 @@ onMounted(() => load())
         Stok menipis saja
       </label>
     </div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto transition-opacity" :class="{ 'opacity-60': loading && items.length }">
       <table class="table">
         <thead>
           <tr><th>Kode</th><th>Nama</th><th>Satuan</th><th class="text-right">Harga</th><th class="text-right">Stok</th><th>Status</th><th /></tr>
         </thead>
         <tbody>
+          <TableSkeleton v-if="loading && !items.length" :cols="7" />
           <tr v-for="o in items" :key="o.id">
-            <td class="font-mono text-xs">{{ o.kode }}</td>
+            <td class="tabular-nums text-xs">{{ o.kode }}</td>
             <td class="font-medium">{{ o.nama }}</td>
             <td>{{ o.satuan }}</td>
             <td class="text-right tabular-nums">{{ rupiah(o.harga) }}</td>
@@ -135,7 +152,9 @@ onMounted(() => load())
               <button class="btn btn-secondary btn-sm" @click="bukaMutasi(o)">Mutasi stok</button>
               <button class="btn btn-ghost btn-sm" @click="bukaKartu(o)">Kartu stok</button>
               <button class="btn btn-ghost btn-sm" @click="bukaForm(o)">Ubah</button>
-              <button v-if="auth.user?.role === 'admin'" class="btn btn-ghost btn-sm text-rose-600" @click="hapus(o)">Hapus</button>
+              <button v-if="auth.user?.role === 'admin'" class="btn btn-ghost btn-sm text-rose-600" :disabled="deleting === o.id" @click="hapus(o)">
+                <AppSpinner v-if="deleting === o.id" size="size-3" />Hapus
+              </button>
             </td>
           </tr>
           <tr v-if="!loading && !items.length">
@@ -183,7 +202,7 @@ onMounted(() => load())
     </form>
     <template #footer>
       <button class="btn btn-secondary" @click="formOpen = false">Batal</button>
-      <button type="submit" form="form-obat" class="btn btn-primary" :disabled="saving">Simpan</button>
+      <button type="submit" form="form-obat" class="btn btn-primary" :disabled="saving"><AppSpinner v-if="saving" />{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
     </template>
   </AppModal>
 
@@ -195,8 +214,8 @@ onMounted(() => load())
         <label
           v-for="[val, label] in [['masuk', 'Masuk'], ['keluar', 'Keluar'], ['penyesuaian', 'Stok opname']]"
           :key="val"
-          :class="mutasi.jenis === val ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-slate-300'"
-          class="cursor-pointer rounded-lg border px-2 py-2 text-center text-sm font-medium"
+          :class="{ 'choice-active': mutasi.jenis === val }"
+          class="choice px-2"
         >
           <input v-model="mutasi.jenis" type="radio" :value="val" class="sr-only" />{{ label }}
         </label>
@@ -213,16 +232,17 @@ onMounted(() => load())
     </form>
     <template #footer>
       <button class="btn btn-secondary" @click="mutasiOpen = false">Batal</button>
-      <button type="submit" form="form-mutasi" class="btn btn-primary" :disabled="saving">Simpan</button>
+      <button type="submit" form="form-mutasi" class="btn btn-primary" :disabled="saving"><AppSpinner v-if="saving" />{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
     </template>
   </AppModal>
 
   <!-- Kartu stok -->
   <AppModal v-model="kartuOpen" :title="`Kartu Stok · ${kartuObat?.nama ?? ''}`" size="max-w-3xl">
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto transition-opacity" :class="{ 'opacity-60': kartuLoading && kartu.data.length }">
       <table class="table">
         <thead><tr><th>Waktu</th><th>Jenis</th><th class="text-right">Jumlah</th><th class="text-right">Stok akhir</th><th>Referensi / Keterangan</th><th>Petugas</th></tr></thead>
         <tbody>
+          <TableSkeleton v-if="kartuLoading && !kartu.data.length" :cols="6" :rows="4" />
           <tr v-for="m in kartu.data" :key="m.id">
             <td class="whitespace-nowrap text-slate-600">{{ waktu(m.created_at) }}</td>
             <td class="capitalize">{{ m.jenis }}</td>
@@ -231,7 +251,7 @@ onMounted(() => load())
             <td>{{ [m.referensi, m.keterangan].filter(Boolean).join(' · ') || '-' }}</td>
             <td class="text-slate-600">{{ m.user?.name ?? '-' }}</td>
           </tr>
-          <tr v-if="!kartu.data.length"><td colspan="6" class="py-6 text-center text-slate-400">Belum ada mutasi.</td></tr>
+          <tr v-if="!kartuLoading && !kartu.data.length"><td colspan="6" class="py-6 text-center text-slate-400">Belum ada mutasi.</td></tr>
         </tbody>
       </table>
     </div>

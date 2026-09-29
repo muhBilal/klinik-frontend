@@ -4,7 +4,7 @@ import StatusBadge from '@/components/StatusBadge.vue'
 import { rupiah } from '@/lib/format'
 
 const columns = [
-  { key: 'kode', label: 'Kode', class: 'font-mono text-xs' },
+  { key: 'kode', label: 'Kode', class: 'tabular-nums text-xs' },
   { key: 'nama', label: 'Nama Tindakan' },
   { key: 'tarif', label: 'Tarif', format: rupiah, class: 'text-right tabular-nums' },
   { key: 'is_active', label: 'Status' },

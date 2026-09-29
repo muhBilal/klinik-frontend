@@ -1,8 +1,11 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageLoading from '@/components/PageLoading.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
+import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { METODE_BAYAR, PENJAMIN, rupiah, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
@@ -10,7 +13,7 @@ import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const toast = useToastStore()
-const tagihan = ref(null)
+const { data: tagihan, error, load: fetchTagihan } = useDetail(() => `/tagihans/${route.params.id}`)
 const errors = ref({})
 const processing = ref(false)
 const bayar = reactive({ metode_bayar: 'tunai', dibayar: '', diskon: 0 })
@@ -25,13 +28,8 @@ const pecahan = computed(() => {
 })
 
 async function load() {
-  try {
-    const { data } = await api.get(`/tagihans/${route.params.id}`)
-    tagihan.value = data
-    bayar.metode_bayar = data.kunjungan.penjamin === 'umum' ? 'tunai' : 'penjamin'
-  } catch (e) {
-    toast.error(errorMessage(e))
-  }
+  const data = await fetchTagihan()
+  if (data) bayar.metode_bayar = data.kunjungan.penjamin === 'umum' ? 'tunai' : 'penjamin'
 }
 
 async function prosesBayar() {
@@ -43,8 +41,9 @@ async function prosesBayar() {
       dibayar: bayar.metode_bayar === 'tunai' ? Number(bayar.dibayar || 0) : null,
       diskon: Number(bayar.diskon || 0),
     })
+    // Respons sudah berbentuk sama dengan detail (struk) -> tidak perlu GET ulang
+    tagihan.value = data
     toast.success(`Pembayaran berhasil.${data.kembalian ? ` Kembalian ${rupiah(data.kembalian)}.` : ''}`)
-    await load()
   } catch (e) {
     errors.value = validationErrors(e)
     toast.error(errorMessage(e))
@@ -73,7 +72,7 @@ onMounted(load)
               <p class="text-xs text-slate-500">Bukti Pembayaran Pelayanan</p>
             </div>
             <div class="text-right text-xs text-slate-500">
-              <p class="font-mono font-semibold text-slate-700">{{ tagihan.no_tagihan }}</p>
+              <p class="tabular-nums font-semibold text-slate-700">{{ tagihan.no_tagihan }}</p>
               <p>{{ tanggal(tagihan.kunjungan.tanggal) }}</p>
             </div>
           </div>
@@ -96,7 +95,7 @@ onMounted(load)
           <dl class="mt-4 ml-auto w-full max-w-xs space-y-1 text-sm">
             <div class="flex justify-between"><dt class="text-slate-500">Total</dt><dd class="tabular-nums">{{ rupiah(tagihan.total) }}</dd></div>
             <div class="flex justify-between"><dt class="text-slate-500">Diskon</dt><dd class="tabular-nums">-{{ rupiah(tagihan.status === 'lunas' ? tagihan.diskon : bayar.diskon) }}</dd></div>
-            <div class="flex justify-between border-t border-slate-200 pt-1 text-base font-semibold">
+            <div class="flex justify-between border-t border-line pt-1 text-base font-semibold">
               <dt>Grand total</dt><dd class="tabular-nums">{{ rupiah(tagihan.status === 'lunas' ? tagihan.grand_total : grandTotal) }}</dd>
             </div>
             <template v-if="tagihan.status === 'lunas'">
@@ -125,9 +124,9 @@ onMounted(load)
             <input v-model.number="bayar.diskon" type="number" min="0" :max="tagihan.total" class="input" :class="{ 'input-error': errors.diskon }" />
             <p v-if="errors.diskon" class="field-error">{{ errors.diskon }}</p>
           </div>
-          <div class="rounded-lg bg-brand-50 p-4 text-center">
-            <p class="text-xs text-brand-700">Yang harus dibayar</p>
-            <p class="text-2xl font-semibold text-brand-800">{{ rupiah(grandTotal) }}</p>
+          <div class="rounded-3xl bg-brand-900 p-5 text-center text-white shadow-xl shadow-black/25 inset-shadow-dark">
+            <p class="text-xs font-medium text-white/60">Yang harus dibayar</p>
+            <p class="mt-1 text-3xl font-semibold tracking-tight">{{ rupiah(grandTotal) }}</p>
           </div>
           <template v-if="bayar.metode_bayar === 'tunai'">
             <div>
@@ -143,7 +142,7 @@ onMounted(load)
               <span class="font-semibold tabular-nums">{{ rupiah(kembalian) }}</span>
             </div>
           </template>
-          <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="processing">{{ processing ? 'Memproses...' : 'Proses Pembayaran' }}</button>
+          <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="processing"><AppSpinner v-if="processing" />{{ processing ? 'Memproses...' : 'Proses Pembayaran' }}</button>
         </form>
         <div v-else class="card-body text-sm text-slate-600">
           Tagihan telah {{ tagihan.status === 'lunas' ? 'dibayar' : 'dibatalkan' }}. Arahkan pasien ke farmasi bila ada resep.
@@ -151,4 +150,5 @@ onMounted(load)
       </div>
     </div>
   </template>
+  <PageLoading v-else :error="error" text="Memuat tagihan..." @retry="load" />
 </template>

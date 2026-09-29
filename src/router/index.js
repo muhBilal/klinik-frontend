@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { setNavigating } from '@/lib/progress'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -41,6 +42,11 @@ const router = createRouter({
   routes,
   scrollBehavior: () => ({ top: 0 }),
 })
+
+// Progress bar selama navigasi (guard + download chunk halaman lazy)
+router.beforeEach(() => setNavigating(true))
+router.afterEach(() => setNavigating(false))
+router.onError(() => setNavigating(false))
 
 router.beforeEach(async (to) => {
   const auth = useAuthStore()

@@ -3,24 +3,32 @@ import { computed } from 'vue'
 
 const props = defineProps({ status: { type: String, default: '' } })
 
+// Pil solid bertulisan putih (gaya "Executed" / "Scheduled" pada referensi desain)
+const ORANGE = 'bg-orange-600'
+const INDIGO = 'bg-indigo-500'
+const VIOLET = 'bg-violet-500'
+const GREEN = 'bg-emerald-600'
+const RED = 'bg-red-500'
+const GRAY = 'bg-slate-500'
+
 const MAP = {
-  menunggu: ['Menunggu', 'bg-amber-50 text-amber-700 ring-amber-200'],
-  diperiksa: ['Diperiksa', 'bg-sky-50 text-sky-700 ring-sky-200'],
-  menunggu_pembayaran: ['Menunggu Bayar', 'bg-violet-50 text-violet-700 ring-violet-200'],
-  selesai: ['Selesai', 'bg-emerald-50 text-emerald-700 ring-emerald-200'],
-  batal: ['Batal', 'bg-slate-100 text-slate-500 ring-slate-200'],
-  diserahkan: ['Diserahkan', 'bg-emerald-50 text-emerald-700 ring-emerald-200'],
-  belum_bayar: ['Belum Bayar', 'bg-rose-50 text-rose-700 ring-rose-200'],
-  lunas: ['Lunas', 'bg-emerald-50 text-emerald-700 ring-emerald-200'],
-  aktif: ['Aktif', 'bg-emerald-50 text-emerald-700 ring-emerald-200'],
-  nonaktif: ['Nonaktif', 'bg-slate-100 text-slate-500 ring-slate-200'],
+  menunggu: ['Menunggu', ORANGE],
+  diperiksa: ['Diperiksa', INDIGO],
+  menunggu_pembayaran: ['Menunggu Bayar', VIOLET],
+  selesai: ['Selesai', GREEN],
+  batal: ['Batal', GRAY],
+  diserahkan: ['Diserahkan', GREEN],
+  belum_bayar: ['Belum Bayar', RED],
+  lunas: ['Lunas', GREEN],
+  aktif: ['Aktif', GREEN],
+  nonaktif: ['Nonaktif', GRAY],
 }
 
-const badge = computed(() => MAP[props.status] ?? [props.status, 'bg-slate-100 text-slate-600 ring-slate-200'])
+const badge = computed(() => MAP[props.status] ?? [props.status, GRAY])
 </script>
 
 <template>
-  <span :class="badge[1]" class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ring-1 ring-inset">
+  <span :class="badge[1]" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap text-white shadow-sm">
     {{ badge[0] }}
   </span>
 </template>

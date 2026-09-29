@@ -1,6 +1,7 @@
 <script setup>
 import { reactive, ref, watch } from 'vue'
 import AppModal from '@/components/AppModal.vue'
+import AppSpinner from '@/components/AppSpinner.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { hariIni } from '@/lib/format'
 import { useToastStore } from '@/stores/toast'
@@ -102,7 +103,9 @@ async function submit() {
     </form>
     <template #footer>
       <button class="btn btn-secondary" @click="open = false">Batal</button>
-      <button type="submit" form="form-pasien" class="btn btn-primary" :disabled="saving">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
+      <button type="submit" form="form-pasien" class="btn btn-primary" :disabled="saving">
+        <AppSpinner v-if="saving" />{{ saving ? 'Menyimpan...' : 'Simpan' }}
+      </button>
     </template>
   </AppModal>
 </template>

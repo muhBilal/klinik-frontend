@@ -25,10 +25,16 @@ bentuk data yang **diandalkan** komponen frontend — bila backend mengubahnya, 
                  diagnosas: [{ id, icd10_id, jenis, icd10: { kode, nama } }] } | null,
   tindakans: [{ id, tindakan_id, jumlah, tarif, tindakan: { nama } }],
   resep: { id, no_resep, status, catatan, items: [{ obat_id, jumlah, aturan_pakai, harga, obat: { nama, satuan, stok } }] } | null,
-  tagihan: { id, no_tagihan, total, grand_total, status, items: [...] } | null
+  tagihan: { id, no_tagihan, total, grand_total, status } | null
 }
 ```
-List kunjungan hanya memuat `pasien` (subset), `poli` (id, kode, nama), `dokter` (id, name).
+Detail memuat `pasien` subset (no_rm, nama, jenis_kelamin, tanggal_lahir/umur, golongan_darah, alergi), `tagihan` tanpa `items`
+(hanya id, no_tagihan, total, grand_total, status). List kunjungan hanya memuat `pasien` (id, no_rm, nama, jenis_kelamin),
+`poli` (id, kode, nama), `dokter` (id, name); `umur` bernilai null di list.
+
+Parameter ringan: `?simple=1` pada endpoint list (tanpa `total`), `GET /pasiens/{id}?ringkas=1` (tanpa kunjungans),
+`GET /pasiens/{id}/riwayat?kecuali={kunjungan_id}`, `GET /polis?aktif=1` (hanya id, kode, nama).
+Respons `POST /reseps/{id}/serahkan` dan `POST /tagihans/{id}/bayar` berbentuk sama dengan GET detail-nya.
 
 ## Resep list
 `{ id, no_resep, status, created_at, items_count, dokter, kunjungan: { pasien, poli, tagihan: { status } | null } }`
@@ -43,7 +49,7 @@ List kunjungan hanya memuat `pasien` (subset), `poli` (id, kode, nama), `dokter`
 ```js
 { tanggal, kunjungan: { total, per_status: { menunggu, diperiksa, menunggu_pembayaran, selesai, batal },
   per_poli: [{ id, nama, kunjungans_count }] }, pasien_total, pasien_baru_hari_ini, resep_menunggu,
-  tagihan_belum_bayar, pendapatan_hari_ini, obat_stok_menipis: [{ nama, satuan, stok }] }
+  tagihan_belum_bayar, pendapatan_hari_ini /* null bila bukan kasir/admin */, obat_stok_menipis: [{ id, nama, satuan, stok }] }
 ```
 
 ## Nilai enum yang dipakai UI

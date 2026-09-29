@@ -23,18 +23,22 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
 <template>
   <Teleport to="body">
     <Transition enter-from-class="opacity-0" enter-active-class="transition duration-150" leave-to-class="opacity-0" leave-active-class="transition duration-100">
-      <div v-if="open" class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-4 sm:pt-16" @mousedown.self="open = false">
-        <div :class="size" class="w-full rounded-xl bg-white shadow-xl" role="dialog" aria-modal="true">
-          <div class="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
-            <h2 class="font-semibold text-slate-800">{{ title }}</h2>
-            <button class="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600" aria-label="Tutup" @click="open = false">
-              <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      <div
+        v-if="open"
+        class="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/20 p-4 backdrop-blur-sm sm:pt-16"
+        @mousedown.self="open = false"
+      >
+        <div :class="size" class="glass-strong w-full motion-safe:animate-pop rounded-[1.75rem]" role="dialog" aria-modal="true">
+          <div class="flex items-center justify-between border-b border-line px-6 py-4">
+            <h2 class="text-lg font-semibold tracking-tight text-slate-900">{{ title }}</h2>
+            <button class="btn-icon size-9" aria-label="Tutup" @click="open = false">
+              <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-          <div class="p-5">
+          <div class="p-6">
             <slot />
           </div>
-          <div v-if="$slots.footer" class="flex justify-end gap-2 border-t border-slate-100 bg-slate-50/60 px-5 py-3">
+          <div v-if="$slots.footer" class="flex justify-end gap-2 rounded-b-[1.75rem] border-t border-line bg-white/50 px-6 py-4">
             <slot name="footer" />
           </div>
         </div>

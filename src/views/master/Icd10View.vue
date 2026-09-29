@@ -2,7 +2,7 @@
 import MasterCrud from '@/components/MasterCrud.vue'
 
 const columns = [
-  { key: 'kode', label: 'Kode', class: 'font-mono font-semibold w-28' },
+  { key: 'kode', label: 'Kode', class: 'tabular-nums font-semibold w-28' },
   { key: 'nama', label: 'Nama Diagnosa' },
 ]
 const fields = [

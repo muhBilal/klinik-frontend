@@ -42,6 +42,31 @@ export const ROLES = {
   kasir: 'Kasir',
 }
 
+export const STATUS_KUNJUNGAN = {
+  menunggu: 'Menunggu',
+  diperiksa: 'Diperiksa',
+  menunggu_pembayaran: 'Menunggu bayar',
+  selesai: 'Selesai',
+  batal: 'Batal',
+}
+
+export const JENIS_MUTASI = { masuk: 'Masuk', keluar: 'Keluar', penyesuaian: 'Stok opname' }
+
+export const SATUAN_OBAT = ['tablet', 'kapsul', 'botol', 'tube', 'sachet', 'ampul', 'vial', 'pcs']
+
+export const GOLONGAN_DARAH = ['A', 'B', 'AB', 'O']
+
+/** Opsi filter umum */
+export const OPSI_STATUS_AKTIF = [
+  { value: 'aktif', label: 'Aktif' },
+  { value: 'nonaktif', label: 'Nonaktif' },
+]
+
+/** { value: label } atau [value] → [{ value, label }] untuk <FilterSelect>. */
+export function toOptions(source) {
+  return Array.isArray(source) ? source.map((v) => ({ value: v, label: v })) : Object.entries(source).map(([value, label]) => ({ value, label }))
+}
+
 export function debounce(fn, wait = 300) {
   let timer
   return (...args) => {

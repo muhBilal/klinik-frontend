@@ -1,25 +1,18 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PageHeader from '@/components/PageHeader.vue'
+import PageLoading from '@/components/PageLoading.vue'
 import RekamMedisRingkas from '@/components/RekamMedisRingkas.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
-import api, { errorMessage } from '@/lib/api'
+import { useDetail } from '@/composables/useDetail'
 import { PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
-import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const router = useRouter()
-const toast = useToastStore()
-const k = ref(null)
+const { data: k, error, load } = useDetail(() => `/kunjungans/${route.params.id}`)
 
-onMounted(async () => {
-  try {
-    k.value = (await api.get(`/kunjungans/${route.params.id}`)).data
-  } catch (e) {
-    toast.error(errorMessage(e))
-  }
-})
+onMounted(load)
 </script>
 
 <template>
@@ -33,7 +26,7 @@ onMounted(async () => {
         <div class="card-header"><h2 class="card-title">Pasien</h2><StatusBadge :status="k.status" /></div>
         <dl class="card-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
           <dt class="text-slate-500">Nama</dt><dd class="font-medium">{{ k.pasien.nama }}</dd>
-          <dt class="text-slate-500">No. RM</dt><dd class="font-mono">{{ k.pasien.no_rm }}</dd>
+          <dt class="text-slate-500">No. RM</dt><dd class="tabular-nums">{{ k.pasien.no_rm }}</dd>
           <dt class="text-slate-500">JK / Umur</dt><dd>{{ jenisKelamin(k.pasien.jenis_kelamin) }} · {{ k.pasien.umur }}</dd>
           <dt class="text-slate-500">Penjamin</dt><dd>{{ PENJAMIN[k.penjamin] }} {{ k.no_penjamin ?? '' }}</dd>
           <dt class="text-slate-500">Dokter</dt><dd>{{ k.dokter?.name ?? '-' }}</dd>
@@ -52,4 +45,5 @@ onMounted(async () => {
       </div>
     </div>
   </template>
+  <PageLoading v-else :error="error" text="Memuat rekam medis..." @retry="load" />
 </template>

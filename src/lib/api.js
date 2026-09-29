@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { requestDone, requestStart } from '@/lib/progress'
 
 export const TOKEN_KEY = 'eklinik_token'
 
@@ -7,15 +8,21 @@ const api = axios.create({
   headers: { Accept: 'application/json' },
 })
 
+// Opsi custom `silent: true` = request latar belakang (mis. auto-refresh), tidak memicu progress bar.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem(TOKEN_KEY)
   if (token) config.headers.Authorization = `Bearer ${token}`
+  if (!config.silent) requestStart()
   return config
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (!response.config.silent) requestDone()
+    return response
+  },
   (error) => {
+    if (!error.config?.silent) requestDone()
     // Token kedaluwarsa / dicabut -> kembali ke login
     if (error.response?.status === 401 && !error.config.url.endsWith('/login')) {
       localStorage.removeItem(TOKEN_KEY)
@@ -24,6 +31,9 @@ api.interceptors.response.use(
     return Promise.reject(error)
   },
 )
+
+/** Request dibatalkan lewat AbortController (digantikan request baru / halaman ditutup) — bukan error. */
+export const isCanceled = (error) => axios.isCancel(error)
 
 /** Pesan error yang ramah untuk ditampilkan di toast. */
 export function errorMessage(error) {

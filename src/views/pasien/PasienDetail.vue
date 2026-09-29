@@ -1,27 +1,36 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import FilterSelect from '@/components/FilterSelect.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import PageLoading from '@/components/PageLoading.vue'
 import PasienFormModal from '@/components/PasienFormModal.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
-import api, { errorMessage } from '@/lib/api'
-import { PENJAMIN, jenisKelamin, tanggal } from '@/lib/format'
+import { useDetail } from '@/composables/useDetail'
+import { PENJAMIN, STATUS_KUNJUNGAN, jenisKelamin, tanggal, toOptions } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
-import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const auth = useAuthStore()
-const toast = useToastStore()
-const pasien = ref(null)
+const { data: pasien, error, load } = useDetail(() => `/pasiens/${route.params.id}`)
 const formOpen = ref(false)
 
-async function load() {
-  try {
-    pasien.value = (await api.get(`/pasiens/${route.params.id}`)).data
-  } catch (e) {
-    toast.error(errorMessage(e))
-  }
-}
+// Respons simpan sudah berisi identitas terbaru; riwayat kunjungan tidak berubah -> tidak perlu muat ulang.
+const onSaved = (data) => Object.assign(pasien.value, data)
+
+// Filter riwayat di sisi klien (riwayat sudah termuat seluruhnya bersama detail pasien)
+const riwayatFilter = reactive({ poli: '', status: '', penjamin: '' })
+const opsiPoli = computed(() => [...new Set((pasien.value?.kunjungans ?? []).map((k) => k.poli?.nama).filter(Boolean))].map((nama) => ({ value: nama, label: nama })))
+const riwayat = computed(() =>
+  (pasien.value?.kunjungans ?? []).filter(
+    (k) =>
+      (!riwayatFilter.poli || k.poli?.nama === riwayatFilter.poli) &&
+      (!riwayatFilter.status || k.status === riwayatFilter.status) &&
+      (!riwayatFilter.penjamin || k.penjamin === riwayatFilter.penjamin),
+  ),
+)
+const riwayatDifilter = computed(() => Object.values(riwayatFilter).some(Boolean))
+const resetRiwayat = () => Object.assign(riwayatFilter, { poli: '', status: '', penjamin: '' })
 
 onMounted(load)
 </script>
@@ -38,8 +47,8 @@ onMounted(load)
       <div class="card">
         <div class="card-header"><h2 class="card-title">Identitas Pasien</h2></div>
         <dl class="card-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
-          <dt class="text-slate-500">NIK</dt><dd class="font-mono">{{ pasien.nik ?? '-' }}</dd>
-          <dt class="text-slate-500">No. BPJS</dt><dd class="font-mono">{{ pasien.no_bpjs ?? '-' }}</dd>
+          <dt class="text-slate-500">NIK</dt><dd class="tabular-nums">{{ pasien.nik ?? '-' }}</dd>
+          <dt class="text-slate-500">No. BPJS</dt><dd class="tabular-nums">{{ pasien.no_bpjs ?? '-' }}</dd>
           <dt class="text-slate-500">Jenis kelamin</dt><dd>{{ jenisKelamin(pasien.jenis_kelamin) }}</dd>
           <dt class="text-slate-500">TTL</dt><dd>{{ pasien.tempat_lahir ?? '-' }}, {{ tanggal(pasien.tanggal_lahir) }} ({{ pasien.umur }})</dd>
           <dt class="text-slate-500">Gol. darah</dt><dd>{{ pasien.golongan_darah ?? '-' }}</dd>
@@ -51,29 +60,39 @@ onMounted(load)
       </div>
 
       <div class="card lg:col-span-2">
-        <div class="card-header"><h2 class="card-title">Riwayat Kunjungan</h2></div>
+        <div class="card-header flex-wrap">
+          <h2 class="card-title">Riwayat Kunjungan</h2>
+          <div v-if="pasien.kunjungans.length" class="filter-bar">
+            <FilterSelect v-model="riwayatFilter.poli" placeholder="Semua poli" :options="opsiPoli" />
+            <FilterSelect v-model="riwayatFilter.status" placeholder="Semua status" :options="toOptions(STATUS_KUNJUNGAN)" />
+            <FilterSelect v-model="riwayatFilter.penjamin" placeholder="Semua penjamin" :options="toOptions(PENJAMIN)" />
+            <button v-if="riwayatDifilter" class="btn btn-ghost btn-sm" @click="resetRiwayat">Reset filter</button>
+          </div>
+        </div>
         <div class="overflow-x-auto">
           <table class="table">
             <thead>
               <tr><th>Tanggal</th><th>Poli / Dokter</th><th>Diagnosa</th><th>Penjamin</th><th>Status</th><th /></tr>
             </thead>
             <tbody>
-              <tr v-for="k in pasien.kunjungans" :key="k.id">
+              <tr v-for="k in riwayat" :key="k.id">
                 <td class="whitespace-nowrap">{{ tanggal(k.tanggal) }}</td>
                 <td>
                   <p>{{ k.poli?.nama }}</p>
                   <p class="text-xs text-slate-500">{{ k.dokter?.name ?? '-' }}</p>
                 </td>
                 <td class="text-xs">
-                  <p v-for="d in k.pemeriksaan?.diagnosas ?? []" :key="d.id"><span class="font-mono font-semibold">{{ d.icd10.kode }}</span> {{ d.icd10.nama }}</p>
+                  <p v-for="d in k.pemeriksaan?.diagnosas ?? []" :key="d.id"><span class="tabular-nums font-semibold">{{ d.icd10.kode }}</span> {{ d.icd10.nama }}</p>
                   <span v-if="!k.pemeriksaan?.diagnosas?.length" class="text-slate-400">-</span>
                 </td>
                 <td>{{ PENJAMIN[k.penjamin] }}</td>
                 <td><StatusBadge :status="k.status" /></td>
                 <td class="text-right"><RouterLink :to="`/kunjungan/${k.id}`" class="btn btn-ghost btn-sm">Lihat</RouterLink></td>
               </tr>
-              <tr v-if="!pasien.kunjungans.length">
-                <td colspan="6" class="py-10 text-center text-slate-400">Belum ada riwayat kunjungan.</td>
+              <tr v-if="!riwayat.length">
+                <td colspan="6" class="py-10 text-center text-slate-400">
+                  {{ riwayatDifilter ? 'Tidak ada kunjungan yang cocok dengan filter.' : 'Belum ada riwayat kunjungan.' }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -81,6 +100,7 @@ onMounted(load)
       </div>
     </div>
 
-    <PasienFormModal v-model="formOpen" :pasien="pasien" @saved="load" />
+    <PasienFormModal v-model="formOpen" :pasien="pasien" @saved="onSaved" />
   </template>
+  <PageLoading v-else :error="error" @retry="load" />
 </template>

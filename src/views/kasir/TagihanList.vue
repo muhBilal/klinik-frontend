@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import AppPagination from '@/components/AppPagination.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useList } from '@/composables/useList'
 import { METODE_BAYAR, PENJAMIN, rupiah, waktu } from '@/lib/format'
 
@@ -22,7 +23,7 @@ onMounted(() => load())
 
   <div class="card">
     <div class="card-header flex-wrap">
-      <div class="flex gap-1">
+      <div class="tabs">
         <button v-for="t in TABS" :key="t.value" :class="{ 'tab-active': filters.status === t.value }" class="tab" @click="filters.status = t.value; load()">{{ t.label }}</button>
       </div>
       <div class="flex gap-2">
@@ -30,14 +31,15 @@ onMounted(() => load())
         <input v-model="filters.q" type="search" class="input w-64 py-1.5" placeholder="No. tagihan / nama / No. RM" @input="search" />
       </div>
     </div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto transition-opacity" :class="{ 'opacity-60': loading && items.length }">
       <table class="table">
         <thead>
           <tr><th>No. Tagihan</th><th>Waktu</th><th>Pasien</th><th>Poli</th><th>Penjamin</th><th class="text-right">Total</th><th>Status</th><th /></tr>
         </thead>
         <tbody>
+          <TableSkeleton v-if="loading && !items.length" :cols="8" />
           <tr v-for="t in items" :key="t.id">
-            <td class="font-mono text-xs font-semibold">{{ t.no_tagihan }}</td>
+            <td class="tabular-nums text-xs font-semibold">{{ t.no_tagihan }}</td>
             <td class="whitespace-nowrap text-slate-600">{{ waktu(t.created_at) }}</td>
             <td>
               <p class="font-medium">{{ t.kunjungan.pasien.nama }}</p>

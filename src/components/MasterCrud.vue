@@ -7,9 +7,12 @@
 import { onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
 import AppPagination from '@/components/AppPagination.vue'
+import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useList } from '@/composables/useList'
 import api, { errorMessage, validationErrors } from '@/lib/api'
+import { invalidate } from '@/lib/cache'
 import { useToastStore } from '@/stores/toast'
 
 const props = defineProps({
@@ -21,6 +24,8 @@ const props = defineProps({
   defaults: { type: Object, default: () => ({}) },
   searchable: { type: Boolean, default: true },
   itemLabel: { type: String, default: 'data' },
+  /** Prefix cache data referensi yang harus dibuang setelah data berubah (lihat lib/cache.js). */
+  invalidates: { type: Array, default: () => [] },
 })
 
 const toast = useToastStore()
@@ -31,6 +36,12 @@ const editing = ref(null)
 const form = reactive({})
 const errors = ref({})
 const saving = ref(false)
+const deleting = ref(null)
+
+function changed() {
+  invalidate(props.endpoint, ...props.invalidates)
+  reload()
+}
 
 function buka(row = null) {
   editing.value = row
@@ -52,7 +63,7 @@ async function simpan() {
     else await api.post(props.endpoint, payload)
     toast.success(`${props.itemLabel[0].toUpperCase()}${props.itemLabel.slice(1)} tersimpan.`)
     open.value = false
-    reload()
+    changed()
   } catch (e) {
     errors.value = validationErrors(e)
     toast.error(errorMessage(e))
@@ -63,12 +74,15 @@ async function simpan() {
 
 async function hapus(row) {
   if (!confirm(`Hapus ${props.itemLabel} "${row.nama ?? row.name ?? row.kode}"?`)) return
+  deleting.value = row.id
   try {
     await api.delete(`${props.endpoint}/${row.id}`)
     toast.success(`${props.itemLabel} dihapus.`)
-    reload()
+    changed()
   } catch (e) {
     toast.error(errorMessage(e))
+  } finally {
+    deleting.value = null
   }
 }
 
@@ -83,9 +97,9 @@ onMounted(() => load())
   <div class="card">
     <div v-if="searchable" class="card-header">
       <input v-model="filters.q" type="search" class="input max-w-sm" placeholder="Cari..." @input="search" />
-      <span v-if="loading" class="text-xs text-slate-400">Memuat...</span>
+      <AppSpinner v-if="loading" class="text-slate-400" />
     </div>
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto transition-opacity" :class="{ 'opacity-60': loading && items.length }">
       <table class="table">
         <thead>
           <tr>
@@ -94,13 +108,16 @@ onMounted(() => load())
           </tr>
         </thead>
         <tbody>
+          <TableSkeleton v-if="loading && !items.length" :cols="columns.length + 1" />
           <tr v-for="row in items" :key="row.id">
             <td v-for="c in columns" :key="c.key" :class="c.class">
               <slot :name="`cell-${c.key}`" :row="row">{{ c.format ? c.format(row[c.key], row) : row[c.key] ?? '-' }}</slot>
             </td>
             <td class="text-right whitespace-nowrap">
               <button class="btn btn-ghost btn-sm" @click="buka(row)">Ubah</button>
-              <button class="btn btn-ghost btn-sm text-rose-600" @click="hapus(row)">Hapus</button>
+              <button class="btn btn-ghost btn-sm text-rose-600" :disabled="deleting === row.id" @click="hapus(row)">
+                <AppSpinner v-if="deleting === row.id" size="size-3" />Hapus
+              </button>
             </td>
           </tr>
           <tr v-if="!loading && !items.length">
@@ -140,7 +157,9 @@ onMounted(() => load())
     </form>
     <template #footer>
       <button class="btn btn-secondary" @click="open = false">Batal</button>
-      <button type="submit" form="form-master" class="btn btn-primary" :disabled="saving">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
+      <button type="submit" form="form-master" class="btn btn-primary" :disabled="saving">
+        <AppSpinner v-if="saving" />{{ saving ? 'Menyimpan...' : 'Simpan' }}
+      </button>
     </template>
   </AppModal>
 </template>
