@@ -1,0 +1,115 @@
+<script setup>
+import { computed, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
+import PageHeader from '@/components/PageHeader.vue'
+import StatusBadge from '@/components/StatusBadge.vue'
+import api, { errorMessage } from '@/lib/api'
+import { jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
+import { printElement } from '@/lib/print'
+import { useToastStore } from '@/stores/toast'
+
+const route = useRoute()
+const toast = useToastStore()
+const resep = ref(null)
+const processing = ref(false)
+
+const lunas = computed(() => resep.value?.kunjungan.tagihan?.status === 'lunas')
+const stokKurang = computed(() => resep.value?.items.some((i) => i.jumlah > i.obat.stok))
+const total = computed(() => resep.value?.items.reduce((s, i) => s + i.harga * i.jumlah, 0) ?? 0)
+
+async function load() {
+  try {
+    resep.value = (await api.get(`/reseps/${route.params.id}`)).data
+  } catch (e) {
+    toast.error(errorMessage(e))
+  }
+}
+
+async function serahkan() {
+  if (!confirm('Serahkan obat ke pasien? Stok akan dikurangi.')) return
+  processing.value = true
+  try {
+    await api.post(`/reseps/${route.params.id}/serahkan`)
+    toast.success('Obat telah diserahkan dan stok diperbarui.')
+    await load()
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    processing.value = false
+  }
+}
+
+onMounted(load)
+</script>
+
+<template>
+  <template v-if="resep">
+    <PageHeader :title="`Resep ${resep.no_resep}`" :subtitle="`${resep.kunjungan.poli.nama} · ${waktu(resep.created_at)}`">
+      <RouterLink to="/farmasi/resep" class="btn btn-secondary">Kembali</RouterLink>
+      <button class="btn btn-secondary" @click="printElement('#etiket', `Etiket ${resep.no_resep}`)">Cetak etiket</button>
+      <button v-if="resep.status === 'menunggu'" class="btn btn-primary" :disabled="!lunas || stokKurang || processing" @click="serahkan">
+        {{ processing ? 'Memproses...' : 'Serahkan obat' }}
+      </button>
+    </PageHeader>
+
+    <div v-if="resep.status === 'menunggu' && !lunas" class="mb-5 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+      Tagihan pasien belum lunas. Arahkan pasien ke kasir sebelum obat diserahkan.
+    </div>
+    <div v-if="resep.status === 'menunggu' && stokKurang" class="mb-5 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+      Ada obat dengan stok tidak mencukupi. Lakukan penerimaan stok terlebih dahulu.
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-3">
+      <div class="card self-start">
+        <div class="card-header"><h2 class="card-title">Pasien</h2><StatusBadge :status="resep.status" /></div>
+        <dl class="card-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+          <dt class="text-slate-500">Nama</dt><dd class="font-medium">{{ resep.kunjungan.pasien.nama }}</dd>
+          <dt class="text-slate-500">No. RM</dt><dd class="font-mono">{{ resep.kunjungan.pasien.no_rm }}</dd>
+          <dt class="text-slate-500">JK / Umur</dt><dd>{{ jenisKelamin(resep.kunjungan.pasien.jenis_kelamin) }} · {{ resep.kunjungan.pasien.umur }}</dd>
+          <dt class="text-slate-500">Alergi</dt><dd :class="resep.kunjungan.pasien.alergi ? 'font-medium text-rose-600' : ''">{{ resep.kunjungan.pasien.alergi ?? 'Tidak ada' }}</dd>
+          <dt class="text-slate-500">Dokter</dt><dd>{{ resep.dokter?.name ?? '-' }}</dd>
+          <dt class="text-slate-500">Tagihan</dt><dd><StatusBadge :status="resep.kunjungan.tagihan?.status ?? 'belum_bayar'" /></dd>
+          <template v-if="resep.status === 'diserahkan'">
+            <dt class="text-slate-500">Diserahkan</dt><dd>{{ waktu(resep.diserahkan_at) }}<br /><span class="text-xs text-slate-500">oleh {{ resep.apoteker?.name }}</span></dd>
+          </template>
+        </dl>
+      </div>
+
+      <div class="card lg:col-span-2">
+        <div class="card-header"><h2 class="card-title">Daftar Obat</h2></div>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead><tr><th>Obat</th><th class="text-right">Jumlah</th><th>Aturan pakai</th><th class="text-right">Stok</th><th class="text-right">Subtotal</th></tr></thead>
+            <tbody>
+              <tr v-for="i in resep.items" :key="i.id">
+                <td>{{ i.obat.nama }}</td>
+                <td class="text-right tabular-nums">{{ i.jumlah }} {{ i.obat.satuan }}</td>
+                <td class="italic">{{ i.aturan_pakai }}</td>
+                <td :class="i.jumlah > i.obat.stok && resep.status === 'menunggu' ? 'font-semibold text-rose-600' : 'text-slate-500'" class="text-right tabular-nums">{{ i.obat.stok }}</td>
+                <td class="text-right tabular-nums">{{ rupiah(i.harga * i.jumlah) }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr><td colspan="4" class="text-right font-medium">Total</td><td class="text-right font-semibold tabular-nums">{{ rupiah(total) }}</td></tr>
+            </tfoot>
+          </table>
+        </div>
+        <p v-if="resep.catatan" class="border-t border-slate-100 px-5 py-3 text-sm"><span class="text-slate-500">Catatan dokter:</span> {{ resep.catatan }}</p>
+      </div>
+    </div>
+
+    <!-- Etiket untuk dicetak -->
+    <div class="hidden">
+      <div id="etiket" class="grid grid-cols-2 gap-3">
+        <div v-for="i in resep.items" :key="i.id" class="rounded border border-slate-400 p-3 text-sm">
+          <p class="text-center text-xs font-semibold">E-KLINIK · INSTALASI FARMASI</p>
+          <p class="mt-1 text-center text-[11px] text-slate-500">{{ resep.no_resep }} · {{ tanggal(resep.created_at) }}</p>
+          <hr class="my-2" />
+          <p class="font-semibold">{{ resep.kunjungan.pasien.nama }} ({{ resep.kunjungan.pasien.no_rm }})</p>
+          <p>{{ i.obat.nama }} — {{ i.jumlah }} {{ i.obat.satuan }}</p>
+          <p class="mt-2 text-center text-base font-bold">{{ i.aturan_pakai }}</p>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>

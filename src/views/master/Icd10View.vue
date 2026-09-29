@@ -1,0 +1,16 @@
+<script setup>
+import MasterCrud from '@/components/MasterCrud.vue'
+
+const columns = [
+  { key: 'kode', label: 'Kode', class: 'font-mono font-semibold w-28' },
+  { key: 'nama', label: 'Nama Diagnosa' },
+]
+const fields = [
+  { key: 'kode', label: 'Kode ICD-10', required: true, placeholder: 'J06.9' },
+  { key: 'nama', label: 'Nama diagnosa', required: true, full: true },
+]
+</script>
+
+<template>
+  <MasterCrud title="Master ICD-10" subtitle="Kode diagnosa penyakit (WHO ICD-10)" endpoint="/icd10s" item-label="kode ICD-10" :columns="columns" :fields="fields" />
+</template>
