@@ -57,14 +57,14 @@ function isiDemo(role) {
   <div class="flex min-h-screen items-center justify-center p-4 sm:p-8">
     <div class="glass grid w-full max-w-5xl motion-safe:animate-pop overflow-hidden rounded-[2rem] lg:grid-cols-[1.1fr_1fr]">
       <!-- Panel hero -->
-      <div class="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-sky-500 via-sky-600 to-blue-700 p-10 text-white lg:flex">
+      <div class="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-brand-500 via-brand-700 to-brand-950 p-10 text-white lg:flex">
         <div class="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full border border-white/20 bg-white/10" />
         <div class="pointer-events-none absolute -bottom-32 -left-20 size-80 rounded-full border border-white/10 bg-white/5" />
         <div class="pointer-events-none absolute right-12 bottom-28 size-24 rotate-12 rounded-3xl border border-white/25 bg-white/10 shadow-xl backdrop-blur-md" />
 
         <div class="relative flex items-center gap-3">
           <div class="grid size-11 place-items-center rounded-xl border border-white/30 bg-white/15 shadow-lg backdrop-blur">
-            <svg class="size-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
+            <svg class="size-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
           </div>
           <div>
             <p class="text-lg leading-tight font-bold">E-Klinik</p>
@@ -93,8 +93,8 @@ function isiDemo(role) {
       <!-- Form -->
       <div class="p-8 sm:p-12">
         <div class="mb-8 flex items-center gap-3 lg:hidden">
-          <div class="grid size-10 place-items-center rounded-2xl bg-brand-900 text-white shadow-lg shadow-black/25">
-            <svg class="size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
+          <div class="grid size-10 place-items-center rounded-2xl bg-linear-to-br from-brand-400 to-brand-800 text-white shadow-lg shadow-brand-900/35">
+            <svg class="size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
           </div>
           <p class="text-lg font-bold text-slate-800">E-Klinik</p>
         </div>

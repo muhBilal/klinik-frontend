@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import api, { TOKEN_KEY } from '@/lib/api'
+import { applyStoredTheme } from '@/lib/theme'
 
 export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem(TOKEN_KEY))
@@ -19,10 +20,18 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = data.token
     user.value = data.user
     localStorage.setItem(TOKEN_KEY, data.token)
+    applyStoredTheme(data.user.theme)
   }
 
   async function fetchMe() {
     const { data } = await api.get('/me')
+    user.value = data
+    applyStoredTheme(data.theme)
+  }
+
+  /** Ubah profil sendiri (nama, email, SIP, password). */
+  async function updateProfile(payload) {
+    const { data } = await api.patch('/me', payload)
     user.value = data
   }
 
@@ -40,5 +49,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(TOKEN_KEY)
   }
 
-  return { token, user, isLoggedIn, hasRole, login, fetchMe, logout, clear }
+  return { token, user, isLoggedIn, hasRole, login, fetchMe, updateProfile, logout, clear }
 })

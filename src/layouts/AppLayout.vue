@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { onKeyStroke } from '@vueuse/core'
 import AppIcon from '@/components/AppIcon.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { MOD_KEY } from '@/lib/keyboard'
 import { visibleMenu } from '@/lib/menu'
 import { useAuthStore } from '@/stores/auth'
@@ -41,6 +42,8 @@ const ICON = {
   logout: 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9',
   menu: 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5',
   close: 'M6 18L18 6M6 6l12 12',
+  theme: 'M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.88 2.88M6.75 17.25h.008v.008H6.75v-.008z',
+  user: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z',
 }
 
 const startsWith = (path, to) => (to === '/' ? path === '/' : path.startsWith(to))
@@ -52,16 +55,6 @@ const activeGroup = computed(() => groups.value.find((group) => group.items.some
 
 // Tombol kembali hanya bila ada halaman sebelumnya di dalam aplikasi (vue-router menyimpannya di history.state)
 const canGoBack = computed(() => route.fullPath && !!window.history.state?.back)
-
-const initials = computed(() =>
-  (auth.user?.name ?? '')
-    .replace(/^(dr|drg|ns)\.?\s*/i, '')
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase(),
-)
 
 watch(() => route.fullPath, () => (drawerOpen.value = false))
 
@@ -76,8 +69,8 @@ async function logout() {
     <!-- ===== Header ===== -->
     <header class="flex items-center gap-4 px-4 pt-4 sm:px-6 lg:gap-6 lg:pt-5 lg:pr-8 lg:pl-5 print:hidden">
       <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" aria-label="E-Klinik, ke dashboard">
-        <span class="grid size-11 place-items-center rounded-2xl bg-brand-900 text-white shadow-lg shadow-sky-600/30 inset-shadow-dark">
-          <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
+        <span class="grid size-11 place-items-center rounded-2xl bg-linear-to-br from-brand-400 to-brand-800 text-white shadow-lg shadow-brand-900/35 inset-shadow-dark">
+          <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
         </span>
         <span class="text-[22px] leading-none tracking-tight text-slate-900"><b class="font-bold">e</b><span class="font-light">-klinik</span></span>
       </RouterLink>
@@ -93,12 +86,12 @@ async function logout() {
         <!-- Tombol Global Search (Algolia) tepat di samping profil kanan atas -->
         <button
           type="button"
-          class="flex items-center gap-2 rounded-full border border-white/90 bg-white/75 py-1.5 pr-2.5 pl-3 text-sm font-medium text-slate-600 shadow-xs transition hover:border-[#003DFF]/40 hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#003DFF]/30 active:scale-95"
+          class="flex items-center gap-2 rounded-full border border-white/90 bg-white/75 py-1.5 pr-2.5 pl-3 text-sm font-medium text-slate-600 shadow-xs transition hover:border-brand-500/40 hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 active:scale-95"
           :aria-label="`Pencarian (${MOD_KEY}+K)`"
           title="Cari modul atau menu (Ctrl+K)"
           @click="paletteOpen = true"
         >
-          <span class="grid size-5 place-items-center text-[#003DFF]">
+          <span class="grid size-5 place-items-center text-brand-600">
             <AppIcon :path="ICON.search" size="size-4" />
           </span>
           <span class="hidden text-xs text-slate-500 sm:inline xl:text-sm">Cari modul…</span>
@@ -111,20 +104,22 @@ async function logout() {
         <!-- Garis pemisah halus di samping profil -->
         <span class="hidden h-5 w-px bg-slate-900/10 sm:block" aria-hidden="true" />
 
-        <!-- Profil Pengguna (Nama & Avatar) di kanan atas -->
-        <div class="flex items-center gap-2.5">
-          <div class="hidden text-right leading-tight xl:block">
-            <p class="text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
-            <p class="text-xs text-slate-500">{{ auth.user?.role_label }}<template v-if="auth.user?.poli"> · {{ auth.user.poli.nama }}</template></p>
-          </div>
-          <div
-            class="grid size-10 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white shadow-lg ring-2 shadow-sky-600/25 ring-white"
-            :title="auth.user?.name"
-          >
-            {{ initials }}
-          </div>
-        </div>
+        <!-- Profil Pengguna (Nama & Avatar) di kanan atas -> halaman profil -->
+        <RouterLink
+          to="/profil"
+          class="flex items-center gap-2.5 rounded-full transition focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 hover:opacity-80"
+          :title="`${auth.user?.name} — ubah profil`"
+        >
+          <span class="hidden text-right leading-tight xl:block">
+            <span class="block text-sm font-semibold text-slate-900">{{ auth.user?.name }}</span>
+            <span class="block text-xs text-slate-500">{{ auth.user?.role_label }}<template v-if="auth.user?.poli"> · {{ auth.user.poli.nama }}</template></span>
+          </span>
+          <UserAvatar :user="auth.user" />
+        </RouterLink>
 
+        <RouterLink to="/themes" class="btn-icon hidden lg:grid" title="Tema tampilan" aria-label="Tema tampilan">
+          <AppIcon :path="ICON.theme" size="size-4.5" />
+        </RouterLink>
         <button class="btn-icon hidden lg:grid" title="Keluar" aria-label="Keluar" @click="logout">
           <AppIcon :path="ICON.logout" size="size-4.5" />
         </button>
@@ -143,26 +138,26 @@ async function logout() {
       </nav>
     </div>
 
-    <!-- ===== Rail navigasi (desktop): semua halaman, dipisah per grup, di tengah layar secara vertikal ===== -->
-    <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col items-center lg:flex print:hidden">
+    <!-- ===== Rail navigasi (desktop): ramping, melebar & menampilkan nama menu saat hover ===== -->
+    <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col items-start lg:flex print:hidden">
       <button v-if="canGoBack" class="rail-btn" aria-label="Kembali" @click="router.back()">
-        <AppIcon :path="ICON.back" size="size-4.5" />
-        <span class="rail-tip">Kembali</span>
+        <AppIcon :path="ICON.back" size="size-4.5" class="shrink-0" />
+        <span class="rail-label">Kembali</span>
       </button>
-      <nav class="rail-nav glass flex flex-col items-center rounded-full p-1.5" aria-label="Menu utama">
+      <nav class="rail-nav glass flex flex-col rounded-[1.75rem]" aria-label="Menu utama">
         <template v-for="(group, gi) in groups" :key="group.label">
-          <span v-if="gi > 0" class="rail-sep h-px w-5 shrink-0 bg-slate-900/10" aria-hidden="true" />
+          <span v-if="gi > 0" class="rail-sep" aria-hidden="true" />
           <RouterLink
             v-for="item in group.items"
             :key="item.to"
             :to="item.to"
-            :aria-label="item.label"
+            :title="item.label"
             :aria-current="isActive(item) ? 'page' : undefined"
             :class="{ 'rail-btn-active': isActive(item) }"
             class="rail-btn"
           >
-            <AppIcon :path="item.icon" size="size-[1.15rem]" />
-            <span class="rail-tip">{{ item.label }}</span>
+            <AppIcon :path="item.icon" size="size-[1.15rem]" class="shrink-0" />
+            <span class="rail-label">{{ item.label }}</span>
           </RouterLink>
         </template>
       </nav>
@@ -185,7 +180,7 @@ async function logout() {
               v-for="item in group.items"
               :key="item.to"
               :to="item.to"
-              :class="isActive(item) ? 'bg-brand-900 text-white shadow-lg shadow-sky-600/25' : 'text-slate-600 hover:bg-white hover:text-slate-900'"
+              :class="isActive(item) ? 'bg-brand-900 text-white shadow-lg shadow-brand-900/30' : 'text-slate-600 hover:bg-white hover:text-slate-900'"
               class="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition"
             >
               <AppIcon :path="item.icon" size="size-4.5" />
@@ -193,8 +188,12 @@ async function logout() {
             </RouterLink>
           </div>
         </nav>
+        <div class="mx-3 grid grid-cols-2 gap-2">
+          <RouterLink to="/profil" class="btn btn-secondary"><AppIcon :path="ICON.user" size="size-4" /> Profil</RouterLink>
+          <RouterLink to="/themes" class="btn btn-secondary"><AppIcon :path="ICON.theme" size="size-4" /> Tema</RouterLink>
+        </div>
         <div class="m-3 flex items-center gap-3 rounded-2xl border border-white/90 bg-white/65 p-3">
-          <div class="grid size-9 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white">{{ initials }}</div>
+          <UserAvatar :user="auth.user" size="size-9" />
           <div class="min-w-0 flex-1 leading-tight">
             <p class="truncate text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
             <p class="truncate text-xs text-slate-500">{{ auth.user?.role_label }}</p>

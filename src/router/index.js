@@ -32,6 +32,9 @@ const routes = [
       { path: 'master/icd10', name: 'master.icd10', component: () => import('@/views/master/Icd10View.vue'), meta: { roles: ['admin'] } },
       { path: 'master/user', name: 'master.user', component: () => import('@/views/master/UserView.vue'), meta: { roles: ['admin'] } },
 
+      { path: 'themes', name: 'themes', component: () => import('@/views/ThemeView.vue') },
+      { path: 'profil', name: 'profil', component: () => import('@/views/ProfilView.vue') },
+
       { path: ':pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFound.vue') },
     ],
   },

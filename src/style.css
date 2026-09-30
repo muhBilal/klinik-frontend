@@ -8,19 +8,21 @@
   /* Outfit: geometris bulat (mirip Gilroy pada referensi desain), mendukung angka tabular */
   --font-sans: 'Outfit Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* Aksen tema: Biru Kesehatan Terang & Segar (Light Clinical / Healthcare Blue).
+  /* Aksen tema: dibangkitkan dari satu rona di `src/lib/theme.js` (bisa diubah di halaman /themes).
+     Nilai di sini = tema bawaan, sekaligus cadangan bila localStorage kosong.
      Nama `brand` dipertahankan agar semua komponen otomatis mengikuti tema. */
-  --color-brand-50: #f0f9ff;
-  --color-brand-100: #e0f2fe;
-  --color-brand-200: #bae6fd;
-  --color-brand-300: #7dd3fc;
-  --color-brand-400: #38bdf8;
-  --color-brand-500: #0ea5e9;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
-  --color-brand-800: #075985;
-  --color-brand-900: #0284c7;
-  --color-brand-950: #0369a1;
+  --color-brand-50: oklch(0.977 0.013 245);
+  --color-brand-100: oklch(0.951 0.026 245);
+  --color-brand-200: oklch(0.901 0.058 245);
+  --color-brand-300: oklch(0.828 0.111 245);
+  --color-brand-400: oklch(0.746 0.16 245);
+  --color-brand-500: oklch(0.685 0.169 245);
+  --color-brand-600: oklch(0.588 0.158 245);
+  --color-brand-700: oklch(0.5 0.134 245);
+  --color-brand-800: oklch(0.443 0.11 245);
+  /* 900 = isian primary (tombol, tab & menu aktif), 950 = status hover-nya */
+  --color-brand-900: oklch(0.48 0.155 245);
+  --color-brand-950: oklch(0.42 0.14 245);
 
   /* Garis pemisah tipis */
   --color-line: rgb(15 23 42 / 0.06);
@@ -103,7 +105,7 @@
     @apply px-3 py-1 text-xs;
   }
   .btn-primary {
-    @apply bg-brand-900 text-white shadow-lg shadow-sky-600/25 inset-shadow-dark hover:bg-brand-950 hover:shadow-sky-600/35;
+    @apply bg-brand-900 text-white shadow-lg shadow-brand-900/30 inset-shadow-dark hover:bg-brand-950 hover:shadow-brand-900/45;
   }
   .btn-secondary {
     @apply border border-slate-200/90 bg-white text-slate-700 shadow-xs hover:bg-slate-50 hover:text-slate-900;
@@ -120,40 +122,44 @@
       hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30;
   }
 
-  /* ---------- Rail navigasi (kiri) ---------- */
-  .rail-btn {
-    @apply relative grid size-11 place-items-center rounded-full border border-slate-200/70 bg-white/90 text-slate-600 shadow-xs transition
-      hover:bg-white hover:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30;
-  }
-  .rail-btn-active {
-    @apply border-brand-900 bg-brand-900 text-white shadow-lg shadow-sky-600/30 inset-shadow-dark hover:bg-brand-900 hover:text-white;
-  }
+  /* ---------- Rail navigasi (kiri): ramping, melebar saat hover ---------- */
   .rail {
-    @apply gap-3;
+    @apply w-14 gap-3 transition-[width] duration-300 ease-out;
+  }
+  /* `:has(:focus-visible)` = fokus keyboard saja; klik mouse tidak membuat rail tetap melebar */
+  .rail:hover,
+  .rail:has(:focus-visible) {
+    @apply w-60;
   }
   .rail-nav {
-    @apply gap-2 border border-slate-200/80 bg-white/80 shadow-glass;
+    @apply w-full gap-1 border border-slate-200/80 bg-white/80 p-1.5 shadow-glass;
+  }
+  .rail-btn {
+    @apply relative flex h-11 w-full shrink-0 items-center gap-3 overflow-hidden rounded-full border border-slate-200/70 bg-white/90 px-[0.8rem]
+      text-slate-600 shadow-xs transition hover:bg-white hover:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30;
+  }
+  .rail-btn-active {
+    @apply border-brand-900 bg-brand-900 text-white shadow-lg shadow-brand-900/35 inset-shadow-dark hover:bg-brand-900 hover:text-white;
+  }
+  /* Nama menu: tersembunyi saat ramping, muncul saat rail di-hover */
+  .rail-label {
+    @apply min-w-0 flex-1 truncate text-left text-[13px] font-medium whitespace-nowrap opacity-0 transition-opacity duration-200;
+  }
+  .rail:hover .rail-label,
+  .rail:has(:focus-visible) .rail-label {
+    @apply opacity-100;
   }
   .rail-sep {
-    @apply my-0.5 bg-slate-200;
+    @apply my-1 h-px w-full shrink-0 bg-slate-200;
   }
-  /* Layar pendek: perkecil tombol rail agar semua menu tetap muat di tengah tanpa menabrak logo */
+  /* Layar pendek: rapatkan agar semua menu tetap muat di tengah tanpa menabrak logo */
   @media (max-height: 860px) {
     .rail-btn {
-      @apply size-9;
+      @apply h-9;
     }
     .rail-nav {
-      @apply gap-1.5;
+      @apply gap-0.5;
     }
-  }
-  /* Label tooltip di kanan tombol rail */
-  .rail-tip {
-    @apply pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded-full bg-brand-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap
-      text-white opacity-0 shadow-lg shadow-sky-600/20 transition;
-  }
-  .rail-btn:hover .rail-tip,
-  .rail-btn:focus-visible .rail-tip {
-    @apply opacity-100;
   }
 
   /* ---------- Form ---------- */
@@ -165,10 +171,10 @@
       placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:ring-4 focus:ring-brand-500/10 focus:outline-none
       disabled:bg-slate-100 disabled:text-slate-400;
   }
-  /* Kotak pencarian berbentuk pil dengan ikon kaca pembesar */
+  /* Kotak pencarian berbentuk pil dengan ikon kaca pembesar (abu netral, cocok untuk semua tema) */
   .input[type='search'] {
     @apply rounded-full pl-10;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%230284c7'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='2' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: 0.95rem center;
     background-size: 1rem;
@@ -185,7 +191,7 @@
       hover:bg-white;
   }
   .choice-active {
-    @apply border-brand-900 bg-brand-900 text-white shadow-lg shadow-sky-600/20 hover:bg-brand-900;
+    @apply border-brand-900 bg-brand-900 text-white shadow-lg shadow-brand-900/25 hover:bg-brand-900;
   }
 
   /* ---------- Tabel ---------- */
@@ -219,7 +225,7 @@
     @apply rounded-full px-4 py-2 text-sm font-medium whitespace-nowrap text-slate-600 transition hover:bg-white hover:text-slate-900;
   }
   .tab-active {
-    @apply bg-brand-900 text-white shadow-lg shadow-sky-600/25 inset-shadow-dark hover:bg-brand-900 hover:text-white;
+    @apply bg-brand-900 text-white shadow-lg shadow-brand-900/30 inset-shadow-dark hover:bg-brand-900 hover:text-white;
   }
 
   /* ---------- Filter tabel (pil; terisi = biru kesehatan) ---------- */
