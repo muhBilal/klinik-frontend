@@ -1,19 +1,24 @@
 <script setup>
-import { reactive, ref } from 'vue'
+import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import { errorMessage, validationErrors } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
+import { useKlinikStore } from '@/stores/klinik'
 
 const auth = useAuthStore()
+const klinik = useKlinikStore()
 const router = useRouter()
 const route = useRoute()
 
 const form = reactive({ email: '', password: '' })
 const errors = ref({})
-const message = ref('')
+const message = ref(route.query.sesi === 'habis' ? 'Sesi Anda telah berakhir. Silakan masuk kembali.' : '')
 const loading = ref(false)
+// Langkah kedua login untuk akun ber-2FA
+const tantangan = ref('')
+const kode = ref('')
 
 // Tile modul di panel hero (ikon heroicons outline)
 const fitur = [
@@ -30,6 +35,8 @@ const demoAkun = [
   ['dokter', 'Dokter'],
   ['apoteker', 'Apoteker'],
   ['kasir', 'Kasir'],
+  ['terapis', 'Terapis'],
+  ['manajer', 'Manajer'],
 ]
 
 async function submit() {
@@ -37,15 +44,36 @@ async function submit() {
   errors.value = {}
   message.value = ''
   try {
-    await auth.login(form.email, form.password)
+    if (tantangan.value) {
+      await auth.login2fa(tantangan.value, kode.value)
+    } else {
+      const hasil = await auth.login(form.email, form.password)
+      if (hasil.tantangan) {
+        tantangan.value = hasil.tantangan
+        return
+      }
+    }
     router.replace(route.query.redirect || '/')
   } catch (e) {
     errors.value = validationErrors(e)
-    if (!Object.keys(errors.value).length) message.value = errorMessage(e)
+    // Tantangan kedaluwarsa / terlalu banyak salah -> ulangi dari email & password
+    if (errors.value.tantangan) {
+      batal2fa()
+      message.value = errors.value.tantangan
+    } else if (!Object.keys(errors.value).length) {
+      message.value = errorMessage(e)
+    }
   } finally {
     loading.value = false
   }
 }
+
+function batal2fa() {
+  tantangan.value = ''
+  kode.value = ''
+}
+
+onMounted(() => klinik.muat())
 
 function isiDemo(role) {
   form.email = `${role}@eklinik.test`
@@ -67,7 +95,7 @@ function isiDemo(role) {
             <svg class="size-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
           </div>
           <div>
-            <p class="text-lg leading-tight font-bold">E-Klinik</p>
+            <p class="text-lg leading-tight font-bold">{{ klinik.nama }}</p>
             <p class="text-xs text-white/70">Sistem Informasi Klinik</p>
           </div>
         </div>
@@ -87,7 +115,7 @@ function isiDemo(role) {
           </div>
         </div>
 
-        <p class="relative text-sm text-white/60">&copy; {{ new Date().getFullYear() }} E-Klinik</p>
+        <p class="relative text-sm text-white/60">&copy; {{ new Date().getFullYear() }} {{ klinik.nama }}</p>
       </div>
 
       <!-- Form -->
@@ -96,7 +124,7 @@ function isiDemo(role) {
           <div class="grid size-10 place-items-center rounded-2xl bg-brand-900 text-white shadow-lg shadow-black/25">
             <svg class="size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
           </div>
-          <p class="text-lg font-bold text-slate-800">E-Klinik</p>
+          <p class="text-lg font-bold text-slate-800">{{ klinik.nama }}</p>
         </div>
 
         <h2 class="text-2xl font-bold tracking-tight text-slate-800">Selamat datang</h2>
@@ -104,18 +132,36 @@ function isiDemo(role) {
 
         <form class="mt-8 space-y-4" @submit.prevent="submit">
           <div v-if="message" class="alert alert-danger py-2">{{ message }}</div>
-          <div>
-            <label class="label" for="email">Email</label>
-            <input id="email" v-model="form.email" type="email" class="input" :class="{ 'input-error': errors.email }" autocomplete="username" required autofocus />
-            <p v-if="errors.email" class="field-error">{{ errors.email }}</p>
-          </div>
-          <div>
-            <label class="label" for="password">Password</label>
-            <input id="password" v-model="form.password" type="password" class="input" :class="{ 'input-error': errors.password }" autocomplete="current-password" required />
-            <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
+          <template v-if="!tantangan">
+            <div>
+              <label class="label" for="email">Email</label>
+              <input id="email" v-model="form.email" type="email" class="input" :class="{ 'input-error': errors.email }" autocomplete="username" required autofocus />
+              <p v-if="errors.email" class="field-error">{{ errors.email }}</p>
+            </div>
+            <div>
+              <label class="label" for="password">Password</label>
+              <input id="password" v-model="form.password" type="password" class="input" :class="{ 'input-error': errors.password }" autocomplete="current-password" required />
+              <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
+            </div>
+          </template>
+          <div v-else>
+            <p class="mb-3 text-sm text-slate-600">Masukkan kode 6 digit dari aplikasi authenticator, atau salah satu kode pemulihan.</p>
+            <label class="label" for="kode">Kode verifikasi</label>
+            <input
+              id="kode"
+              v-model="kode"
+              class="input text-center font-mono text-lg tracking-[0.3em]"
+              :class="{ 'input-error': errors.kode }"
+              autocomplete="one-time-code"
+              maxlength="20"
+              required
+              autofocus
+            />
+            <p v-if="errors.kode" class="field-error">{{ errors.kode }}</p>
+            <button type="button" class="mt-2 text-xs font-medium text-slate-500 hover:underline" @click="batal2fa">Kembali ke email & password</button>
           </div>
           <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="loading">
-            <AppSpinner v-if="loading" />{{ loading ? 'Memproses...' : 'Masuk' }}
+            <AppSpinner v-if="loading" />{{ loading ? 'Memproses...' : tantangan ? 'Verifikasi' : 'Masuk' }}
           </button>
         </form>
 

@@ -152,7 +152,7 @@ onMounted(() => load())
               <button class="btn btn-secondary btn-sm" @click="bukaMutasi(o)">Mutasi stok</button>
               <button class="btn btn-ghost btn-sm" @click="bukaKartu(o)">Kartu stok</button>
               <button class="btn btn-ghost btn-sm" @click="bukaForm(o)">Ubah</button>
-              <button v-if="auth.user?.role === 'admin'" class="btn btn-ghost btn-sm text-rose-600" :disabled="deleting === o.id" @click="hapus(o)">
+              <button v-if="auth.can('master.kelola')" class="btn btn-ghost btn-sm text-rose-600" :disabled="deleting === o.id" @click="hapus(o)">
                 <AppSpinner v-if="deleting === o.id" size="size-3" />Hapus
               </button>
             </td>

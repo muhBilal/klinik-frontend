@@ -29,14 +29,15 @@ Build produksi: `npm run build` → folder `dist/` (static; web server perlu fal
 
 ### Akun demo (password `password`)
 
-`admin@`, `pendaftaran@`, `perawat@`, `dokter@`, `apoteker@`, `kasir@` + `eklinik.test` — tersedia tombol pengisi otomatis di halaman login.
+`admin@`, `pendaftaran@`, `perawat@`, `dokter@`, `apoteker@`, `kasir@`, `terapis@`, `manajer@` + `eklinik.test` — tersedia tombol pengisi otomatis di halaman login.
 
 ## Halaman
 
 Dashboard · Data pasien · Pendaftaran kunjungan & tiket antrian · Antrian poli · Pemeriksaan (SOAP, ICD-10, tindakan, resep)
-· Farmasi (resep, obat & kartu stok) · Kasir (tagihan & struk) · Master (poli, tindakan, ICD-10, pengguna).
-Menu otomatis menyesuaikan role pengguna.
+· Lampiran klinis terenkripsi · Farmasi (resep, obat & kartu stok) · Kasir (tagihan & struk) · Master (poli, tindakan, ICD-10, cabang, pengguna)
+· Administrasi (peran & izin, pengaturan klinik, audit log) · Profil (ganti password, 2FA).
+Menu otomatis menyesuaikan izin pengguna; user lintas cabang memilih cabang aktif di header.
 
 ## Dokumentasi
 
-Struktur kode, routing & role, komponen, dan kontrak API ada di [`AI-Context/`](AI-Context/README.md).
+Struktur kode, routing & izin, komponen, dan kontrak API ada di [`AI-Context/`](AI-Context/README.md).

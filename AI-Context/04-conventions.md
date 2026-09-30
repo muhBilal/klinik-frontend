@@ -15,18 +15,18 @@
     - Tombol: `.btn` + `.btn-primary` (pil hitam) / `.btn-secondary` (pil putih) / `.btn-danger` / `.btn-ghost`, `.btn-sm`, `.btn-icon` (lingkaran).
     - Form: `.label`, `.input` (`type="search"` otomatis jadi pil + ikon kaca pembesar), `.input-error`, `.field-error`,
       `.choice` + `.choice-active` (pilihan radio berbentuk kartu).
-    - Lainnya: `.table`, `.tabs` + `.tab` + `.tab-active` (pil hitam), `.alert` + `.alert-warning/-danger`, `.rail-btn` + `.rail-btn-active` + `.rail-tip`.
+    - Lainnya: `.table`, `.tabs` + `.tab` + `.tab-active` (pil hitam), `.alert` + `.alert-warning/-danger`, `.rail-btn` + `.rail-btn-active` + `.rail-tip` (rail modul).
   - Status memakai `<StatusBadge>` (pil solid bertulisan putih) — jangan membuat badge warna sendiri.
   - Warna selain monokrom hanya untuk makna: merah = error/alergi/stok kurang, warna badge status.
 - Tombol **selalu** dua class: `class="btn btn-primary"` (varian tidak menyertakan `.btn`).
 - `.card` memakai `backdrop-filter` (membuat stacking context) → `.card:focus-within` dinaikkan `z-index` agar dropdown
   `AsyncSelect` tidak tertutup kartu berikutnya. Jangan beri `overflow-hidden` pada `.card` yang berisi dropdown.
 - Angka uang/kuantitas di tabel: `text-right tabular-nums`, format dengan `rupiah()` / `angka()`.
-- Layout (`AppLayout`): desktop = rail ikon kiri berisi **semua** halaman sesuai role (dipisah garis per grup, tooltip nama,
-  item aktif hitam), diposisikan di **tengah vertikal** layar (`top-1/2 -translate-y-1/2`; tombol mengecil di layar pendek
-  `max-height: 860px` agar tidak menabrak logo) + header berisi logo, tab pil (item dalam grup aktif) dan profil.
-  Mobile (< `lg`) = rail disembunyikan, tab bisa digeser, menu lengkap di drawer (tombol `aria-label="Menu"`).
-  Tabel dibungkus `overflow-x-auto`.
+- Layout (`AppLayout`): desktop = **rail modul** kiri (pil kaca mengambang di tengah vertikal, satu tombol ikon per modul,
+  tooltip nama, modul aktif biru) + header berisi logo, **tab pil halaman modul terpilih** di tengah, pemilih cabang, pencarian,
+  profil, keluar. Mobile (< `lg`) = rail disembunyikan, tab halaman modul di bawah header (bisa digeser), semua modul & halaman
+  di drawer (tombol `aria-label="Menu"`). Jangan mengganti rail menjadi panel sidebar penuh (sudah dicoba & ditolak user).
+  Detail: [07-navigasi-modul.md](07-navigasi-modul.md). Tabel dibungkus `overflow-x-auto`.
 - Elemen yang tidak boleh ikut dicetak diberi `print:hidden`, namun cetak utama memakai `printElement()`.
 
 ## Komponen reusable (`src/components`)
@@ -38,7 +38,8 @@
 | `AppPagination` | `meta`, `@change(page)` | Memakai meta dari `useList`. |
 | `StatusBadge` | `status` | Map warna/label untuk semua status kunjungan/resep/tagihan + `aktif`/`nonaktif`. Tambah status baru di sini. |
 | `PageHeader` | `title`, `subtitle`, slot aksi | |
-| `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, slot `#cell-{key}` | CRUD generik untuk master. `fields[].type`: text/number/email/password/select/checkbox; `options`, `required`, `full`, `show(form)`. Password kosong saat edit = tidak diubah. |
+| `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, `invalidates`, slot `#cell-{key}`, event `changed` | CRUD generik untuk master (endpoint paginated atau array). `fields[].type`: text/number/email/password/time/select/checkbox (tipe lain diteruskan ke `<input type>`); `options`, `required`, `full`, `show(form)`, `placeholder`. Password kosong saat edit = tidak diubah. |
+| `LampiranBerkas` | `pasienId`, `kunjunganId?`, `readonly` | Lampiran klinis terenkripsi: daftar (rme.lihat), unggah & hapus (berkas.kelola), "Lihat" meminta tautan bertanda tangan (tercatat audit) → pratinjau gambar di modal / PDF di tab baru. |
 | `PasienFormModal` | `v-model`, `pasien` (null = baru), `@saved(pasien)` | Dipakai di list pasien, detail, dan pendaftaran. |
 | `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan, resep. |
 | `ToastHost`, `AppIcon` | — / `path`, `size` | Ikon = path SVG heroicons outline. |
@@ -47,14 +48,31 @@
 | `TableSkeleton` | `cols`, `rows` (5) | Baris placeholder di dalam `<tbody>`. |
 | `TopProgress` | — | Progress bar global, sudah dipasang di `App.vue`. |
 
+## Hak akses di UI
+
+- Tampilkan/sembunyikan dengan `auth.can('izin')` (satu atau beberapa izin, "salah satu"). Nama izin = enum `Izin` backend
+  (daftar lengkap: `backend/AI-Context/modul/F0-01-rbac-peran-izin.md`).
+- Jangan membandingkan `auth.user.role` — peran kustom bisa dibuat admin.
+- Label peran dari API (`user.role_label`, `GET /perans`), bukan konstanta di frontend.
+- Konten rekam medis (SOAP, diagnosa, lampiran) hanya untuk `can('rme.lihat')`; backend tidak mengirimnya ke peran lain.
+
+## Identitas klinik & cetak
+
+- Nama klinik: `useKlinikStore().nama`; kontak/catatan kaki: `klinik.info` (dari `GET /info`, dimuat `AppLayout`/`LoginView`).
+- Kop dokumen cetak = nama klinik + nama cabang dokumen (`tagihan.cabang`, `resep.cabang`, `tiket.cabang`); alamat & telepon
+  cabang, fallback pengaturan klinik.
+- Struk & tiket: `printElement('#struk', judul, { lebar: klinik.info?.cetak?.lebar_struk })`.
+
 ## Menambah halaman baru
 
 1. Buat view di `src/views/<modul>/`.
-2. Daftarkan route (lazy import) di `router/index.js` dengan `meta.roles` sesuai `role:` backend.
-3. Tambah item menu di `lib/menu.js` (roles sama, ikon path SVG). Setiap item otomatis muncul di rail dan sebagai tab di header
-   saat grupnya aktif; `match` untuk prefix path tambahan yang ikut menandai item aktif (mis. `/pemeriksaan` → Antrian Poli).
+2. Daftarkan route (lazy import) di `router/index.js` dengan `meta.izin` sesuai middleware `izin:` backend.
+3. Tambah item menu di `lib/menu.js` di modul yang tepat (`izin` sama, ikon path SVG). Item otomatis muncul sebagai tab navbar
+   saat modulnya dipilih, di drawer mobile, dan di pencarian Ctrl+K; `match` untuk prefix path tambahan yang ikut menandai
+   item aktif (mis. `/pemeriksaan` → Antrian Poli). Modul baru = objek grup baru dengan `key`, `title`, `description`, `icon`.
 4. Gunakan `useList` untuk list, `api` + `errorMessage/validationErrors` untuk form.
-5. `npm run build`.
+5. Aksi cepat di `CommandPalette.vue` (`ACTIONS`) memakai `izin` juga.
+6. `npm run build`.
 
 ## Jebakan yang sudah diketahui
 
@@ -64,6 +82,10 @@
 | Global browser (`window`, `setTimeout`) tidak bisa dipanggil di template Vue | Buat fungsi di `<script setup>`. |
 | Tanggal `YYYY-MM-DD` diparse sebagai UTC | Pakai `tanggal()` dari `lib/format.js` (sudah menangani) dan `hariIni()` untuk default filter. |
 | Kolom `stok` obat | Hanya berubah lewat endpoint mutasi/serahkan; form edit obat tidak mengirim stok. |
-| Role check di UI | `hasRole('x')` bernilai true untuk admin — pakai `auth.user.role === 'x'` bila perilaku khusus role itu saja. |
+| Cek akses di UI | `auth.can()` true untuk administrator (semua izin). Untuk "dokter yang tercatat di kunjungan" pakai `auth.user.tercatat_dokter`. |
+| Data cabang lain | Detail transaksi cabang lain → 404 dari backend (kecuali `GET /kunjungans/{id}` read-only). Tautan dari riwayat pasien lintas cabang hanya ke `/kunjungan/:id`. |
+| Ganti cabang | Selalu lewat `auth.setCabang()` + reload; jangan menulis `localStorage['eklinik_cabang']` langsung. |
+| Tautan berkas | Berlaku ±5 menit & setiap permintaan tercatat audit — minta saat dibutuhkan, jangan dicache/di-prefetch. |
+| `window.open` setelah `await` | Diblokir popup blocker; buka jendela kosong dulu lalu isi `location` (lihat `LampiranBerkas.buka`). |
 | CORS error | Pastikan origin (mis. `http://localhost:5173`) ada di `FRONTEND_URL` backend. |
 | Token di `localStorage` | Trade-off kesederhanaan vs risiko XSS. Jangan pernah render HTML dari data user (`v-html`). |

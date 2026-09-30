@@ -14,9 +14,11 @@ import api, { errorMessage, validationErrors } from '@/lib/api'
 import { getDokters, getPolisAktif } from '@/lib/cache'
 import { PENJAMIN, STATUS_KUNJUNGAN, hariIni, jam, jenisKelamin, tanggal, toOptions } from '@/lib/format'
 import { printElement } from '@/lib/print'
+import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
+const klinik = useKlinikStore()
 const toast = useToastStore()
 
 const polis = ref([])
@@ -254,14 +256,15 @@ onMounted(() => {
 
   <AppModal :model-value="!!tiket" title="Tiket Antrian" size="max-w-xs" @update:model-value="tiket = null">
     <div v-if="tiket" id="tiket" class="text-center">
-      <p class="text-xs tracking-widest text-slate-500 uppercase">E-Klinik · {{ tiket.poli.nama }}</p>
+      <p class="text-xs tracking-widest text-slate-500 uppercase">{{ klinik.nama }} · {{ tiket.poli.nama }}</p>
+      <p v-if="tiket.cabang" class="text-[11px] text-slate-400">{{ tiket.cabang.nama }}</p>
       <p class="my-3 tabular-nums text-5xl font-bold text-brand-700">{{ tiket.poli.kode }}-{{ String(tiket.no_antrian).padStart(3, '0') }}</p>
       <p class="font-medium">{{ tiket.pasien.nama }}</p>
       <p class="text-sm text-slate-500">RM {{ tiket.pasien.no_rm }} · {{ PENJAMIN[tiket.penjamin] }}</p>
       <p class="mt-2 text-xs text-slate-400">{{ tiket.no_registrasi }} · {{ tanggal(tiket.tanggal) }}</p>
     </div>
     <template #footer>
-      <button class="btn btn-primary" @click="printElement('#tiket', 'Tiket Antrian')">Cetak</button>
+      <button class="btn btn-primary" @click="printElement('#tiket', 'Tiket Antrian', { lebar: klinik.info?.cetak?.lebar_struk })">Cetak</button>
     </template>
   </AppModal>
 </template>

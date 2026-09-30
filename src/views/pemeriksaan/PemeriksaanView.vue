@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSpinner from '@/components/AppSpinner.vue'
 import AsyncSelect from '@/components/AsyncSelect.vue'
+import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
 import RekamMedisRingkas from '@/components/RekamMedisRingkas.vue'
@@ -50,8 +51,9 @@ const form = reactive({
   catatan_resep: '',
 })
 
-const isPerawat = computed(() => auth.user?.role === 'perawat')
-const isDokter = computed(() => auth.hasRole('dokter'))
+// Tanpa izin pemeriksaan.dokter (perawat, terapis): hanya tanda vital + anamnesis (S), sama dengan backend.
+const isDokter = computed(() => auth.can('pemeriksaan.dokter'))
+const isPerawat = computed(() => !isDokter.value)
 const editable = computed(() => ['menunggu', 'diperiksa'].includes(kunjungan.value?.status))
 const imt = computed(() => {
   const bb = Number(form.berat_badan)
@@ -249,7 +251,7 @@ onMounted(load)
         <section class="card">
           <div class="card-header">
             <h2 class="card-title">Catatan SOAP</h2>
-            <span v-if="isPerawat" class="text-xs text-slate-400">Perawat mengisi anamnesis (S); O/A/P diisi dokter</span>
+            <span v-if="isPerawat" class="text-xs text-slate-400">Anda mengisi anamnesis (S); O/A/P diisi dokter</span>
           </div>
           <div class="card-body grid gap-4 sm:grid-cols-2">
             <div v-for="f in SOAP" :key="f.key">
@@ -363,6 +365,8 @@ onMounted(load)
           <p class="mt-1 text-xs text-slate-400">Konsultasi {{ rupiah(kunjungan.poli.tarif_konsultasi) }} + tindakan + obat</p>
         </div>
 
+        <LampiranBerkas :pasien-id="kunjungan.pasien_id" :kunjungan-id="kunjungan.id" :readonly="kunjungan.status === 'batal'" />
+
         <div class="card">
           <div class="card-header">
             <h2 class="card-title">Riwayat Kunjungan</h2>
@@ -378,7 +382,7 @@ onMounted(load)
             <details v-for="r in riwayat" :key="r.id" class="group px-5 py-3">
               <summary class="cursor-pointer list-none text-sm">
                 <span class="font-medium">{{ tanggal(r.tanggal) }}</span>
-                <span class="text-slate-500"> · {{ r.poli.nama }}</span>
+                <span class="text-slate-500"> · {{ r.poli.nama }}<template v-if="r.cabang"> · {{ r.cabang.nama }}</template></span>
                 <p class="truncate text-xs text-slate-500">{{ r.pemeriksaan?.diagnosas?.map((d) => d.icd10.kode + ' ' + d.icd10.nama).join(', ') || '-' }}</p>
               </summary>
               <div class="mt-3"><RekamMedisRingkas :kunjungan="r" /></div>

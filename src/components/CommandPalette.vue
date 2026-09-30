@@ -59,7 +59,7 @@ const ACTIONS = [
     category: 'Aksi Cepat',
     hint: 'Formulir pendaftaran rekam medis pasien baru',
     to: '/pasien?baru=1',
-    roles: ['pendaftaran'],
+    izin: ['pasien.kelola'],
     icon: ICON.userPlus,
     keywords: ['tambah pasien', 'registrasi', 'pasien baru', 'rekam medis baru', 'input pasien'],
   },
@@ -69,7 +69,7 @@ const ACTIONS = [
     category: 'Aksi Cepat',
     hint: 'Daftarkan pasien berobat ke antrian poliklinik',
     to: '/pendaftaran',
-    roles: ['pendaftaran'],
+    izin: ['kunjungan.daftar'],
     icon: ICON.clipboard,
     keywords: ['kunjungan baru', 'daftar poli', 'antrian baru', 'tiket kunjungan'],
   },
@@ -79,7 +79,7 @@ const ACTIONS = [
     category: 'Aksi Cepat',
     hint: 'Input data obat baru ke katalog farmasi',
     to: '/farmasi/obat?baru=1',
-    roles: ['apoteker', 'admin'],
+    izin: ['farmasi.obat'],
     icon: ICON.plus,
     keywords: ['tambah obat', 'farmasi', 'master obat', 'katalog obat', 'input obat'],
   },
@@ -89,7 +89,7 @@ const ACTIONS = [
     category: 'Aksi Cepat',
     hint: 'Buat unit poliklinik baru pada master data',
     to: '/master/poli?baru=1',
-    roles: ['admin'],
+    izin: ['master.kelola'],
     icon: ICON.building,
     keywords: ['tambah poli', 'buat klinik', 'unit baru', 'spesialis'],
   },
@@ -99,7 +99,7 @@ const ACTIONS = [
     category: 'Aksi Cepat',
     hint: 'Input tarif & jenis tindakan medis baru',
     to: '/master/tindakan?baru=1',
-    roles: ['admin'],
+    izin: ['master.kelola'],
     icon: ICON.documentPlus,
     keywords: ['tambah tindakan', 'tarif baru', 'layanan baru', 'prosedur baru'],
   },
@@ -109,7 +109,7 @@ const ACTIONS = [
     category: 'Aksi Cepat',
     hint: 'Buat akun staf, dokter, perawat, atau kasir baru',
     to: '/master/user?baru=1',
-    roles: ['admin'],
+    izin: ['pengguna.kelola'],
     icon: ICON.userPlus,
     keywords: ['tambah user', 'tambah akun', 'dokter baru', 'perawat baru', 'buat user'],
   },
@@ -134,38 +134,36 @@ const recents = ref([])
 let controller = null
 let lastFocus = null
 
-const canSearchPasien = computed(() => auth.hasRole('pendaftaran', 'perawat', 'dokter'))
+const canSearchPasien = computed(() => auth.can('pasien.lihat'))
 
 /**
  * Verifikasi ketat apakah pengguna berhak mengakses modul/item pencarian.
  * Mengecek:
- * 1. Properti `roles` eksplisit pada item
- * 2. `meta.roles` dari route tujuan Vue Router
+ * 1. Properti `izin` eksplisit pada item
+ * 2. `meta.izin` dari route tujuan Vue Router
  * 3. Hak akses pencarian data pasien
  */
 function canAccess(item) {
   if (!item) return false
   if (item.action === 'logout') return true
 
-  // 1. Cek peran eksplisit pada item jika didefinisikan
-  if (Array.isArray(item.roles) && item.roles.length > 0) {
-    if (!auth.hasRole(...item.roles)) {
-      return false
-    }
+  // 1. Cek izin eksplisit pada item jika didefinisikan
+  if (Array.isArray(item.izin) && item.izin.length > 0 && !auth.can(...item.izin)) {
+    return false
   }
 
-  // 2. Pasien hanya dapat diakses oleh role yang diizinkan (pendaftaran, perawat, dokter, admin)
+  // 2. Pasien hanya dapat dicari pemegang izin pasien.lihat
   if (item.kind === 'pasien' && !canSearchPasien.value) {
     return false
   }
 
-  // 3. Cek meta.roles rute Vue Router jika memiliki path 'to'
+  // 3. Cek meta.izin rute Vue Router jika memiliki path 'to'
   if (item.to) {
     try {
       const cleanPath = String(item.to).split('?')[0]
       const resolved = router.resolve(cleanPath)
-      const routeRoles = resolved?.matched?.flatMap((r) => r.meta?.roles ?? []) ?? []
-      if (routeRoles.length > 0 && !auth.hasRole(...routeRoles)) {
+      const routeIzin = resolved?.matched?.flatMap((r) => r.meta?.izin ?? []) ?? []
+      if (routeIzin.length > 0 && !auth.can(...routeIzin)) {
         return false
       }
     } catch {
@@ -178,7 +176,7 @@ function canAccess(item) {
 
 // Daftar semua menu yang dapat diakses oleh user saat ini
 const menuEntries = computed(() =>
-  visibleMenu(auth.hasRole)
+  visibleMenu(auth.can)
     .flatMap((group) =>
       group.items.map((item) => ({
         ...item,

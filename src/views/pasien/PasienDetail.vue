@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import FilterSelect from '@/components/FilterSelect.vue'
+import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
 import PasienFormModal from '@/components/PasienFormModal.vue'
@@ -39,8 +40,9 @@ onMounted(load)
   <template v-if="pasien">
     <PageHeader :title="pasien.nama" :subtitle="`No. RM ${pasien.no_rm}`">
       <RouterLink to="/pasien" class="btn btn-secondary">Kembali</RouterLink>
-      <button v-if="auth.hasRole('pendaftaran')" class="btn btn-secondary" @click="formOpen = true">Ubah Data</button>
-      <RouterLink v-if="auth.hasRole('pendaftaran')" :to="{ path: '/pendaftaran', query: { pasien_id: pasien.id } }" class="btn btn-primary">Daftarkan Kunjungan</RouterLink>
+      <RouterLink v-if="auth.can('audit.lihat')" :to="{ path: '/admin/audit', query: { pasien_id: pasien.id } }" class="btn btn-secondary" title="Siapa saja yang mengakses & mengubah data pasien ini">Jejak Akses</RouterLink>
+      <button v-if="auth.can('pasien.kelola')" class="btn btn-secondary" @click="formOpen = true">Ubah Data</button>
+      <RouterLink v-if="auth.can('kunjungan.daftar')" :to="{ path: '/pendaftaran', query: { pasien_id: pasien.id } }" class="btn btn-primary">Daftarkan Kunjungan</RouterLink>
     </PageHeader>
 
     <div class="grid gap-5 lg:grid-cols-3">
@@ -72,16 +74,16 @@ onMounted(load)
         <div class="overflow-x-auto">
           <table class="table">
             <thead>
-              <tr><th>Tanggal</th><th>Poli / Dokter</th><th>Diagnosa</th><th>Penjamin</th><th>Status</th><th /></tr>
+              <tr><th>Tanggal</th><th>Poli / Dokter</th><th v-if="auth.can('rme.lihat')">Diagnosa</th><th>Penjamin</th><th>Status</th><th /></tr>
             </thead>
             <tbody>
               <tr v-for="k in riwayat" :key="k.id">
                 <td class="whitespace-nowrap">{{ tanggal(k.tanggal) }}</td>
                 <td>
                   <p>{{ k.poli?.nama }}</p>
-                  <p class="text-xs text-slate-500">{{ k.dokter?.name ?? '-' }}</p>
+                  <p class="text-xs text-slate-500">{{ k.dokter?.name ?? '-' }}<template v-if="k.cabang"> · {{ k.cabang.nama }}</template></p>
                 </td>
-                <td class="text-xs">
+                <td v-if="auth.can('rme.lihat')" class="text-xs">
                   <p v-for="d in k.pemeriksaan?.diagnosas ?? []" :key="d.id"><span class="tabular-nums font-semibold">{{ d.icd10.kode }}</span> {{ d.icd10.nama }}</p>
                   <span v-if="!k.pemeriksaan?.diagnosas?.length" class="text-slate-400">-</span>
                 </td>
@@ -97,6 +99,9 @@ onMounted(load)
             </tbody>
           </table>
         </div>
+      </div>
+      <div v-if="auth.can('rme.lihat')" class="lg:col-span-3">
+        <LampiranBerkas :pasien-id="pasien.id" />
       </div>
     </div>
 

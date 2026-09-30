@@ -3,6 +3,7 @@
  * Halaman CRUD generik untuk master data.
  * columns: [{ key, label, format?(value, row), class? }]
  * fields:  [{ key, label, type, options?, required?, full?, placeholder? }]
+ * Event `changed` setelah data tersimpan/terhapus.
  */
 import { onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
@@ -28,6 +29,7 @@ const props = defineProps({
   invalidates: { type: Array, default: () => [] },
 })
 
+const emit = defineEmits(['changed'])
 const toast = useToastStore()
 const { items, meta, loading, filters, load, reload, search } = useList(props.endpoint, { q: '' })
 
@@ -41,6 +43,7 @@ const deleting = ref(null)
 function changed() {
   invalidate(props.endpoint, ...props.invalidates)
   reload()
+  emit('changed')
 }
 
 function buka(row = null) {

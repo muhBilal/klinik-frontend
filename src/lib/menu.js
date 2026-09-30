@@ -1,10 +1,15 @@
 /**
- * Menu navigasi & metadata modul E-Klinik.
- * `roles` kosong = semua role. Admin selalu melihat semua menu.
- * Ikon: path SVG (Heroicons outline 24px).
+ * Menu navigasi E-Klinik: MODUL (grup, satu tombol di rail kiri) -> ITEM halaman (tampil di navbar saat modulnya dipilih).
+ * Modul: `key` (unik), `title`, `description`, `icon`. Item: `label`, `to`, `izin`, `match`, `icon`, metadata pencarian.
+ * `izin` = tampil bila user punya SALAH SATU izin (sama dengan `meta.izin` route); kosong = semua user.
+ * Modul tanpa item yang boleh diakses tidak ditampilkan. Administrator memegang semua izin. Ikon: path SVG (Heroicons outline 24px).
  */
 export const MENU = [
   {
+    key: 'beranda',
+    title: 'Beranda',
+    description: 'Ringkasan klinik hari ini',
+    icon: 'M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25',
     items: [
       {
         label: 'Dashboard',
@@ -17,7 +22,10 @@ export const MENU = [
     ],
   },
   {
+    key: 'pendaftaran',
     title: 'Pendaftaran',
+    description: 'Data pasien & registrasi kunjungan',
+    icon: 'M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM3 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 019.374 21c-2.331 0-4.512-.645-6.374-1.766z',
     items: [
       {
         label: 'Data Pasien',
@@ -25,7 +33,7 @@ export const MENU = [
         category: 'Pendaftaran',
         description: 'Database pasien, nomor rekam medis (No. RM), NIK, dan BPJS',
         keywords: ['pasien', 'rekam medis', 'rm', 'nik', 'bpjs', 'biodata', 'riwayat', 'identitas'],
-        roles: ['pendaftaran', 'perawat', 'dokter'],
+        izin: ['pasien.lihat'],
         icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
       },
       {
@@ -34,13 +42,16 @@ export const MENU = [
         category: 'Pendaftaran',
         description: 'Registrasi kunjungan berobat, antrian poli & tiket pendaftaran',
         keywords: ['daftar', 'registrasi', 'tiket', 'antrian baru', 'kunjungan baru', 'loket pendaftaran', 'kunjungan'],
-        roles: ['pendaftaran'],
+        izin: ['kunjungan.daftar'],
         icon: 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z',
       },
     ],
   },
   {
+    key: 'pelayanan',
     title: 'Pelayanan',
+    description: 'Antrian, pemeriksaan & rekam medis',
+    icon: 'M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z',
     items: [
       {
         label: 'Antrian Poli',
@@ -49,13 +60,16 @@ export const MENU = [
         description: 'Pemanggilan antrian, pemeriksaan dokter/perawat, input SOAP & tanda vital (TTV)',
         keywords: ['panggil', 'periksa', 'pemeriksaan', 'soap', 'ttv', 'tanda vital', 'dokter', 'perawat', 'anamnesa', 'tensi', 'diagnosa'],
         match: ['/pemeriksaan'],
-        roles: ['perawat', 'dokter'],
+        izin: ['pemeriksaan.panggil', 'pemeriksaan.vital', 'pemeriksaan.dokter'],
         icon: 'M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z',
       },
     ],
   },
   {
+    key: 'farmasi',
     title: 'Farmasi',
+    description: 'Resep, obat & kartu stok',
+    icon: 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5',
     items: [
       {
         label: 'Resep',
@@ -63,7 +77,7 @@ export const MENU = [
         category: 'Farmasi & Apotek',
         description: 'Daftar resep dari dokter, telaah resep, penyiapan etiket & penyerahan obat',
         keywords: ['apotek', 'obat', 'serahkan', 'etiket', 'resep', 'racikan', 'farmasi', 'telaah resep'],
-        roles: ['apoteker'],
+        izin: ['farmasi.resep'],
         icon: 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5',
       },
       {
@@ -72,13 +86,16 @@ export const MENU = [
         category: 'Farmasi & Apotek',
         description: 'Katalog master obat, stok opname, mutasi stok, kartu stok & harga',
         keywords: ['apotek', 'stok', 'mutasi', 'kartu stok', 'opname', 'gudang', 'katalog obat', 'sediaan farmasi'],
-        roles: ['apoteker'],
+        izin: ['farmasi.obat'],
         icon: 'M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z',
       },
     ],
   },
   {
+    key: 'keuangan',
     title: 'Keuangan',
+    description: 'Tagihan & pembayaran',
+    icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z',
     items: [
       {
         label: 'Kasir',
@@ -86,13 +103,16 @@ export const MENU = [
         category: 'Keuangan & Kasir',
         description: 'Pembayaran tagihan tindakan & obat, invoice billing & cetak kuitansi',
         keywords: ['bayar', 'pembayaran', 'tagihan', 'invoice', 'struk', 'kuitansi', 'billing', 'kasir', 'keuangan'],
-        roles: ['kasir'],
+        izin: ['kasir.tagihan'],
         icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z',
       },
     ],
   },
   {
+    key: 'master',
     title: 'Master Data',
+    description: 'Poli, tindakan, ICD-10 & cabang',
+    icon: 'M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5 0c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125',
     items: [
       {
         label: 'Poli',
@@ -100,7 +120,7 @@ export const MENU = [
         category: 'Master Data',
         description: 'Pengaturan unit poliklinik, poli umum/gigi & tarif konsultasi dokter',
         keywords: ['klinik', 'unit', 'tarif konsultasi', 'master poli', 'daftar poli', 'spesialis'],
-        roles: ['admin'],
+        izin: ['master.kelola'],
         icon: 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z',
       },
       {
@@ -109,7 +129,7 @@ export const MENU = [
         category: 'Master Data',
         description: 'Master tindakan medis klinis, jasa medis & tarif layanan',
         keywords: ['tarif', 'layanan', 'prosedur', 'tindakan', 'master tindakan', 'biaya tindakan'],
-        roles: ['admin'],
+        izin: ['master.kelola'],
         icon: 'M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z',
       },
       {
@@ -118,26 +138,76 @@ export const MENU = [
         category: 'Master Data',
         description: 'Katalog kode klasifikasi diagnosis penyakit internasional WHO ICD-10',
         keywords: ['diagnosa', 'penyakit', 'kode icd', 'icd-10', 'icd10', 'who', 'master icd', 'klasifikasi'],
-        roles: ['admin'],
+        izin: ['master.kelola'],
         icon: 'M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25',
       },
+      {
+        label: 'Cabang',
+        to: '/master/cabang',
+        category: 'Master Data',
+        description: 'Cabang klinik, alamat, kontak & jam operasional',
+        keywords: ['cabang', 'outlet', 'lokasi', 'multi cabang', 'jam buka', 'klinik'],
+        izin: ['cabang.kelola'],
+        icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z',
+      },
+    ],
+  },
+  {
+    key: 'administrasi',
+    title: 'Administrasi',
+    description: 'Pengguna, peran, pengaturan & audit',
+    icon: 'M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75',
+    items: [
       {
         label: 'Pengguna',
         to: '/master/user',
         category: 'Master Data',
         description: 'Kelola akun pengguna, dokter, perawat, apoteker, kasir, admin & hak akses',
         keywords: ['user', 'akun', 'role', 'petugas', 'password', 'dokter', 'perawat', 'kasir', 'apoteker', 'admin', 'master user'],
-        roles: ['admin'],
+        izin: ['pengguna.kelola'],
         icon: 'M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z',
+      },
+      {
+        label: 'Peran & Izin',
+        to: '/admin/peran',
+        category: 'Administrasi',
+        description: 'Atur peran pengguna dan izin akses per modul (RBAC)',
+        keywords: ['peran', 'role', 'izin', 'hak akses', 'rbac', 'permission', 'akses'],
+        izin: ['peran.kelola'],
+        icon: 'M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z',
+      },
+      {
+        label: 'Pengaturan',
+        to: '/admin/pengaturan',
+        category: 'Administrasi',
+        description: 'Identitas klinik, kop struk, penomoran dokumen & keamanan sesi',
+        keywords: ['pengaturan', 'setting', 'konfigurasi', 'nama klinik', 'struk', 'prefix', 'keamanan', '2fa', 'timeout'],
+        izin: ['pengaturan.kelola'],
+        icon: 'M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 010 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 010-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+      },
+      {
+        label: 'Audit Log',
+        to: '/admin/audit',
+        category: 'Administrasi',
+        description: 'Jejak akses rekam medis, perubahan data, login & aktivitas pengguna',
+        keywords: ['audit', 'log', 'jejak', 'riwayat akses', 'aktivitas', 'keamanan', 'pdp'],
+        izin: ['audit.lihat'],
+        icon: 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z',
       },
     ],
   },
 ]
 
-/** Menu yang terlihat untuk user saat ini, per grup (dipakai layout & command palette). */
-export function visibleMenu(hasRole) {
-  return MENU.map((group) => {
-    const items = group.items.filter((item) => !item.roles || hasRole(...item.roles))
-    return { label: group.title ?? items[0]?.label, items }
-  }).filter((group) => group.items.length)
+/**
+ * Modul & item yang terlihat untuk user saat ini (dipakai layout & command palette). `can` = auth.can
+ * @returns {{ key: string, label: string, description: string, icon: string, items: object[] }[]}
+ */
+export function visibleMenu(can) {
+  return MENU.map((group) => ({
+    key: group.key,
+    label: group.title,
+    description: group.description,
+    icon: group.icon,
+    items: group.items.filter((item) => !item.izin || can(...item.izin)),
+  })).filter((group) => group.items.length)
 }

@@ -1,14 +1,18 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useIdle } from '@vueuse/core'
 import AppIcon from '@/components/AppIcon.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
 import { MOD_KEY } from '@/lib/keyboard'
 import { visibleMenu } from '@/lib/menu'
 import { useAuthStore } from '@/stores/auth'
+import { useKlinikStore } from '@/stores/klinik'
+import { useToastStore } from '@/stores/toast'
 
 const auth = useAuthStore()
+const klinik = useKlinikStore()
+const toast = useToastStore()
 const route = useRoute()
 const router = useRouter()
 const drawerOpen = ref(false)
@@ -43,12 +47,56 @@ const ICON = {
   close: 'M6 18L18 6M6 6l12 12',
 }
 
-const startsWith = (path, to) => (to === '/' ? path === '/' : path.startsWith(to))
-const isActive = (item) => [item.to, ...(item.match ?? [])].some((to) => startsWith(route.path, to))
+// Navigasi terakhir per modul di sessionStorage (per tab; dikosongkan auth.clear() saat logout — perangkat bersama).
+// Baca/tulis aman bila storage diblokir.
+function baca(key, cadangan = null) {
+  try {
+    return JSON.parse(sessionStorage.getItem(key)) ?? cadangan
+  } catch {
+    return cadangan
+  }
+}
+function simpan(key, value) {
+  try {
+    sessionStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    /* abaikan */
+  }
+}
 
-/** Grup menu sesuai role: semua item tampil di rail (dipisah per grup); item grup aktif = tab di header. */
-const groups = computed(() => visibleMenu(auth.hasRole))
-const activeGroup = computed(() => groups.value.find((group) => group.items.some(isActive)))
+const startsWith = (path, to) => (to === '/' ? path === '/' : path.startsWith(to))
+const cocok = (path, item) => [item.to, ...(item.match ?? [])].some((to) => startsWith(path, to))
+const isActive = (item) => cocok(route.path, item)
+
+/**
+ * Rail kiri = daftar MODUL (grup menu, satu tombol per modul); navbar = halaman milik modul yang dipilih.
+ * Modul terpilih = modul halaman yang sedang dibuka. Halaman di luar menu (profil, detail kunjungan) tetap
+ * menampilkan modul terakhir agar navbar tidak kosong.
+ */
+const groups = computed(() => visibleMenu(auth.can))
+const modulRute = computed(() => groups.value.find((group) => group.items.some(isActive)) ?? null)
+const modulTerakhir = ref(baca('eklinik_modul'))
+const activeGroup = computed(() => modulRute.value ?? groups.value.find((g) => g.key === modulTerakhir.value) ?? null)
+
+// Membuka modul kembali ke halaman terakhir yang dibuka di modul itu (mis. tetap di detail pasien yang tadi dibuka).
+const halamanTerakhir = reactive(baca('eklinik_modul_halaman', {}))
+watch(
+  () => route.fullPath,
+  () => {
+    const modul = modulRute.value
+    if (!modul) return
+    modulTerakhir.value = modul.key
+    halamanTerakhir[modul.key] = route.fullPath
+    simpan('eklinik_modul', modul.key)
+    simpan('eklinik_modul_halaman', halamanTerakhir)
+  },
+  { immediate: true },
+)
+
+function tujuanModul(group) {
+  const terakhir = halamanTerakhir[group.key]
+  return terakhir && group.items.some((item) => cocok(terakhir.split('?')[0], item)) ? terakhir : group.items[0].to
+}
 
 // Tombol kembali hanya bila ada halaman sebelumnya di dalam aplikasi (vue-router menyimpannya di history.state)
 const canGoBack = computed(() => route.fullPath && !!window.history.state?.back)
@@ -65,32 +113,71 @@ const initials = computed(() =>
 
 watch(() => route.fullPath, () => (drawerOpen.value = false))
 
+klinik.muat()
+
+/** User lintas cabang memilih cabang aktif; halaman dimuat ulang agar semua data mengikuti cabang baru. */
+function gantiCabang(event) {
+  auth.setCabang(event.target.value)
+  window.location.reload()
+}
+
 async function logout() {
   await auth.logout()
   router.push({ name: 'login' })
 }
+
+// Sesi berakhir bila tidak ada interaksi (mouse/keyboard/sentuh) selama batas idle pengaturan klinik (PRD 7.2).
+// Backend juga menolak token yang idle; ini menutup sesi di layar meski halaman melakukan auto-refresh.
+const { idle } = useIdle((auth.user?.sesi?.idle_timeout_menit ?? 15) * 60 * 1000)
+watch(idle, async (value) => {
+  if (!value || !auth.isLoggedIn) return
+  await auth.logout().catch(() => {})
+  toast.info('Sesi diakhiri karena tidak ada aktivitas.')
+  router.push({ name: 'login' })
+})
 </script>
 
 <template>
   <div class="min-h-screen">
-    <!-- ===== Header ===== -->
+    <!-- ===== Header: logo, halaman modul terpilih (tab), alat ===== -->
     <header class="flex items-center gap-4 px-4 pt-4 sm:px-6 lg:gap-6 lg:pt-5 lg:pr-8 lg:pl-5 print:hidden">
-      <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" aria-label="E-Klinik, ke dashboard">
+      <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" :aria-label="`${klinik.nama}, ke dashboard`" :title="klinik.nama">
         <span class="grid size-11 place-items-center rounded-2xl bg-brand-900 text-white shadow-lg shadow-sky-600/30 inset-shadow-dark">
           <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
         </span>
         <span class="text-[22px] leading-none tracking-tight text-slate-900"><b class="font-bold">e</b><span class="font-light">-klinik</span></span>
       </RouterLink>
 
-      <!-- Tab halaman dalam grup aktif (desktop) -->
-      <nav v-if="activeGroup" class="tabs mx-auto hidden lg:inline-flex" aria-label="Halaman">
-        <RouterLink v-for="item in activeGroup.items" :key="item.to" :to="item.to" :class="{ 'tab-active': isActive(item) }" class="tab">
+      <!-- Tab halaman dari modul yang dipilih di rail (desktop) -->
+      <nav v-if="activeGroup" class="tabs mx-auto hidden lg:inline-flex" :aria-label="`Halaman ${activeGroup.label}`">
+        <RouterLink
+          v-for="item in activeGroup.items"
+          :key="item.to"
+          :to="item.to"
+          :aria-current="isActive(item) ? 'page' : undefined"
+          :class="{ 'tab-active': isActive(item) }"
+          class="tab"
+        >
           {{ item.label }}
         </RouterLink>
       </nav>
 
       <div class="ml-auto flex items-center gap-2.5 sm:gap-3 lg:ml-0">
-        <!-- Tombol Global Search (Algolia) tepat di samping profil kanan atas -->
+        <!-- Cabang aktif: pemilih untuk user lintas cabang, label untuk staf cabang -->
+        <select
+          v-if="auth.lintasCabang && auth.cabangs.length > 1"
+          :value="auth.cabangAktif"
+          class="input hidden w-auto max-w-48 py-1.5 text-sm md:block"
+          aria-label="Cabang aktif"
+          title="Cabang aktif"
+          @change="gantiCabang"
+        >
+          <option value="">Semua cabang</option>
+          <option v-for="c in auth.cabangs" :key="c.id" :value="String(c.id)">{{ c.nama }}</option>
+        </select>
+        <span v-else-if="auth.cabang" class="chip hidden md:inline-flex" title="Cabang tempat Anda bertugas">{{ auth.cabang.nama }}</span>
+
+        <!-- Tombol Global Search -->
         <button
           type="button"
           class="flex items-center gap-2 rounded-full border border-white/90 bg-white/75 py-1.5 pr-2.5 pl-3 text-sm font-medium text-slate-600 shadow-xs transition hover:border-[#003DFF]/40 hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#003DFF]/30 active:scale-95"
@@ -108,11 +195,10 @@ async function logout() {
           </span>
         </button>
 
-        <!-- Garis pemisah halus di samping profil -->
         <span class="hidden h-5 w-px bg-slate-900/10 sm:block" aria-hidden="true" />
 
-        <!-- Profil Pengguna (Nama & Avatar) di kanan atas -->
-        <div class="flex items-center gap-2.5">
+        <!-- Profil Pengguna (Nama & Avatar) -> halaman profil & keamanan akun -->
+        <RouterLink to="/profil" class="flex items-center gap-2.5" title="Profil & keamanan akun">
           <div class="hidden text-right leading-tight xl:block">
             <p class="text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
             <p class="text-xs text-slate-500">{{ auth.user?.role_label }}<template v-if="auth.user?.poli"> · {{ auth.user.poli.nama }}</template></p>
@@ -123,7 +209,7 @@ async function logout() {
           >
             {{ initials }}
           </div>
-        </div>
+        </RouterLink>
 
         <button class="btn-icon hidden lg:grid" title="Keluar" aria-label="Keluar" @click="logout">
           <AppIcon :path="ICON.logout" size="size-4.5" />
@@ -134,41 +220,38 @@ async function logout() {
       </div>
     </header>
 
-    <!-- Tab halaman (mobile): bisa digeser horizontal -->
+    <!-- Halaman modul (mobile): bisa digeser horizontal -->
     <div v-if="activeGroup" class="overflow-x-auto px-4 pt-3 sm:px-6 lg:hidden print:hidden">
-      <nav class="tabs flex-nowrap" aria-label="Halaman">
+      <nav class="tabs flex-nowrap" :aria-label="`Halaman ${activeGroup.label}`">
         <RouterLink v-for="item in activeGroup.items" :key="item.to" :to="item.to" :class="{ 'tab-active': isActive(item) }" class="tab">
           {{ item.label }}
         </RouterLink>
       </nav>
     </div>
 
-    <!-- ===== Rail navigasi (desktop): semua halaman, dipisah per grup, di tengah layar secara vertikal ===== -->
-    <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col items-center lg:flex print:hidden">
+    <!-- ===== Rail modul (desktop): satu tombol per modul, di tengah layar secara vertikal ===== -->
+    <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col items-center lg:flex print:hidden" aria-label="Modul">
       <button v-if="canGoBack" class="rail-btn" aria-label="Kembali" @click="router.back()">
         <AppIcon :path="ICON.back" size="size-4.5" />
         <span class="rail-tip">Kembali</span>
       </button>
-      <nav class="rail-nav glass flex flex-col items-center rounded-full p-1.5" aria-label="Menu utama">
-        <template v-for="(group, gi) in groups" :key="group.label">
-          <span v-if="gi > 0" class="rail-sep h-px w-5 shrink-0 bg-slate-900/10" aria-hidden="true" />
-          <RouterLink
-            v-for="item in group.items"
-            :key="item.to"
-            :to="item.to"
-            :aria-label="item.label"
-            :aria-current="isActive(item) ? 'page' : undefined"
-            :class="{ 'rail-btn-active': isActive(item) }"
-            class="rail-btn"
-          >
-            <AppIcon :path="item.icon" size="size-[1.15rem]" />
-            <span class="rail-tip">{{ item.label }}</span>
-          </RouterLink>
-        </template>
+      <nav class="rail-nav glass flex flex-col items-center rounded-full p-1.5" aria-label="Modul">
+        <RouterLink
+          v-for="group in groups"
+          :key="group.key"
+          :to="tujuanModul(group)"
+          :aria-label="group.label"
+          :aria-current="activeGroup?.key === group.key ? 'true' : undefined"
+          :class="{ 'rail-btn-active': activeGroup?.key === group.key }"
+          class="rail-btn"
+        >
+          <AppIcon :path="group.icon" size="size-[1.15rem]" />
+          <span class="rail-tip">{{ group.label }}</span>
+        </RouterLink>
       </nav>
     </aside>
 
-    <!-- ===== Drawer menu (mobile) ===== -->
+    <!-- ===== Drawer menu (mobile): modul beserta halamannya ===== -->
     <Transition enter-from-class="opacity-0" enter-active-class="transition duration-200" leave-to-class="opacity-0" leave-active-class="transition duration-150">
       <div v-if="drawerOpen" class="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden" @click="drawerOpen = false" />
     </Transition>
@@ -179,8 +262,10 @@ async function logout() {
           <button class="btn-icon size-9" aria-label="Tutup menu" @click="drawerOpen = false"><AppIcon :path="ICON.close" size="size-4" /></button>
         </div>
         <nav class="flex-1 space-y-4 overflow-y-auto px-3 py-3">
-          <div v-for="group in groups" :key="group.label">
-            <p class="mb-1.5 px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">{{ group.label }}</p>
+          <div v-for="group in groups" :key="group.key">
+            <p class="mb-1.5 flex items-center gap-2 px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+              <AppIcon :path="group.icon" size="size-3.5" />{{ group.label }}
+            </p>
             <RouterLink
               v-for="item in group.items"
               :key="item.to"
@@ -193,12 +278,21 @@ async function logout() {
             </RouterLink>
           </div>
         </nav>
+        <div v-if="auth.lintasCabang && auth.cabangs.length > 1" class="mx-3 md:hidden">
+          <label class="label" for="cabang-drawer">Cabang aktif</label>
+          <select id="cabang-drawer" :value="auth.cabangAktif" class="input" @change="gantiCabang">
+            <option value="">Semua cabang</option>
+            <option v-for="c in auth.cabangs" :key="c.id" :value="String(c.id)">{{ c.nama }}</option>
+          </select>
+        </div>
         <div class="m-3 flex items-center gap-3 rounded-2xl border border-white/90 bg-white/65 p-3">
-          <div class="grid size-9 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white">{{ initials }}</div>
-          <div class="min-w-0 flex-1 leading-tight">
-            <p class="truncate text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
-            <p class="truncate text-xs text-slate-500">{{ auth.user?.role_label }}</p>
-          </div>
+          <RouterLink to="/profil" class="flex min-w-0 flex-1 items-center gap-3" title="Profil & keamanan akun">
+            <div class="grid size-9 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white">{{ initials }}</div>
+            <div class="min-w-0 flex-1 leading-tight">
+              <p class="truncate text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
+              <p class="truncate text-xs text-slate-500">{{ auth.user?.role_label }}</p>
+            </div>
+          </RouterLink>
           <button class="btn-icon size-9" title="Keluar" aria-label="Keluar" @click="logout"><AppIcon :path="ICON.logout" size="size-4" /></button>
         </div>
       </aside>

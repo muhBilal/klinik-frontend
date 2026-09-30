@@ -40,14 +40,14 @@ function onSaved(data) {
 }
 
 // Aksi "Pasien baru" dari pencarian global (?baru=1)
-useQueryAction('baru', () => auth.hasRole('pendaftaran') && tambah())
+useQueryAction('baru', () => auth.can('pasien.kelola') && tambah())
 
 onMounted(() => load())
 </script>
 
 <template>
   <PageHeader title="Data Pasien" subtitle="Master data pasien dan nomor rekam medis">
-    <button v-if="auth.hasRole('pendaftaran')" class="btn btn-primary" @click="tambah">+ Pasien Baru</button>
+    <button v-if="auth.can('pasien.kelola')" class="btn btn-primary" @click="tambah">+ Pasien Baru</button>
   </PageHeader>
 
   <div class="card">
@@ -87,8 +87,8 @@ onMounted(() => load())
             <td class="tabular-nums text-xs">{{ p.nik ?? '-' }}</td>
             <td>{{ p.no_hp ?? '-' }}</td>
             <td class="text-right whitespace-nowrap">
-              <RouterLink v-if="auth.hasRole('pendaftaran')" :to="{ path: '/pendaftaran', query: { pasien_id: p.id } }" class="btn btn-primary btn-sm">Daftarkan</RouterLink>
-              <button v-if="auth.hasRole('pendaftaran')" class="btn btn-ghost btn-sm" @click="ubah(p)">Ubah</button>
+              <RouterLink v-if="auth.can('kunjungan.daftar')" :to="{ path: '/pendaftaran', query: { pasien_id: p.id } }" class="btn btn-primary btn-sm">Daftarkan</RouterLink>
+              <button v-if="auth.can('pasien.kelola')" class="btn btn-ghost btn-sm" @click="ubah(p)">Ubah</button>
               <RouterLink :to="`/pasien/${p.id}`" class="btn btn-ghost btn-sm">Detail</RouterLink>
             </td>
           </tr>

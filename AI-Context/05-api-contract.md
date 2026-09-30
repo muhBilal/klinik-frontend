@@ -9,10 +9,25 @@ bentuk data yang **diandalkan** komponen frontend — bila backend mengubahnya, 
 - Error 422: `{ message, errors: { field: ['pesan'] } }`. Key array memakai dot notation (`resep.0.obat_id`).
 - Uang = integer rupiah. Tanggal `YYYY-MM-DD`; timestamp ISO UTC (`created_at`, `dibayar_at`, ...).
 
+## Login
+`POST /login` → `{ token, user }` **atau** `{ two_factor: true, tantangan }` → `POST /login/2fa { tantangan, kode }` → `{ token, user }`.
+Error 422 `tantangan` = sesi login kedaluwarsa (ulangi dari email/password); 422 `kode` = kode salah.
+
 ## User (`/login`, `/me`)
 ```js
-{ id, name, email, role: 'dokter', role_label: 'Dokter', poli_id, poli: { id, kode, nama } | null, sip, is_active }
+{
+  id, name, email, role: 'dokter', role_label: 'Dokter', poli_id, cabang_id, sip, is_active, two_factor_confirmed_at,
+  poli: { id, kode, nama } | null, cabang: { id, kode, nama } | null,
+  izin: ['pasien.lihat', ...],            // izin efektif; dipakai auth.can()
+  tercatat_dokter: true,                  // punya pemeriksaan.dokter & bukan administrator
+  cabangs: [{ id, kode, nama }],          // pilihan cabang aktif (staf: hanya cabangnya)
+  two_factor: { aktif: false, wajib: false },
+  sesi: { idle_timeout_menit: 15 },
+}
 ```
+
+## Info publik (`GET /info`, tanpa login)
+`{ klinik: { nama, alamat, telepon, email, npwp }, struk: { catatan_kaki }, cetak: { lebar_struk: '58mm' atau '80mm' } }`
 
 ## Kunjungan (detail, `GET /kunjungans/{id}` dan respons pemeriksaan)
 ```js
@@ -28,9 +43,11 @@ bentuk data yang **diandalkan** komponen frontend — bila backend mengubahnya, 
   tagihan: { id, no_tagihan, total, grand_total, status } | null
 }
 ```
-Detail memuat `pasien` subset (no_rm, nama, jenis_kelamin, tanggal_lahir/umur, golongan_darah, alergi), `tagihan` tanpa `items`
-(hanya id, no_tagihan, total, grand_total, status). List kunjungan hanya memuat `pasien` (id, no_rm, nama, jenis_kelamin),
-`poli` (id, kode, nama), `dokter` (id, name); `umur` bernilai null di list.
+Detail memuat `pasien` subset (no_rm, nama, jenis_kelamin, tanggal_lahir/umur, golongan_darah, alergi), `cabang` (id, kode, nama),
+`tagihan` tanpa `items` (hanya id, no_tagihan, total, grand_total, status). **Tanpa izin `rme.lihat` key `pemeriksaan`,
+`tindakans`, `resep` tidak ada** — komponen harus tahan data itu kosong. List kunjungan memuat `pasien` (id, no_rm, nama,
+jenis_kelamin), `poli` (id, kode, nama), `dokter` (id, name), `cabang` (id, kode, nama); `umur` bernilai null di list.
+Riwayat pasien (`/pasiens/{id}` dan `/pasiens/{id}/riwayat`) mencakup semua cabang dan menyertakan `cabang`.
 
 Parameter ringan: `?simple=1` pada endpoint list (tanpa `total`), `GET /pasiens/{id}?ringkas=1` (tanpa kunjungans),
 `GET /pasiens/{id}/riwayat?kecuali={kunjungan_id}`, `GET /polis?aktif=1` (hanya id, kode, nama).
@@ -40,7 +57,19 @@ Respons `POST /reseps/{id}/serahkan` dan `POST /tagihans/{id}/bayar` berbentuk s
 `{ id, no_resep, status, created_at, items_count, dokter, kunjungan: { pasien, poli, tagihan: { status } | null } }`
 
 ## Tagihan detail
-`{ no_tagihan, total, diskon, grand_total, status, metode_bayar, dibayar, kembalian, dibayar_at, kasir, items: [{ kategori, deskripsi, jumlah, harga, subtotal }], kunjungan: { tanggal, penjamin, pasien, poli, dokter } }`
+`{ no_tagihan, total, diskon, grand_total, status, metode_bayar, dibayar, kembalian, dibayar_at, kasir, cabang: { id, kode, nama, alamat, telepon }, items: [{ kategori, deskripsi, jumlah, harga, subtotal }], kunjungan: { tanggal, penjamin, pasien, poli, dokter } }`
+Resep detail juga memuat `cabang` (kop etiket).
+
+## Berkas (`GET /berkas` → array)
+`{ uuid, kategori, keterangan, nama_file, mime, ukuran, pasien_id, kunjungan_id, cabang_id, pengunggah: { id, name }, created_at }`.
+`GET /berkas/{uuid}/tautan` → `{ url, kedaluwarsa }` (URL absolut ke API, bisa langsung dipakai `<img src>` / tab baru).
+
+## Peran, izin, cabang, pengaturan, audit
+- `GET /perans` → `[{ id, kode, nama, deskripsi, is_sistem, akses_penuh, izin: [kode], users_count }]`
+- `GET /izins` → `[{ grup, izin: [{ kode, label }] }]`
+- `GET /cabangs` → array `{ id, kode, nama, alamat, telepon, email, jam_buka: 'HH:MM', jam_tutup, is_active, users_count? }`
+- `GET /pengaturan` → `{ klinik: {...}, struk: {...}, cetak: {...}, penomoran: { prefix_registrasi, prefix_resep, prefix_tagihan }, keamanan: { idle_timeout_menit, wajib_2fa: [kode] } }`; `PUT` payload bentuk sama (parsial), error kunci bertitik (`penomoran.prefix_resep`).
+- `GET /audit-logs` → paginated `{ id, aksi, tipe, subjek_id, pasien_id, label, ip_address, created_at, user: { id, name, email } | null, cabang }`; `GET /audit-logs/{id}` + `perubahan: { kolom: { lama, baru } }`, `user_agent`.
 
 ## Obat
 `{ id, kode, nama, satuan, harga, stok, stok_minimum, is_active }`; mutasi: `{ jenis, jumlah (bertanda), stok_akhir, referensi, keterangan, created_at, user }`.
@@ -56,4 +85,6 @@ Respons `POST /reseps/{id}/serahkan` dan `POST /tagihans/{id}/bayar` berbentuk s
 - Status kunjungan: `menunggu`, `diperiksa`, `menunggu_pembayaran`, `selesai`, `batal`
 - Status resep: `menunggu`, `diserahkan`, `batal` · Status tagihan: `belum_bayar`, `lunas`, `batal`
 - Penjamin: `umum`, `bpjs`, `asuransi` · Metode bayar: `tunai`, `debit`, `qris`, `transfer`, `penjamin`
-- Role: `admin`, `pendaftaran`, `perawat`, `dokter`, `apoteker`, `kasir`
+- Peran: kode bebas dari `GET /perans` (bawaan: `admin`, `pendaftaran`, `perawat`, `dokter`, `apoteker`, `kasir`, `terapis`, `manajer`, `marketing`)
+- Kategori berkas: `foto_klinis`, `informed_consent`, `radiologi`, `hasil_penunjang`, `lainnya`
+- Aksi audit: `buat`, `ubah`, `hapus`, `pulihkan`, `lihat`, `akses_berkas`, `unduh_berkas`, `login`, `login_gagal`, `logout`, `ubah_izin`, `ubah_password`, `2fa_*`

@@ -10,6 +10,8 @@
 | axios | ^1 | HTTP client |
 | vite | ^8 | dev server & build (Node ≥ 20.19 / 22.12) |
 | tailwindcss + @tailwindcss/vite | ^4 | styling, konfigurasi di CSS (`@theme`) — tidak ada `tailwind.config.js` |
+| @vueuse/core | ^15 | `onKeyStroke` (Ctrl+K), `useIdle` (akhiri sesi idle) |
+| qrcode | ^1.5 | QR code aktivasi 2FA di halaman Profil |
 
 Tidak ada linter/test runner terpasang. Verifikasi dengan `npm run build` dan uji manual di browser.
 
@@ -55,5 +57,5 @@ backend dari `backend/docker-compose.dev.yml`.
 
 ## Akun demo
 
-Password `password`: `admin@`, `pendaftaran@`, `perawat@`, `dokter@`, `apoteker@`, `kasir@` + `eklinik.test`.
-Halaman login punya tombol pengisi akun demo.
+Password `password`: `admin@`, `pendaftaran@`, `perawat@`, `dokter@`, `apoteker@`, `kasir@`, `terapis@`, `manajer@` + `eklinik.test`.
+Halaman login punya tombol pengisi akun demo. Admin = lintas cabang; akun lain di cabang "Klinik Utama".

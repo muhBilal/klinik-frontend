@@ -78,7 +78,7 @@ onUnmounted(() => {
           <option value="">Semua poli</option>
           <option v-for="p in polis" :key="p.id" :value="p.id">{{ p.nama }}</option>
         </select>
-        <label v-if="auth.user?.role === 'dokter'" class="flex items-center gap-2 text-sm text-slate-600">
+        <label v-if="auth.user?.tercatat_dokter" class="flex items-center gap-2 text-sm text-slate-600">
           <input type="checkbox" class="accent-brand-600" :checked="!!filters.dokter_id" @change="filters.dokter_id = $event.target.checked ? auth.user.id : ''; load()" />
           Pasien saya saja
         </label>
@@ -103,7 +103,7 @@ onUnmounted(() => {
             <td><StatusBadge :status="k.status" /></td>
             <td class="text-right whitespace-nowrap">
               <template v-if="k.status === 'menunggu'">
-                <RouterLink v-if="auth.user?.role === 'perawat'" :to="`/pemeriksaan/${k.id}`" class="btn btn-secondary btn-sm">Isi TTV</RouterLink>
+                <RouterLink v-if="auth.can('pemeriksaan.vital') && !auth.can('pemeriksaan.dokter')" :to="`/pemeriksaan/${k.id}`" class="btn btn-secondary btn-sm">Isi TTV</RouterLink>
                 <button class="btn btn-primary btn-sm" :disabled="!!calling" @click="panggil(k)">
                   <AppSpinner v-if="calling === k.id" size="size-3" />Panggil
                 </button>

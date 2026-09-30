@@ -9,11 +9,19 @@ import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { METODE_BAYAR, PENJAMIN, rupiah, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
+import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
+const klinik = useKlinikStore()
 const toast = useToastStore()
 const { data: tagihan, error, load: fetchTagihan } = useDetail(() => `/tagihans/${route.params.id}`)
+// Kop struk: alamat & telepon cabang, bila kosong memakai identitas klinik di Pengaturan
+const kontak = computed(() => {
+  const c = tagihan.value?.cabang
+  const k = klinik.info?.klinik
+  return [c?.alamat ?? k?.alamat, c?.telepon ?? k?.telepon].filter(Boolean).join(' · ')
+})
 const errors = ref({})
 const processing = ref(false)
 const bayar = reactive({ metode_bayar: 'tunai', dibayar: '', diskon: 0 })
@@ -59,7 +67,7 @@ onMounted(load)
   <template v-if="tagihan">
     <PageHeader :title="`Tagihan ${tagihan.no_tagihan}`" :subtitle="`${tagihan.kunjungan.pasien.nama} · ${tagihan.kunjungan.poli.nama}`">
       <RouterLink to="/kasir" class="btn btn-secondary">Kembali</RouterLink>
-      <button v-if="tagihan.status === 'lunas'" class="btn btn-primary" @click="printElement('#struk', `Struk ${tagihan.no_tagihan}`)">Cetak struk</button>
+      <button v-if="tagihan.status === 'lunas'" class="btn btn-primary" @click="printElement('#struk', `Struk ${tagihan.no_tagihan}`, { lebar: klinik.info?.cetak?.lebar_struk })">Cetak struk</button>
     </PageHeader>
 
     <div class="grid gap-5 lg:grid-cols-5">
@@ -68,7 +76,8 @@ onMounted(load)
         <div id="struk" class="card-body">
           <div class="mb-4 flex items-start justify-between gap-4 border-b border-dashed border-slate-300 pb-4">
             <div>
-              <p class="font-semibold">E-KLINIK</p>
+              <p class="font-semibold">{{ klinik.nama }}<template v-if="tagihan.cabang"> · {{ tagihan.cabang.nama }}</template></p>
+              <p v-if="kontak" class="text-xs text-slate-500">{{ kontak }}</p>
               <p class="text-xs text-slate-500">Bukti Pembayaran Pelayanan</p>
             </div>
             <div class="text-right text-xs text-slate-500">
@@ -104,7 +113,7 @@ onMounted(load)
             </template>
           </dl>
           <p v-if="tagihan.status === 'lunas'" class="mt-6 border-t border-dashed border-slate-300 pt-3 text-center text-xs text-slate-500">
-            Lunas {{ waktu(tagihan.dibayar_at) }} · Kasir: {{ tagihan.kasir?.name }}<br />Terima kasih, semoga lekas sembuh.
+            Lunas {{ waktu(tagihan.dibayar_at) }} · Kasir: {{ tagihan.kasir?.name }}<template v-if="klinik.info?.struk?.catatan_kaki"><br />{{ klinik.info.struk.catatan_kaki }}</template>
           </p>
         </div>
       </div>

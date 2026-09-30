@@ -33,14 +33,17 @@ export const PENJAMIN = { umum: 'Umum', bpjs: 'BPJS', asuransi: 'Asuransi' }
 
 export const METODE_BAYAR = { tunai: 'Tunai', debit: 'Kartu Debit', qris: 'QRIS', transfer: 'Transfer', penjamin: 'Ditanggung Penjamin' }
 
-export const ROLES = {
-  admin: 'Administrator',
-  pendaftaran: 'Pendaftaran',
-  perawat: 'Perawat',
-  dokter: 'Dokter',
-  apoteker: 'Apoteker',
-  kasir: 'Kasir',
+/** Kategori lampiran klinis (enum KategoriBerkas di backend). */
+export const KATEGORI_BERKAS = {
+  foto_klinis: 'Foto klinis',
+  informed_consent: 'Informed consent',
+  radiologi: 'Radiologi',
+  hasil_penunjang: 'Hasil penunjang',
+  lainnya: 'Lainnya',
 }
+
+/** Ukuran berkas (byte) yang mudah dibaca. */
+export const ukuranBerkas = (byte) => (byte < 1024 * 1024 ? `${Math.max(1, Math.round(byte / 1024))} KB` : `${(byte / 1024 / 1024).toFixed(1)} MB`)
 
 export const STATUS_KUNJUNGAN = {
   menunggu: 'Menunggu',

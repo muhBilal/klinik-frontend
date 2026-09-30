@@ -120,7 +120,7 @@
       hover:bg-slate-50 hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30;
   }
 
-  /* ---------- Rail navigasi (kiri) ---------- */
+  /* ---------- Rail modul (kiri): satu tombol per modul ---------- */
   .rail-btn {
     @apply relative grid size-11 place-items-center rounded-full border border-slate-200/70 bg-white/90 text-slate-600 shadow-xs transition
       hover:bg-white hover:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30;
@@ -134,10 +134,7 @@
   .rail-nav {
     @apply gap-2 border border-slate-200/80 bg-white/80 shadow-glass;
   }
-  .rail-sep {
-    @apply my-0.5 bg-slate-200;
-  }
-  /* Layar pendek: perkecil tombol rail agar semua menu tetap muat di tengah tanpa menabrak logo */
+  /* Layar pendek: perkecil tombol rail agar semua modul tetap muat di tengah tanpa menabrak logo */
   @media (max-height: 860px) {
     .rail-btn {
       @apply size-9;
@@ -146,7 +143,7 @@
       @apply gap-1.5;
     }
   }
-  /* Label tooltip di kanan tombol rail */
+  /* Label tooltip (nama modul) di kanan tombol rail */
   .rail-tip {
     @apply pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded-full bg-brand-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap
       text-white opacity-0 shadow-lg shadow-sky-600/20 transition;

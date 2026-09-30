@@ -9,9 +9,11 @@ import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage } from '@/lib/api'
 import { jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
+import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
+const klinik = useKlinikStore()
 const toast = useToastStore()
 const { data: resep, error, load } = useDetail(() => `/reseps/${route.params.id}`)
 const processing = ref(false)
@@ -97,7 +99,8 @@ onMounted(load)
     <div class="hidden">
       <div id="etiket" class="grid grid-cols-2 gap-3">
         <div v-for="i in resep.items" :key="i.id" class="rounded border border-slate-400 p-3 text-sm">
-          <p class="text-center text-xs font-semibold">E-KLINIK · INSTALASI FARMASI</p>
+          <p class="text-center text-xs font-semibold uppercase">{{ klinik.nama }} · Instalasi Farmasi</p>
+          <p v-if="resep.cabang" class="text-center text-[11px] text-slate-500">{{ resep.cabang.nama }}</p>
           <p class="mt-1 text-center text-[11px] text-slate-500">{{ resep.no_resep }} · {{ tanggal(resep.created_at) }}</p>
           <hr class="my-2" />
           <p class="font-semibold">{{ resep.kunjungan.pasien.nama }} ({{ resep.kunjungan.pasien.no_rm }})</p>
