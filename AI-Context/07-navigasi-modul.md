@@ -18,6 +18,9 @@ tetapi **satu tombol = satu modul**; navbar berisi **halaman milik modul yang di
 
 Catatan: versi panel sidebar penuh (logo + daftar modul berlabel + tombol ringkas) sempat dibuat lalu **dibatalkan atas
 permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi satu panel setinggi layar.
+Varian "rail ramping yang melebar saat hover" (dengan `.rail-label` & `.rail-sep`) dari cabang `wip-avatar-theme` juga
+**tidak dipakai** saat merge, dengan alasan yang sama: satu sistem rail saja. Foto profil (`UserAvatar`) dan tema
+tampilan dari cabang itu tetap diambil.
 
 ## Sumber data: `lib/menu.js`
 

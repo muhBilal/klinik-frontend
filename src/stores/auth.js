@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import api, { CABANG_KEY, TOKEN_KEY } from '@/lib/api'
 import { invalidate } from '@/lib/cache'
+import { applyStoredTheme } from '@/lib/theme'
 
 /** Data sesi tab (mis. halaman terakhir per modul) tidak boleh terbawa ke pengguna berikutnya di perangkat bersama. */
 export function lupakanSesiTab() {
@@ -33,6 +34,7 @@ export const useAuthStore = defineStore('auth', () => {
 
   function setUser(data) {
     user.value = data
+    applyStoredTheme(data.theme)
     // Sinkronkan cabang aktif dengan cabang yang boleh diakses
     if (data.cabang_id) setCabang(String(data.cabang_id))
     else if (cabangAktif.value && !data.cabangs.some((c) => String(c.id) === String(cabangAktif.value))) setCabang('')
@@ -69,6 +71,12 @@ export const useAuthStore = defineStore('auth', () => {
     setUser(data)
   }
 
+  /** Ubah profil sendiri (nama, email, SIP, avatar). Ganti password lewat PUT /me/password. */
+  async function updateProfile(payload) {
+    const { data } = await api.patch('/me', payload)
+    setUser(data)
+  }
+
   async function logout() {
     try {
       await api.post('/logout')
@@ -86,6 +94,6 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     token, user, cabangAktif, isLoggedIn, izin, lintasCabang, cabangs, cabang, perlu2fa,
-    can, setCabang, login, login2fa, fetchMe, logout, clear,
+    can, setCabang, login, login2fa, fetchMe, updateProfile, logout, clear,
   }
 })

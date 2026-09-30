@@ -12,5 +12,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // API diteruskan ke container Laravel -> satu origin, tanpa setelan CORS tambahan
+    proxy: { '/api': 'http://localhost:8000' },
   },
 })

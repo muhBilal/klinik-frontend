@@ -45,6 +45,9 @@ const routes = [
       { path: 'admin/pengaturan', name: 'admin.pengaturan', component: () => import('@/views/admin/PengaturanView.vue'), meta: { izin: ['pengaturan.kelola'] } },
       { path: 'admin/audit', name: 'admin.audit', component: () => import('@/views/admin/AuditLogView.vue'), meta: { izin: ['audit.lihat'] } },
 
+      { path: 'themes', name: 'themes', component: () => import('@/views/ThemeView.vue') },
+      { path: 'profil', name: 'profil', component: () => import('@/views/ProfilView.vue') },
+
       { path: ':pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFound.vue') },
     ],
   },
