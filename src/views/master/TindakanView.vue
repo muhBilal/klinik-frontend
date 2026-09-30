@@ -1,6 +1,7 @@
 <script setup>
 /**
- * Katalog treatment (PRD TR-01): kategori, durasi + buffer, harga dasar, harga per cabang, BHP standar.
+ * Katalog treatment (PRD TR-01): kategori, durasi + buffer, harga dasar, harga per cabang, BHP standar,
+ * serta atribut RME: kode ICD-9-CM default, bentuk catatan tindakan, dan template informed consent wajib (RM-02/03/05).
  * Harga cabang: "dasar" = ikut harga dasar (tidak dikirim), "khusus" = tarif cabang, "tidak" = tidak dilayani di cabang itu.
  */
 import { computed, onMounted, reactive, ref } from 'vue'
@@ -16,7 +17,7 @@ import { useList } from '@/composables/useList'
 import { useQueryAction } from '@/composables/useQueryAction'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
-import { OPSI_STATUS_AKTIF, angka, rupiah } from '@/lib/format'
+import { JENIS_CATATAN, OPSI_STATUS_AKTIF, angka, rupiah } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
@@ -26,15 +27,17 @@ const { items, meta, loading, filters, load, reload, search, isFiltered, reset }
 
 const kategoris = ref([])
 const cabangs = ref([])
+const templateConsents = ref([])
 const opsiKategori = computed(() => kategoris.value.map((k) => ({ value: k.id, label: `${k.nama}${k.is_active ? '' : ' (nonaktif)'}` })))
 
 // Kategori & cabang dibutuhkan form; form bisa dibuka sebelum mount selesai (?baru=1), jadi ditunggu di buka().
 let referensi = null
 function muatReferensi() {
-  referensi ??= Promise.all([cachedGet('/kategori-tindakans'), cachedGet('/cabangs')])
-    .then(([k, c]) => {
+  referensi ??= Promise.all([cachedGet('/kategori-tindakans'), cachedGet('/cabangs'), cachedGet('/template-consents', { aktif: 1 })])
+    .then(([k, c, t]) => {
       kategoris.value = k
       cabangs.value = c
+      templateConsents.value = t
     })
     .catch((e) => {
       referensi = null
@@ -104,6 +107,10 @@ async function buka(row = null) {
     buffer_menit: detail?.buffer_menit ?? 0,
     tarif: detail?.tarif ?? 0,
     is_active: detail?.is_active ?? true,
+    icd9cm: detail?.icd9cm ?? null,
+    jenis_catatan: detail?.jenis_catatan ?? 'umum',
+    template_consent_id: detail?.template_consent_id ?? '',
+    template_consent: detail?.template_consent ?? null,
     hargas: gridHarga(detail),
     bhps: (detail?.bhps ?? []).map((b) => ({ obat_id: b.obat_id, kode: b.obat.kode, nama: b.obat.nama, satuan: b.obat.satuan, jumlah: b.jumlah })),
   })
@@ -124,6 +131,9 @@ function payload() {
     buffer_menit: form.buffer_menit === '' ? null : form.buffer_menit,
     tarif: form.tarif,
     is_active: form.is_active,
+    icd9cm_id: form.icd9cm?.id ?? null,
+    jenis_catatan: form.jenis_catatan,
+    template_consent_id: form.template_consent_id || null,
     hargas: hargaDikirim.value.map((h) => ({ cabang_id: h.cabang_id, tarif: h.mode === 'khusus' ? h.tarif : form.tarif, tersedia: h.mode === 'khusus' })),
     bhps: form.bhps.map(({ obat_id, jumlah }) => ({ obat_id, jumlah })),
   }
@@ -208,7 +218,10 @@ onMounted(() => {
             <td class="tabular-nums text-xs">{{ t.kode }}</td>
             <td>
               <p class="font-medium">{{ t.nama }}</p>
-              <p class="text-xs text-slate-500">{{ t.kategori?.nama ?? 'Tanpa kategori' }}</p>
+              <p class="text-xs text-slate-500">
+                {{ t.kategori?.nama ?? 'Tanpa kategori' }}<template v-if="t.icd9cm"> · ICD-9-CM {{ t.icd9cm.kode }}</template>
+                <span v-if="t.template_consent_id" class="text-amber-700"> · wajib consent</span>
+              </p>
             </td>
             <td class="whitespace-nowrap tabular-nums text-slate-600" title="Durasi tindakan + buffer sterilisasi/persiapan">{{ durasi(t) }}</td>
             <td class="text-right tabular-nums">{{ rupiah(t.tarif) }}</td>
@@ -281,6 +294,43 @@ onMounted(() => {
           <input v-model="form.is_active" type="checkbox" class="accent-brand-600" /> Aktif (dapat dipilih di pemeriksaan)
         </label>
       </div>
+
+      <!-- Rekam medis: kode tindakan, bentuk catatan, informed consent (RM-02/03/05) -->
+      <section class="space-y-3">
+        <h3 class="text-sm font-semibold text-slate-800">Rekam medis</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label class="label">Kode ICD-9-CM default</label>
+            <div v-if="form.icd9cm" class="flex items-center justify-between gap-2 rounded-2xl bg-white/60 px-3 py-2 text-sm">
+              <span><b class="tabular-nums">{{ form.icd9cm.kode }}</b> {{ form.icd9cm.nama }}</span>
+              <button type="button" class="text-xs text-slate-400 hover:text-slate-700" @click="form.icd9cm = null">ganti</button>
+            </div>
+            <AsyncSelect v-else endpoint="/icd9cms" placeholder="Cari kode / nama tindakan ICD-9-CM..." @select="(icd) => (form.icd9cm = icd)">
+              <template #default="{ item }"><b class="tabular-nums">{{ item.kode }}</b> {{ item.nama }}</template>
+            </AsyncSelect>
+            <p v-if="errors.icd9cm_id" class="field-error">{{ errors.icd9cm_id }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">Disalin ke tindakan kunjungan (bisa diubah dokter); dipakai laporan & SATUSEHAT (Procedure).</p>
+          </div>
+          <div>
+            <label class="label" for="t-jenis-catatan">Bentuk catatan tindakan</label>
+            <select id="t-jenis-catatan" v-model="form.jenis_catatan" class="input">
+              <option v-for="(label, val) in JENIS_CATATAN" :key="val" :value="val">{{ label }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="t-consent">Informed consent</label>
+            <select id="t-consent" v-model="form.template_consent_id" class="input" :class="{ 'input-error': errors.template_consent_id }">
+              <option value="">— Tidak wajib consent —</option>
+              <option v-for="c in templateConsents" :key="c.id" :value="c.id">Wajib: {{ c.nama }}</option>
+              <option v-if="form.template_consent && !templateConsents.some((c) => c.id === form.template_consent.id)" :value="form.template_consent.id">
+                Wajib: {{ form.template_consent.nama }} (nonaktif)
+              </option>
+            </select>
+            <p v-if="errors.template_consent_id" class="field-error">{{ errors.template_consent_id }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">Wajib = pemeriksaan tidak bisa ditutup sebelum pasien menandatangani consent.</p>
+          </div>
+        </div>
+      </section>
 
       <!-- Harga per cabang -->
       <section>

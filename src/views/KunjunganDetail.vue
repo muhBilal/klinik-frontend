@@ -1,19 +1,44 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import AppSpinner from '@/components/AppSpinner.vue'
 import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
 import RekamMedisRingkas from '@/components/RekamMedisRingkas.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
+import AddendumModal from '@/components/rme/AddendumModal.vue'
 import { useDetail } from '@/composables/useDetail'
+import api, { errorMessage } from '@/lib/api'
 import { PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+const toast = useToastStore()
 const { data: k, error, load } = useDetail(() => `/kunjungans/${route.params.id}`)
+
+const verifikasi = ref(null)
+const memverifikasi = ref(false)
+const addendumOpen = ref(false)
+
+/** Cocokkan hash tanda tangan dengan isi rekam medis saat ini (RM-07). */
+async function cekKeutuhan() {
+  memverifikasi.value = true
+  try {
+    verifikasi.value = (await api.get(`/kunjungans/${route.params.id}/verifikasi`)).data
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    memverifikasi.value = false
+  }
+}
+
+function addendumTersimpan(a) {
+  k.value.pemeriksaan.addendums = [...(k.value.pemeriksaan.addendums ?? []), a]
+}
 
 onMounted(load)
 </script>
@@ -22,6 +47,14 @@ onMounted(load)
   <template v-if="k">
     <PageHeader :title="`Kunjungan ${k.no_registrasi}`" :subtitle="`${k.poli.nama} · ${tanggal(k.tanggal)}`">
       <button class="btn btn-secondary" @click="router.back()">Kembali</button>
+      <!-- Addendum hanya untuk kunjungan cabang aktif (backend menolak cabang lain) -->
+      <button
+        v-if="auth.can('pemeriksaan.dokter') && k.pemeriksaan?.ditandatangani_at && (!auth.cabang || auth.cabang.id === k.cabang_id)"
+        class="btn btn-secondary"
+        @click="addendumOpen = true"
+      >
+        Tambah addendum
+      </button>
     </PageHeader>
 
     <div class="grid gap-5 lg:grid-cols-3">
@@ -45,15 +78,25 @@ onMounted(load)
       </div>
       <div v-if="auth.can('rme.lihat')" class="space-y-5 lg:col-span-2">
         <div class="card">
-          <div class="card-header"><h2 class="card-title">Rekam Medis</h2></div>
+          <div class="card-header">
+            <h2 class="card-title">Rekam Medis</h2>
+            <template v-if="k.pemeriksaan?.ditandatangani_at">
+              <span v-if="verifikasi" :class="verifikasi.valid ? 'text-emerald-700' : 'text-rose-700'" class="text-xs font-semibold">
+                {{ verifikasi.valid ? '✓ Isi utuh sesuai tanda tangan' : '⚠ Isi berubah setelah ditandatangani' }}
+              </span>
+              <button v-else class="btn btn-ghost btn-sm" :disabled="memverifikasi" @click="cekKeutuhan"><AppSpinner v-if="memverifikasi" size="size-3" />Cek keutuhan</button>
+            </template>
+          </div>
           <div class="card-body"><RekamMedisRingkas :kunjungan="k" /></div>
         </div>
-        <LampiranBerkas :pasien-id="k.pasien_id" :kunjungan-id="k.id" readonly />
+        <LampiranBerkas v-if="!k.rme_disembunyikan" :pasien-id="k.pasien_id" :kunjungan-id="k.id" readonly />
       </div>
       <div v-else class="card self-start lg:col-span-2">
         <div class="card-body text-sm text-slate-500">Isi rekam medis hanya dapat dilihat tenaga medis (izin <code>rme.lihat</code>).</div>
       </div>
     </div>
+
+    <AddendumModal v-model="addendumOpen" :kunjungan-id="k.id" @saved="addendumTersimpan" />
   </template>
   <PageLoading v-else :error="error" text="Memuat rekam medis..." @retry="load" />
 </template>

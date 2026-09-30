@@ -121,6 +121,19 @@ onMounted(load)
     </div>
 
     <div class="card lg:col-span-2">
+      <div class="card-header"><h2 class="card-title">Rekam Medis</h2></div>
+      <div class="card-body">
+        <label class="flex items-start gap-2 text-sm">
+          <input v-model="form.rme.wajib_informed_consent" type="checkbox" class="mt-0.5 accent-brand-600" />
+          <span>
+            Wajib informed consent sebelum pemeriksaan ditutup
+            <span class="block text-xs text-slate-400">Berlaku untuk treatment yang diberi template consent di Katalog Treatment. Matikan hanya bila consent masih diambil di kertas.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card lg:col-span-2">
       <div class="card-header"><h2 class="card-title">Keamanan</h2></div>
       <div class="card-body grid gap-5 sm:grid-cols-[16rem_1fr]">
         <div>

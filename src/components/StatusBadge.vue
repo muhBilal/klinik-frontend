@@ -21,6 +21,10 @@ const MAP = {
   belum_bayar: ['Belum Bayar', RED],
   lunas: ['Lunas', GREEN],
   aktif: ['Aktif', GREEN],
+  // Informed consent
+  disetujui: ['Disetujui', GREEN],
+  ditolak: ['Ditolak', RED],
+  dicabut: ['Dicabut', GRAY],
   nonaktif: ['Nonaktif', GRAY],
 }
 

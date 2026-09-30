@@ -55,6 +55,56 @@ export const STATUS_KUNJUNGAN = {
 
 export const JENIS_MUTASI = { masuk: 'Masuk', keluar: 'Keluar', penyesuaian: 'Stok opname' }
 
+/** Bentuk catatan tindakan per treatment (enum JenisCatatanTindakan backend). */
+export const JENIS_CATATAN = { umum: 'Catatan umum', injeksi: 'Face chart injeksi', energi: 'Parameter laser / energy device' }
+
+/** Reaksi kulit setelah tindakan energy device (CatatanTindakan::PARAMETER backend). */
+export const REAKSI_KULIT = {
+  tidak_ada: 'Tidak ada',
+  eritema_ringan: 'Eritema ringan',
+  eritema_sedang: 'Eritema sedang',
+  eritema_berat: 'Eritema berat',
+  edema: 'Edema',
+  purpura: 'Purpura',
+  lepuh: 'Lepuh (blister)',
+  hiperpigmentasi: 'Hiperpigmentasi',
+  lainnya: 'Lainnya',
+}
+
+/** Parameter energy device: [key, label, satuan, step]. Urutan = urutan tampil di form. */
+export const PARAMETER_ALAT = [
+  ['panjang_gelombang_nm', 'Panjang gelombang', 'nm', '1'],
+  ['fluence_j_cm2', 'Fluence', 'J/cm²', '0.01'],
+  ['spot_size_mm', 'Spot size', 'mm', '0.1'],
+  ['durasi_pulsa_ms', 'Durasi pulsa', 'ms', '0.01'],
+  ['frekuensi_hz', 'Frekuensi', 'Hz', '0.1'],
+  ['energi_total_j', 'Energi total', 'J', '0.1'],
+  ['jumlah_shot', 'Jumlah shot', 'shot', '1'],
+  ['jumlah_pass', 'Jumlah pass', 'pass', '1'],
+]
+
+/** Hubungan penanda tangan informed consent dengan pasien (enum HubunganPenandatangan). */
+export const HUBUNGAN_PENANDATANGAN = {
+  pasien: 'Pasien sendiri',
+  orang_tua: 'Orang tua',
+  suami_istri: 'Suami / istri',
+  anak: 'Anak',
+  saudara: 'Saudara kandung',
+  wali: 'Wali',
+}
+
+/** Bagian rekam medis yang dikoreksi lewat addendum (enum BagianAddendum). */
+export const BAGIAN_ADDENDUM = {
+  subjektif: 'Subjektif',
+  objektif: 'Objektif',
+  asesmen: 'Asesmen',
+  plan: 'Plan',
+  diagnosa: 'Diagnosa',
+  tindakan: 'Tindakan',
+  resep: 'Resep',
+  lainnya: 'Lainnya',
+}
+
 export const SATUAN_OBAT = ['tablet', 'kapsul', 'botol', 'tube', 'sachet', 'ampul', 'vial', 'pcs']
 
 export const GOLONGAN_DARAH = ['A', 'B', 'AB', 'O']

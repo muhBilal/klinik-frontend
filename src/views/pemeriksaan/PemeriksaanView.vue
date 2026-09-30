@@ -8,8 +8,14 @@ import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
 import RekamMedisRingkas from '@/components/RekamMedisRingkas.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
+import AddendumModal from '@/components/rme/AddendumModal.vue'
+import CatatanTindakanModal from '@/components/rme/CatatanTindakanModal.vue'
+import ConsentFormModal from '@/components/rme/ConsentFormModal.vue'
+import ConsentLihatModal from '@/components/rme/ConsentLihatModal.vue'
+import TemplateSoapModal from '@/components/rme/TemplateSoapModal.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
-import { PENJAMIN, jenisKelamin, rupiah, tanggal } from '@/lib/format'
+import { cachedGet } from '@/lib/cache'
+import { BAGIAN_ADDENDUM, PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
@@ -23,6 +29,7 @@ const loadError = ref('')
 const riwayat = ref([])
 const riwayatLoading = ref(true)
 const errors = ref({})
+const consentKurang = ref([])
 const saving = ref(false)
 const calling = ref(false)
 const finishing = ref(false)
@@ -45,6 +52,7 @@ const ATURAN_PAKAI = ['3 x 1 sesudah makan', '2 x 1 sesudah makan', '1 x 1 sesud
 
 const form = reactive({
   ...Object.fromEntries([...VITAL, ...SOAP].map((f) => [f.key, ''])),
+  akses_terbatas: false,
   diagnosas: [],
   tindakans: [],
   resep: [],
@@ -54,7 +62,11 @@ const form = reactive({
 // Tanpa izin pemeriksaan.dokter (perawat, terapis): hanya tanda vital + anamnesis (S), sama dengan backend.
 const isDokter = computed(() => auth.can('pemeriksaan.dokter'))
 const isPerawat = computed(() => !isDokter.value)
+const bolehTindakan = computed(() => auth.can('rme.tindakan'))
 const editable = computed(() => ['menunggu', 'diperiksa'].includes(kunjungan.value?.status))
+const ditandatangani = computed(() => !!kunjungan.value?.pemeriksaan?.ditandatangani_at)
+/** Dokter yang tercatat (bukan admin) tanpa SIP aktif tidak bisa menutup pemeriksaan — backend menolak dengan 422 `sip`. */
+const sipBermasalah = computed(() => isDokter.value && !auth.user?.sip_aktif)
 const imt = computed(() => {
   const bb = Number(form.berat_badan)
   const tb = Number(form.tinggi_badan) / 100
@@ -72,30 +84,176 @@ function isiForm(k) {
   const p = k.pemeriksaan ?? {}
   for (const f of [...VITAL, ...SOAP]) form[f.key] = p[f.key] ?? ''
   if (!form.subjektif && k.keluhan) form.subjektif = k.keluhan
-  form.diagnosas = (p.diagnosas ?? []).map((d) => ({ icd10_id: d.icd10_id, jenis: d.jenis, kode: d.icd10.kode, nama: d.icd10.nama }))
-  form.tindakans = k.tindakans.map((t) => ({ tindakan_id: t.tindakan_id, jumlah: t.jumlah, nama: t.tindakan.nama, tarif: t.tarif }))
+  form.akses_terbatas = !!k.akses_terbatas
+  form.diagnosas = (p.diagnosas ?? []).map((d) => ({ icd10_id: d.icd10_id, jenis: d.jenis, kode: d.icd10.kode, nama: d.icd10.nama, sensitif: d.icd10.sensitif }))
+  form.tindakans = (k.tindakans ?? []).map((t) => ({
+    id: t.id,
+    tindakan_id: t.tindakan_id,
+    jumlah: t.jumlah,
+    nama: t.tindakan.nama,
+    tarif: t.tarif,
+    petugas_id: t.petugas_id ?? '',
+    petugas_nama: t.petugas?.name,
+    icd9cm_id: t.icd9cm_id,
+    icd9cm: t.icd9cm,
+    template_consent_id: t.tindakan.template_consent_id,
+    jenis_catatan: t.tindakan.jenis_catatan,
+    catatan: t.catatan,
+  }))
   form.resep = (k.resep?.items ?? []).map((r) => ({
     obat_id: r.obat_id, jumlah: r.jumlah, aturan_pakai: r.aturan_pakai, nama: r.obat.nama, satuan: r.obat.satuan, harga: r.harga, stok: r.obat.stok,
   }))
   form.catatan_resep = k.resep?.catatan ?? ''
 }
 
+// ---- Diagnosa & favorit (RM-02) ----
+const favorits = ref([])
+
+async function muatFavorit() {
+  if (!isDokter.value) return
+  try {
+    favorits.value = (await api.get('/icd10s', { params: { favorit: 1, per_page: 50, simple: 1 }, silent: true })).data.data
+  } catch {
+    favorits.value = []
+  }
+}
+
+const isFavorit = (icd10Id) => favorits.value.some((f) => f.id === icd10Id)
+
+async function toggleFavorit(d) {
+  const id = d.icd10_id ?? d.id
+  const hapus = isFavorit(id)
+  try {
+    if (hapus) await api.delete('/kode-favorits', { data: { jenis: 'icd10', kode_id: id } })
+    else await api.post('/kode-favorits', { jenis: 'icd10', kode_id: id })
+    favorits.value = hapus ? favorits.value.filter((f) => f.id !== id) : [...favorits.value, { id, kode: d.kode, nama: d.nama, sensitif: d.sensitif }]
+  } catch (e) {
+    toast.error(errorMessage(e))
+  }
+}
+
 function tambahDiagnosa(icd) {
   if (form.diagnosas.some((d) => d.icd10_id === icd.id)) return toast.info('Diagnosa sudah ditambahkan.')
-  form.diagnosas.push({ icd10_id: icd.id, kode: icd.kode, nama: icd.nama, jenis: form.diagnosas.length ? 'sekunder' : 'primer' })
+  form.diagnosas.push({ icd10_id: icd.id, kode: icd.kode, nama: icd.nama, sensitif: icd.sensitif, jenis: form.diagnosas.length ? 'sekunder' : 'primer' })
+  if (icd.sensitif && !form.akses_terbatas) {
+    form.akses_terbatas = true
+    toast.info('Diagnosa sensitif: kunjungan ditandai berakses terbatas.')
+  }
 }
 
 function jadikanPrimer(index) {
   form.diagnosas.forEach((d, i) => (d.jenis = i === index ? 'primer' : 'sekunder'))
 }
 
+const adaDiagnosaSensitif = computed(() => form.diagnosas.some((d) => d.sensitif))
+
+// ---- Template SOAP (RM-01) ----
+const templateOpen = ref(false)
+
+function terapkanTemplate({ template, mode }) {
+  for (const { key } of SOAP) {
+    const isi = template[key]
+    if (!isi) continue
+    if (mode === 'timpa' || !String(form[key] ?? '').trim()) form[key] = isi
+    else if (mode === 'tambah') form[key] = `${form[key]}\n${isi}`
+  }
+  for (const d of template.diagnosas ?? []) tambahDiagnosaDiam(d)
+  if (template.akses_terbatas) form.akses_terbatas = true
+  toast.success('Template diterapkan. Periksa isinya lalu simpan.')
+}
+
+function tambahDiagnosaDiam(icd) {
+  if (form.diagnosas.some((d) => d.icd10_id === icd.id)) return
+  form.diagnosas.push({ icd10_id: icd.id, kode: icd.kode, nama: icd.nama, sensitif: icd.sensitif, jenis: form.diagnosas.length ? 'sekunder' : 'primer' })
+  if (icd.sensitif) form.akses_terbatas = true
+}
+
+// ---- Tindakan: ICD-9-CM, petugas, catatan & consent (RM-02/03/05) ----
+const petugas = ref([])
+const icd9Edit = ref(null)
+
 // Tarif estimasi = harga cabang kunjungan (tarif_cabang); nilai final di-snapshot backend saat disimpan.
 function tambahTindakan(t) {
   const ada = form.tindakans.find((x) => x.tindakan_id === t.id)
-  if (ada) ada.jumlah++
-  else form.tindakans.push({ tindakan_id: t.id, nama: t.nama, tarif: t.tarif_cabang, jumlah: 1 })
+  if (ada) return ada.jumlah++
+  form.tindakans.push({
+    tindakan_id: t.id,
+    nama: t.nama,
+    tarif: t.tarif_cabang,
+    jumlah: 1,
+    petugas_id: auth.user?.tercatat_dokter ? auth.user.id : kunjungan.value.dokter_id ?? '',
+    icd9cm_id: t.icd9cm_id,
+    icd9cm: t.icd9cm,
+    template_consent_id: t.template_consent_id,
+    jenis_catatan: t.jenis_catatan,
+    catatan: null,
+  })
 }
 
+function pilihIcd9(t, icd) {
+  t.icd9cm_id = icd.id
+  t.icd9cm = icd
+  icd9Edit.value = null
+}
+
+/** Consent terbaru untuk satu baris tindakan: yang berlaku (disetujui) diutamakan. */
+function consentTindakan(t) {
+  const daftar = (kunjungan.value?.informed_consents ?? []).filter((c) => c.kunjungan_tindakan_id === t.id)
+  return daftar.find((c) => c.status === 'disetujui') ?? daftar.at(-1) ?? null
+}
+
+const consentBelum = computed(() => form.tindakans.filter((t) => t.template_consent_id && consentTindakan(t)?.status !== 'disetujui'))
+
+const catatanOpen = ref(false)
+const catatanId = ref(null)
+const consentFormOpen = ref(false)
+const consentTindakanAktif = ref(null)
+const consentLihatOpen = ref(false)
+const consentUuid = ref('')
+
+/** Catatan & consent butuh baris tersimpan (punya id); simpan dulu bila baru ditambahkan. */
+async function pastikanTersimpan(t) {
+  if (t.id) return t
+  if (!isDokter.value || !(await simpan({ silent: true }))) return null
+  return form.tindakans.find((x) => x.tindakan_id === t.tindakan_id && x.id) ?? null
+}
+
+async function bukaCatatan(t) {
+  const baris = await pastikanTersimpan(t)
+  if (!baris) return
+  catatanId.value = baris.id
+  catatanOpen.value = true
+}
+
+function catatanTersimpan({ id, catatan, petugas_id }) {
+  const t = form.tindakans.find((x) => x.id === id)
+  if (!t) return
+  t.catatan = catatan
+  t.petugas_id = petugas_id ?? ''
+}
+
+async function ambilConsent(t) {
+  const baris = await pastikanTersimpan(t)
+  if (!baris) return
+  consentTindakanAktif.value = baris
+  consentFormOpen.value = true
+}
+
+function consentTersimpan(consent) {
+  kunjungan.value.informed_consents = [...(kunjungan.value.informed_consents ?? []), consent]
+  consentKurang.value = []
+}
+
+function lihatConsent(c) {
+  consentUuid.value = c.uuid
+  consentLihatOpen.value = true
+}
+
+function consentBerubah(data) {
+  kunjungan.value.informed_consents = kunjungan.value.informed_consents.map((c) => (c.uuid === data.uuid ? { ...c, ...data } : c))
+}
+
+// ---- Resep ----
 function tambahObat(o) {
   if (form.resep.some((r) => r.obat_id === o.id)) return toast.info('Obat sudah ada di resep.')
   if (o.stok <= 0) toast.info(`Perhatian: stok ${o.nama} kosong.`)
@@ -108,8 +266,11 @@ function payload() {
 
   return {
     ...data,
+    akses_terbatas: form.akses_terbatas,
     diagnosas: form.diagnosas.map(({ icd10_id, jenis }) => ({ icd10_id, jenis })),
-    tindakans: form.tindakans.map(({ tindakan_id, jumlah }) => ({ tindakan_id, jumlah })),
+    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, icd9cm_id }) => ({
+      id: id ?? null, tindakan_id, jumlah, petugas_id: petugas_id || null, icd9cm_id: icd9cm_id ?? null,
+    })),
     resep: form.resep.map(({ obat_id, jumlah, aturan_pakai }) => ({ obat_id, jumlah, aturan_pakai })),
     catatan_resep: form.catatan_resep || null,
   }
@@ -147,18 +308,27 @@ async function panggil() {
 
 async function selesai() {
   if (!form.diagnosas.length) return toast.error('Tambahkan minimal satu diagnosa ICD-10.')
-  if (!confirm('Selesaikan pemeriksaan? Data tidak dapat diubah lagi dan tagihan akan diterbitkan.')) return
+  if (!confirm('Selesaikan & tanda tangani rekam medis? Setelah ini isi RME terkunci (koreksi hanya lewat addendum) dan tagihan diterbitkan.')) return
   finishing.value = true
+  consentKurang.value = []
   try {
     if (!(await simpan({ silent: true }))) return
     await api.post(`/kunjungans/${route.params.id}/selesai`)
-    toast.success('Pemeriksaan selesai. Pasien diarahkan ke kasir.')
+    toast.success('Pemeriksaan selesai & ditandatangani. Pasien diarahkan ke kasir.')
     router.push('/antrian')
   } catch (e) {
+    consentKurang.value = e.response?.data?.errors?.informed_consent ?? []
     toast.error(errorMessage(e))
   } finally {
     finishing.value = false
   }
+}
+
+// ---- Addendum (RM-07) ----
+const addendumOpen = ref(false)
+
+function addendumTersimpan(a) {
+  kunjungan.value.pemeriksaan.addendums = [...(kunjungan.value.pemeriksaan.addendums ?? []), a]
 }
 
 // Riwayat dimuat terpisah agar form pemeriksaan bisa langsung tampil dan diisi.
@@ -179,6 +349,8 @@ async function load() {
     const { data } = await api.get(`/kunjungans/${route.params.id}`)
     isiForm(data)
     loadRiwayat(data)
+    muatFavorit()
+    if (isDokter.value) cachedGet('/petugas').then((p) => (petugas.value = p)).catch(() => {})
   } catch (e) {
     loadError.value = errorMessage(e)
   }
@@ -195,13 +367,15 @@ onMounted(load)
         <button v-if="kunjungan.status === 'menunggu'" class="btn btn-secondary" :disabled="calling" @click="panggil">
           <AppSpinner v-if="calling" />Panggil pasien
         </button>
+        <button v-if="isDokter" class="btn btn-secondary" @click="templateOpen = true">Template</button>
         <button class="btn btn-secondary" :disabled="saving || finishing" @click="simpan()">
           <AppSpinner v-if="saving && !finishing" />{{ saving && !finishing ? 'Menyimpan...' : 'Simpan' }}
         </button>
         <button v-if="isDokter && kunjungan.status === 'diperiksa'" class="btn btn-primary" :disabled="saving || finishing" @click="selesai">
-          <AppSpinner v-if="finishing" />{{ finishing ? 'Memproses...' : 'Selesai pemeriksaan' }}
+          <AppSpinner v-if="finishing" />{{ finishing ? 'Memproses...' : 'Selesai & tanda tangani' }}
         </button>
       </template>
+      <button v-else-if="isDokter && ditandatangani" class="btn btn-secondary" @click="addendumOpen = true">Tambah addendum</button>
     </PageHeader>
 
     <!-- Identitas pasien -->
@@ -214,10 +388,28 @@ onMounted(load)
       <div><p class="text-xs text-slate-500">Gol. darah</p><p class="font-medium">{{ kunjungan.pasien.golongan_darah ?? '-' }}</p></div>
       <div><p class="text-xs text-slate-500">Status</p><StatusBadge :status="kunjungan.status" /></div>
       <div v-if="kunjungan.pasien.alergi" class="rounded-xl bg-rose-500/10 px-3 py-2 font-semibold text-rose-700 ring-1 ring-rose-400/30">⚠ Alergi: {{ kunjungan.pasien.alergi }}</div>
+      <label
+        v-if="isDokter && editable"
+        class="ml-auto flex items-center gap-2 rounded-xl px-3 py-2"
+        :class="form.akses_terbatas ? 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-400/30' : 'text-slate-500'"
+        title="Isi rekam medis hanya dapat dibuka tim yang menangani & pemegang izin rme.terbatas (mis. kasus IMS)"
+      >
+        <input v-model="form.akses_terbatas" type="checkbox" class="accent-rose-600" :disabled="adaDiagnosaSensitif" />
+        🔒 Akses terbatas
+        <span v-if="adaDiagnosaSensitif" class="text-xs">(diagnosa sensitif)</span>
+      </label>
+      <span v-else-if="kunjungan.akses_terbatas" class="ml-auto rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">🔒 Akses terbatas</span>
     </div>
 
     <div v-if="!editable" class="alert alert-warning mb-5">
-      Pemeriksaan sudah ditutup. Data ditampilkan dalam mode baca.
+      Pemeriksaan sudah ditutup<template v-if="ditandatangani"> dan ditandatangani</template>. Data ditampilkan dalam mode baca<template v-if="ditandatangani">; koreksi lewat addendum</template>.
+    </div>
+    <div v-else-if="sipBermasalah && auth.user?.tercatat_dokter" class="alert alert-warning mb-5">
+      No. SIP Anda belum diisi atau sudah kedaluwarsa, sehingga Anda belum bisa menandatangani & menutup pemeriksaan. Hubungi admin untuk memperbarui data SIP.
+    </div>
+    <div v-if="consentKurang.length" class="alert alert-danger mb-5">
+      <p class="font-semibold">Pemeriksaan belum bisa ditutup:</p>
+      <ul class="list-disc pl-5"><li v-for="m in consentKurang" :key="m">{{ m }}</li></ul>
     </div>
 
     <div class="grid gap-5 xl:grid-cols-3">
@@ -253,13 +445,14 @@ onMounted(load)
           <div class="card-header">
             <h2 class="card-title">Catatan SOAP</h2>
             <span v-if="isPerawat" class="text-xs text-slate-400">Anda mengisi anamnesis (S); O/A/P diisi dokter</span>
+            <button v-else-if="editable" type="button" class="btn btn-ghost btn-sm" @click="templateOpen = true">Pakai template</button>
           </div>
           <div class="card-body grid gap-4 sm:grid-cols-2">
             <div v-for="f in SOAP" :key="f.key">
               <label class="label">{{ f.label }}</label>
               <textarea
                 v-model="form[f.key]"
-                rows="3"
+                rows="4"
                 class="input"
                 :placeholder="f.placeholder"
                 :disabled="!editable || (isPerawat && f.key !== 'subjektif')"
@@ -274,13 +467,39 @@ onMounted(load)
             <div class="card-header"><h2 class="card-title">Diagnosa (ICD-10)</h2></div>
             <div class="card-body space-y-3">
               <AsyncSelect v-if="editable" endpoint="/icd10s" placeholder="Cari kode atau nama penyakit..." @select="tambahDiagnosa">
-                <template #default="{ item }"><span class="tabular-nums font-semibold">{{ item.kode }}</span> {{ item.nama }}</template>
+                <template #default="{ item }">
+                  <span v-if="item.favorit" class="text-amber-500">★ </span><span class="tabular-nums font-semibold">{{ item.kode }}</span> {{ item.nama }}
+                  <span v-if="item.sensitif" class="text-xs text-rose-600"> · sensitif</span>
+                </template>
               </AsyncSelect>
+              <div v-if="editable && favorits.length" class="flex flex-wrap gap-1.5">
+                <span class="self-center text-xs text-slate-400">Favorit:</span>
+                <button
+                  v-for="f in favorits"
+                  :key="f.id"
+                  type="button"
+                  class="chip hover:bg-white"
+                  :class="{ 'opacity-40': form.diagnosas.some((d) => d.icd10_id === f.id) }"
+                  :title="f.nama"
+                  @click="tambahDiagnosa(f)"
+                >
+                  <b class="tabular-nums">{{ f.kode }}</b> <span class="max-w-40 truncate">{{ f.nama }}</span>
+                </button>
+              </div>
               <p v-if="errors.diagnosas" class="field-error">{{ errors.diagnosas }}</p>
               <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white/30">
                 <li v-for="(d, i) in form.diagnosas" :key="d.icd10_id" class="flex items-center gap-3 px-3 py-2 text-sm">
+                  <button
+                    type="button"
+                    :class="isFavorit(d.icd10_id) ? 'text-amber-500' : 'text-slate-300 hover:text-amber-500'"
+                    :title="isFavorit(d.icd10_id) ? 'Hapus dari favorit' : 'Jadikan favorit'"
+                    :aria-label="isFavorit(d.icd10_id) ? `Hapus ${d.kode} dari favorit` : `Jadikan ${d.kode} favorit`"
+                    @click="toggleFavorit(d)"
+                  >
+                    ★
+                  </button>
                   <span class="w-16 tabular-nums font-semibold">{{ d.kode }}</span>
-                  <span class="flex-1">{{ d.nama }}</span>
+                  <span class="flex-1">{{ d.nama }} <span v-if="d.sensitif" class="text-xs text-rose-600">· sensitif</span></span>
                   <button
                     type="button"
                     :class="d.jenis === 'primer' ? 'bg-brand-900 text-white shadow-sm' : 'bg-slate-900/5 text-slate-500 hover:bg-slate-900/10'"
@@ -296,33 +515,84 @@ onMounted(load)
               </ul>
             </div>
           </section>
+        </template>
 
-          <!-- Tindakan -->
-          <section class="card">
-            <div class="card-header"><h2 class="card-title">Tindakan</h2></div>
-            <div class="card-body space-y-3">
-              <AsyncSelect v-if="editable" endpoint="/tindakans" :params="{ aktif: 1, cabang_id: kunjungan.cabang_id }" placeholder="Cari tindakan / treatment..." @select="tambahTindakan">
-                <template #default="{ item }">
-                  {{ item.nama }}
-                  <span class="text-xs text-slate-500">· {{ rupiah(item.tarif_cabang) }} · {{ item.durasi_menit }} mnt<template v-if="item.kategori"> · {{ item.kategori.nama }}</template></span>
-                </template>
-              </AsyncSelect>
-              <div v-if="form.tindakans.length" class="overflow-x-auto rounded-xl border border-line bg-white/30">
-                <table class="table">
-                  <thead><tr><th>Tindakan</th><th class="w-24">Jumlah</th><th class="text-right">Tarif</th><th class="w-8" /></tr></thead>
-                  <tbody>
-                    <tr v-for="(t, i) in form.tindakans" :key="t.tindakan_id">
-                      <td>{{ t.nama }}</td>
-                      <td><input v-model.number="t.jumlah" type="number" min="1" class="input py-1" :disabled="!editable" /></td>
-                      <td class="text-right tabular-nums">{{ rupiah(t.tarif * t.jumlah) }}</td>
-                      <td><button v-if="editable" type="button" class="text-slate-400 hover:text-rose-600" @click="form.tindakans.splice(i, 1)">&times;</button></td>
-                    </tr>
-                  </tbody>
-                </table>
+        <!-- Tindakan: dokter mengelola daftar; tenaga dengan izin rme.tindakan mengisi catatan & consent -->
+        <section v-if="isDokter || (bolehTindakan && form.tindakans.length)" class="card">
+          <div class="card-header">
+            <h2 class="card-title">Tindakan</h2>
+            <span v-if="consentBelum.length && editable" class="text-xs font-semibold text-amber-700">{{ consentBelum.length }} tindakan menunggu informed consent</span>
+          </div>
+          <div class="card-body space-y-3">
+            <AsyncSelect v-if="editable && isDokter" endpoint="/tindakans" :params="{ aktif: 1, cabang_id: kunjungan.cabang_id }" placeholder="Cari tindakan / treatment..." @select="tambahTindakan">
+              <template #default="{ item }">
+                {{ item.nama }}
+                <span class="text-xs text-slate-500">· {{ rupiah(item.tarif_cabang) }} · {{ item.durasi_menit }} mnt<template v-if="item.kategori"> · {{ item.kategori.nama }}</template></span>
+              </template>
+            </AsyncSelect>
+            <div v-if="form.tindakans.length" class="space-y-2">
+              <div v-for="(t, i) in form.tindakans" :key="t.id ?? `baru-${t.tindakan_id}`" class="rounded-2xl border border-line bg-white/30 p-3">
+                <div class="flex flex-wrap items-start gap-3">
+                  <div class="min-w-48 flex-1">
+                    <p class="font-medium">{{ t.nama }} <span v-if="!t.id" class="text-xs font-normal text-amber-700">· belum disimpan</span></p>
+                    <div class="mt-0.5 text-xs text-slate-500">
+                      <template v-if="icd9Edit === i">
+                        <AsyncSelect endpoint="/icd9cms" placeholder="Cari kode / nama tindakan ICD-9-CM..." @select="(icd) => pilihIcd9(t, icd)">
+                          <template #default="{ item }"><span v-if="item.favorit" class="text-amber-500">★ </span><b class="tabular-nums">{{ item.kode }}</b> {{ item.nama }}</template>
+                        </AsyncSelect>
+                      </template>
+                      <button v-else type="button" class="hover:text-slate-800" :disabled="!editable || !isDokter" @click="icd9Edit = i">
+                        ICD-9-CM: <b class="tabular-nums">{{ t.icd9cm?.kode ?? '—' }}</b> {{ t.icd9cm?.nama ?? '' }}<span v-if="editable && isDokter" class="underline"> ubah</span>
+                      </button>
+                    </div>
+                    <p v-if="t.catatan" class="mt-1 text-xs text-slate-500">
+                      Catatan: {{ [t.catatan.area, t.catatan.titiks?.length && `${t.catatan.titiks.length} titik`, t.catatan.parameter && 'parameter alat terisi'].filter(Boolean).join(' · ') || 'terisi' }}
+                    </p>
+                  </div>
+                  <div class="w-44">
+                    <label class="sr-only" :for="`petugas-${i}`">Petugas {{ t.nama }}</label>
+                    <select :id="`petugas-${i}`" v-model="t.petugas_id" class="input py-1 text-sm" :class="{ 'input-error': errors[`tindakans.${i}.petugas_id`] }" :disabled="!editable || !isDokter">
+                      <option value="">— Petugas —</option>
+                      <option v-for="p in petugas" :key="p.id" :value="p.id">{{ p.name }}</option>
+                      <option v-if="t.petugas_id && !petugas.some((p) => p.id === t.petugas_id)" :value="t.petugas_id">{{ t.petugas_nama ?? `#${t.petugas_id}` }}</option>
+                    </select>
+                    <p v-if="errors[`tindakans.${i}.petugas_id`]" class="field-error">{{ errors[`tindakans.${i}.petugas_id`] }}</p>
+                  </div>
+                  <div class="w-20">
+                    <label class="sr-only" :for="`jumlah-${i}`">Jumlah {{ t.nama }}</label>
+                    <input :id="`jumlah-${i}`" v-model.number="t.jumlah" type="number" min="1" class="input py-1" :disabled="!editable || !isDokter" />
+                  </div>
+                  <p class="w-28 pt-1.5 text-right tabular-nums">{{ rupiah(t.tarif * t.jumlah) }}</p>
+                  <button v-if="editable && isDokter" type="button" class="pt-1 text-slate-400 hover:text-rose-600" :aria-label="`Hapus ${t.nama}`" @click="form.tindakans.splice(i, 1)">&times;</button>
+                </div>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                  <button type="button" class="btn btn-secondary btn-sm" @click="bukaCatatan(t)">
+                    {{ t.jenis_catatan === 'injeksi' ? 'Face chart' : t.jenis_catatan === 'energi' ? 'Parameter alat' : 'Catatan tindakan' }}
+                  </button>
+                  <template v-if="consentTindakan(t)">
+                    <button type="button" class="flex items-center gap-1.5 text-xs" @click="lihatConsent(consentTindakan(t))">
+                      <StatusBadge :status="consentTindakan(t).status" /> <span class="underline">informed consent</span>
+                    </button>
+                    <button v-if="editable && bolehTindakan && consentTindakan(t).status !== 'disetujui'" type="button" class="btn btn-ghost btn-sm" @click="ambilConsent(t)">Ambil ulang</button>
+                  </template>
+                  <button
+                    v-else-if="editable && bolehTindakan"
+                    type="button"
+                    :class="t.template_consent_id ? 'btn-primary' : 'btn-ghost'"
+                    class="btn btn-sm"
+                    @click="ambilConsent(t)"
+                  >
+                    {{ t.template_consent_id ? 'Ambil informed consent (wajib)' : 'Informed consent' }}
+                  </button>
+                  <span v-else-if="t.template_consent_id" class="text-xs text-amber-700">Informed consent wajib — belum diambil</span>
+                </div>
               </div>
             </div>
-          </section>
+            <p v-else class="text-sm text-slate-400">Belum ada tindakan.</p>
+          </div>
+        </section>
 
+        <template v-if="!isPerawat">
           <!-- Resep -->
           <section class="card">
             <div class="card-header">
@@ -369,6 +639,27 @@ onMounted(load)
           <p class="mt-1 text-xs text-slate-400">Konsultasi {{ rupiah(kunjungan.poli.tarif_konsultasi) }} + tindakan + obat</p>
         </div>
 
+        <!-- Tanda tangan & addendum (RM-07) -->
+        <div v-if="ditandatangani" class="card">
+          <div class="card-header">
+            <h2 class="card-title">Tanda Tangan RME</h2>
+            <button v-if="isDokter" class="btn btn-ghost btn-sm" @click="addendumOpen = true">+ Addendum</button>
+          </div>
+          <div class="card-body space-y-3 text-sm">
+            <p class="rounded-xl bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800">
+              ✓ Ditandatangani oleh <b>{{ kunjungan.pemeriksaan.penandatangan?.name }}</b>
+              <template v-if="kunjungan.pemeriksaan.penandatangan?.sip"> (SIP {{ kunjungan.pemeriksaan.penandatangan.sip }})</template>
+              · {{ waktu(kunjungan.pemeriksaan.ditandatangani_at) }}
+            </p>
+            <div v-for="a in kunjungan.pemeriksaan.addendums ?? []" :key="a.id" class="rounded-xl border-l-4 border-amber-400 bg-amber-50/70 px-3 py-2">
+              <p class="text-xs text-slate-500">{{ BAGIAN_ADDENDUM[a.bagian] ?? a.bagian }} · {{ a.user?.name }} · {{ waktu(a.created_at) }}</p>
+              <p class="whitespace-pre-line">{{ a.isi }}</p>
+              <p class="text-xs text-slate-500">Alasan: {{ a.alasan }}</p>
+            </div>
+            <p v-if="!kunjungan.pemeriksaan.addendums?.length" class="text-xs text-slate-400">Belum ada addendum.</p>
+          </div>
+        </div>
+
         <LampiranBerkas :pasien-id="kunjungan.pasien_id" :kunjungan-id="kunjungan.id" :readonly="kunjungan.status === 'batal'" />
 
         <div class="card">
@@ -387,7 +678,10 @@ onMounted(load)
               <summary class="cursor-pointer list-none text-sm">
                 <span class="font-medium">{{ tanggal(r.tanggal) }}</span>
                 <span class="text-slate-500"> · {{ r.poli.nama }}<template v-if="r.cabang"> · {{ r.cabang.nama }}</template></span>
-                <p class="truncate text-xs text-slate-500">{{ r.pemeriksaan?.diagnosas?.map((d) => d.icd10.kode + ' ' + d.icd10.nama).join(', ') || '-' }}</p>
+                <p class="truncate text-xs text-slate-500">
+                  <template v-if="r.rme_disembunyikan">🔒 Akses terbatas</template>
+                  <template v-else>{{ r.pemeriksaan?.diagnosas?.map((d) => d.icd10.kode + ' ' + d.icd10.nama).join(', ') || '-' }}</template>
+                </p>
               </summary>
               <div class="mt-3"><RekamMedisRingkas :kunjungan="r" /></div>
             </details>
@@ -396,6 +690,12 @@ onMounted(load)
         </div>
       </aside>
     </div>
+
+    <TemplateSoapModal v-model="templateOpen" :poli-id="kunjungan.poli_id" :tindakan-ids="form.tindakans.map((t) => t.tindakan_id)" @terapkan="terapkanTemplate" />
+    <CatatanTindakanModal v-model="catatanOpen" :kunjungan-tindakan-id="catatanId" :editable="editable" @saved="catatanTersimpan" />
+    <ConsentFormModal v-model="consentFormOpen" :kunjungan="kunjungan" :tindakan="consentTindakanAktif" @saved="consentTersimpan" />
+    <ConsentLihatModal v-model="consentLihatOpen" :uuid="consentUuid" :bisa-cabut="editable && bolehTindakan" @changed="consentBerubah" />
+    <AddendumModal v-model="addendumOpen" :kunjungan-id="kunjungan.id" @saved="addendumTersimpan" />
   </template>
   <PageLoading v-else :error="loadError" text="Memuat data pemeriksaan..." @retry="load" />
 </template>

@@ -38,10 +38,15 @@
 | `AppPagination` | `meta`, `@change(page)` | Memakai meta dari `useList`. |
 | `StatusBadge` | `status` | Map warna/label untuk semua status kunjungan/resep/tagihan + `aktif`/`nonaktif`. Tambah status baru di sini. |
 | `PageHeader` | `title`, `subtitle`, slot aksi | |
-| `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, `invalidates`, slot `#cell-{key}`, event `changed` | CRUD generik untuk master (endpoint paginated atau array). `fields[].type`: text/number/email/password/time/select/checkbox (tipe lain diteruskan ke `<input type>`); `options`, `required`, `full`, `show(form)`, `placeholder`. Password kosong saat edit = tidak diubah. |
+| `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, `invalidates`, `modalSize`, slot `#cell-{key}`, event `changed` | CRUD generik untuk master (endpoint paginated atau array). `fields[].type`: text/number/email/password/time/select/checkbox/**textarea** (tipe lain diteruskan ke `<input type>`); `options`, `required`, `full`, `show(form)`, `placeholder`, `rows`, `hint` (teks bantuan). Password kosong saat edit = tidak diubah. Checkbox baru default `true` kecuali diberi `defaults`. |
 | `LampiranBerkas` | `pasienId`, `kunjunganId?`, `readonly` | Lampiran klinis terenkripsi: daftar (rme.lihat), unggah & hapus (berkas.kelola), "Lihat" meminta tautan bertanda tangan (tercatat audit) → pratinjau gambar di modal / PDF di tab baru. |
 | `PasienFormModal` | `v-model`, `pasien` (null = baru), `@saved(pasien)` | Dipakai di list pasien, detail, dan pendaftaran. |
-| `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan, resep. |
+| `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan (+ ICD-9-CM, petugas, catatan), consent (klik = lihat), resep, tanda tangan, addendum. `rme_disembunyikan` → pesan 🔒 saja. |
+| `SignaturePad` | `v-model` (PNG data URL), `label`, `disabled`, `invalid`; expose `hapus()` | Tanda tangan jari/stylus di tablet. |
+| `rme/FaceChart` | `v-model` (titik), `v-model:terpilih`, `readonly`, `@tambah({x,y,area})` | Diagram wajah; titik relatif 0..1. |
+| `rme/CatatanTindakanModal` | `v-model`, `kunjunganTindakanId`, `editable`, `@saved` | Catatan, face chart, parameter alat, BHP. |
+| `rme/ConsentFormModal` / `rme/ConsentLihatModal` | `kunjungan`, `tindakan` / `uuid`, `bisaCabut` | Ambil consent (naskah backend + tanda tangan) / lihat, cetak, cabut. |
+| `rme/AddendumModal`, `rme/TemplateSoapModal` | `kunjunganId` / `poliId`, `tindakanIds`, `@terapkan({template, mode})` | Addendum RME; pilih template SOAP. |
 | `ToastHost`, `AppIcon` | — / `path`, `size` | Ikon = path SVG heroicons outline. |
 | `AppSpinner` | `size` (`size-4`) | Spinner warna `currentColor`; di tombol taruh sebelum teks. |
 | `PageLoading` | `error`, `text`, `@retry` | Placeholder halaman detail (spinner / pesan error + coba lagi). |
@@ -89,3 +94,6 @@
 | `window.open` setelah `await` | Diblokir popup blocker; buka jendela kosong dulu lalu isi `location` (lihat `LampiranBerkas.buka`). |
 | CORS error | Pastikan origin (mis. `http://localhost:5173`) ada di `FRONTEND_URL` backend. |
 | Token di `localStorage` | Trade-off kesederhanaan vs risiko XSS. Jangan pernah render HTML dari data user (`v-html`). |
+| `<option :value="null">` | Vue tidak menulis atribut `value`, jadi `select.value` DOM = teks opsinya. Cek pilihan lewat `v-model`/`selectedIndex`, bukan `select.value` (penting untuk skrip E2E). |
+| Naskah consent / tanda tangan | Jangan merakit naskah di frontend — tampilkan `isi` dari `pratinjau` (backend me-render ulang & menyimpan snapshot). Detail consent (`/informed-consents/{uuid}`) tercatat audit tiap dibuka: minta saat modal dibuka, jangan prefetch. |
+| Pemeriksaan yang sudah ditandatangani | Jangan tampilkan form edit; koreksi lewat `AddendumModal`. Backend menolak semua perubahan. |

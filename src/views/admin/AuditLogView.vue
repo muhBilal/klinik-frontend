@@ -55,6 +55,13 @@ const TIPE = {
   tindakan_bhp: 'BHP standar treatment',
   poli: 'Poli',
   icd10: 'ICD-10',
+  icd9cm: 'ICD-9-CM',
+  template_soap: 'Template SOAP',
+  template_consent: 'Template consent',
+  informed_consent: 'Informed consent',
+  catatan_tindakan: 'Catatan tindakan',
+  catatan_tindakan_titik: 'Titik face chart',
+  pemeriksaan_addendum: 'Addendum rekam medis',
 }
 // Warna badge per kelompok aksi (merah = kegagalan / penghapusan, biru = akses data pasien)
 const warna = (aksi) =>

@@ -12,6 +12,7 @@ tetapi **satu tombol = satu modul**; navbar berisi **halaman milik modul yang di
  │⚗●│  Farmasi   ← modul terpilih (tombol biru); nama modul muncul sebagai tooltip saat hover
  │▭ │  Keuangan
  │⛁ │  Master Data
+ │▤ │  Rekam Medis
  │☰ │  Administrasi
  ╰──╯
 ```
@@ -33,7 +34,8 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 | Pelayanan (`pelayanan`) | Antrian Poli (+ `/pemeriksaan/:id`) |
 | Farmasi (`farmasi`) | Resep, Obat & Stok |
 | Keuangan (`keuangan`) | Kasir |
-| Master Data (`master`) | Poli, Treatment, Kategori Treatment, ICD-10, Cabang |
+| Master Data (`master`) | Poli, Treatment, Kategori Treatment, Cabang |
+| Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
 | Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |
 
 ## Perilaku (`layouts/AppLayout.vue`)
