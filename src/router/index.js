@@ -36,6 +36,7 @@ const routes = [
 
       { path: 'master/poli', name: 'master.poli', component: () => import('@/views/master/PoliView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/tindakan', name: 'master.tindakan', component: () => import('@/views/master/TindakanView.vue'), meta: { izin: ['master.kelola'] } },
+      { path: 'master/kategori-treatment', name: 'master.kategori-treatment', component: () => import('@/views/master/KategoriTindakanView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/icd10', name: 'master.icd10', component: () => import('@/views/master/Icd10View.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/cabang', name: 'master.cabang', component: () => import('@/views/master/CabangView.vue'), meta: { izin: ['cabang.kelola'] } },
       { path: 'master/user', name: 'master.user', component: () => import('@/views/master/UserView.vue'), meta: { izin: ['pengguna.kelola'] } },

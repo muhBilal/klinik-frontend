@@ -33,7 +33,7 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 | Pelayanan (`pelayanan`) | Antrian Poli (+ `/pemeriksaan/:id`) |
 | Farmasi (`farmasi`) | Resep, Obat & Stok |
 | Keuangan (`keuangan`) | Kasir |
-| Master Data (`master`) | Poli, Tindakan, ICD-10, Cabang |
+| Master Data (`master`) | Poli, Treatment, Kategori Treatment, ICD-10, Cabang |
 | Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |
 
 ## Perilaku (`layouts/AppLayout.vue`)

@@ -11,6 +11,7 @@ Konteks untuk AI assistant (dan developer baru) yang akan bekerja di `frontend/`
 | [05-api-contract.md](05-api-contract.md) | Bentuk data dari backend yang diandalkan UI |
 | [06-fitur-fase-0.md](06-fitur-fase-0.md) | UI fitur Fase 0 per fitur: izin, cabang, audit, 2FA & sesi, berkas, pengaturan |
 | [07-navigasi-modul.md](07-navigasi-modul.md) | Navigasi: rail modul (kiri) + tab halaman modul terpilih di header |
+| [08-fitur-fase-1.md](08-fitur-fase-1.md) | UI fitur Fase 1 per fitur (bertambah per modul): katalog treatment |
 
 Kebutuhan produk (PRD) & progres ada di repo backend: `backend/AI-Context/PRD — ...md` dan `backend/AI-Context/07-roadmap-progress.md`.
 Dokumen per fitur (backend + frontend): `backend/AI-Context/modul/`.

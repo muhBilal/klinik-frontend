@@ -89,10 +89,11 @@ function jadikanPrimer(index) {
   form.diagnosas.forEach((d, i) => (d.jenis = i === index ? 'primer' : 'sekunder'))
 }
 
+// Tarif estimasi = harga cabang kunjungan (tarif_cabang); nilai final di-snapshot backend saat disimpan.
 function tambahTindakan(t) {
   const ada = form.tindakans.find((x) => x.tindakan_id === t.id)
   if (ada) ada.jumlah++
-  else form.tindakans.push({ tindakan_id: t.id, nama: t.nama, tarif: t.tarif, jumlah: 1 })
+  else form.tindakans.push({ tindakan_id: t.id, nama: t.nama, tarif: t.tarif_cabang, jumlah: 1 })
 }
 
 function tambahObat(o) {
@@ -300,8 +301,11 @@ onMounted(load)
           <section class="card">
             <div class="card-header"><h2 class="card-title">Tindakan</h2></div>
             <div class="card-body space-y-3">
-              <AsyncSelect v-if="editable" endpoint="/tindakans" :params="{ aktif: 1 }" placeholder="Cari tindakan..." @select="tambahTindakan">
-                <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">· {{ rupiah(item.tarif) }}</span></template>
+              <AsyncSelect v-if="editable" endpoint="/tindakans" :params="{ aktif: 1, cabang_id: kunjungan.cabang_id }" placeholder="Cari tindakan / treatment..." @select="tambahTindakan">
+                <template #default="{ item }">
+                  {{ item.nama }}
+                  <span class="text-xs text-slate-500">· {{ rupiah(item.tarif_cabang) }} · {{ item.durasi_menit }} mnt<template v-if="item.kategori"> · {{ item.kategori.nama }}</template></span>
+                </template>
               </AsyncSelect>
               <div v-if="form.tindakans.length" class="overflow-x-auto rounded-xl border border-line bg-white/30">
                 <table class="table">

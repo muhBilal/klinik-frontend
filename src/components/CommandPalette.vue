@@ -95,13 +95,13 @@ const ACTIONS = [
   },
   {
     id: 'aksi:tindakan-baru',
-    label: 'Tambah Tindakan Medis',
+    label: 'Tambah Treatment / Tindakan',
     category: 'Aksi Cepat',
-    hint: 'Input tarif & jenis tindakan medis baru',
+    hint: 'Treatment baru: kategori, durasi, harga per cabang & BHP standar',
     to: '/master/tindakan?baru=1',
     izin: ['master.kelola'],
     icon: ICON.documentPlus,
-    keywords: ['tambah tindakan', 'tarif baru', 'layanan baru', 'prosedur baru'],
+    keywords: ['tambah tindakan', 'tambah treatment', 'tarif baru', 'layanan baru', 'prosedur baru'],
   },
   {
     id: 'aksi:user-baru',

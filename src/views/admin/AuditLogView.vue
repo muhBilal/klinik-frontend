@@ -49,7 +49,10 @@ const TIPE = {
   cabang: 'Cabang',
   pengaturan: 'Pengaturan',
   obat: 'Obat',
-  tindakan: 'Master tindakan',
+  tindakan: 'Treatment',
+  kategori_tindakan: 'Kategori treatment',
+  tindakan_harga: 'Harga treatment per cabang',
+  tindakan_bhp: 'BHP standar treatment',
   poli: 'Poli',
   icd10: 'ICD-10',
 }

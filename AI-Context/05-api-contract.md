@@ -5,7 +5,7 @@ bentuk data yang **diandalkan** komponen frontend — bila backend mengubahnya, 
 
 ## Umum
 - List paginated Laravel: `{ data: [], current_page, last_page, from, to, total }` → dinormalisasi `useList`.
-- Array biasa: `GET /polis`, `GET /dokters`, `GET /pasiens/{id}/riwayat`.
+- Array biasa: `GET /polis`, `GET /dokters`, `GET /pasiens/{id}/riwayat`, `GET /kategori-tindakans`.
 - Error 422: `{ message, errors: { field: ['pesan'] } }`. Key array memakai dot notation (`resep.0.obat_id`).
 - Uang = integer rupiah. Tanggal `YYYY-MM-DD`; timestamp ISO UTC (`created_at`, `dibayar_at`, ...).
 
@@ -71,6 +71,17 @@ Resep detail juga memuat `cabang` (kop etiket).
 - `GET /pengaturan` → `{ klinik: {...}, struk: {...}, cetak: {...}, penomoran: { prefix_registrasi, prefix_resep, prefix_tagihan }, keamanan: { idle_timeout_menit, wajib_2fa: [kode] } }`; `PUT` payload bentuk sama (parsial), error kunci bertitik (`penomoran.prefix_resep`).
 - `GET /audit-logs` → paginated `{ id, aksi, tipe, subjek_id, pasien_id, label, ip_address, created_at, user: { id, name, email } | null, cabang }`; `GET /audit-logs/{id}` + `perubahan: { kolom: { lama, baru } }`, `user_agent`.
 
+## Treatment (`/tindakans`, F1-01)
+- List: `{ id, kode, nama, kategori_id, durasi_menit, buffer_menit, tarif /* harga dasar */, tarif_cabang, tersedia, is_active,
+  hargas_count, bhps_count, kategori: { id, nama } | null }`. `tarif_cabang`/`tersedia` untuk `?cabang_id=` atau cabang aktif.
+  `aktif=1` menyembunyikan treatment yang tidak dilayani di cabang itu. **Estimasi biaya pemeriksaan memakai `tarif_cabang`**
+  (kirim `cabang_id` kunjungan), bukan `tarif`.
+- Detail/simpan: + `hargas: [{ id, cabang_id, tarif, tersedia, cabang: { id, kode, nama, is_active } }]`,
+  `bhps: [{ id, obat_id, jumlah /* float */, obat: { id, kode, nama, satuan, is_active } }]`.
+- Payload: `{ kode, nama, kategori_id, durasi_menit, buffer_menit, tarif, is_active, hargas: [{ cabang_id, tarif, tersedia }], bhps: [{ obat_id, jumlah }] }`
+  — `hargas`/`bhps` replace-all; error `hargas.N.tarif`, `bhps.N.jumlah` (N = indeks di payload).
+- Kategori: `GET /kategori-tindakans` → `[{ id, nama, deskripsi, is_active, tindakans_count }]`; `?aktif=1` → `[{ id, nama }]`.
+
 ## Obat
 `{ id, kode, nama, satuan, harga, stok, stok_minimum, is_active }`; mutasi: `{ jenis, jumlah (bertanda), stok_akhir, referensi, keterangan, created_at, user }`.
 
@@ -88,3 +99,4 @@ Resep detail juga memuat `cabang` (kop etiket).
 - Peran: kode bebas dari `GET /perans` (bawaan: `admin`, `pendaftaran`, `perawat`, `dokter`, `apoteker`, `kasir`, `terapis`, `manajer`, `marketing`)
 - Kategori berkas: `foto_klinis`, `informed_consent`, `radiologi`, `hasil_penunjang`, `lainnya`
 - Aksi audit: `buat`, `ubah`, `hapus`, `pulihkan`, `lihat`, `akses_berkas`, `unduh_berkas`, `login`, `login_gagal`, `logout`, `ubah_izin`, `ubah_password`, `2fa_*`
+- Jenis data audit baru (F1-01): `kategori_tindakan`, `tindakan_harga`, `tindakan_bhp` (label di `AuditLogView` `TIPE`)
