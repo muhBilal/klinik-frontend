@@ -28,6 +28,22 @@ Perilaku `TindakanView`:
 `PemeriksaanView`: `AsyncSelect` `/tindakans` dengan `{ aktif: 1, cabang_id: kunjungan.cabang_id }` sehingga treatment yang tidak
 dilayani di cabang kunjungan tidak muncul; estimasi biaya memakai `tarif_cabang`; nilai final tetap snapshot backend.
 
+## F1-02 Booking · F1-03 Kasir · F1-04 Inventori — **backend saja, UI belum dibuat**
+
+Backend ketiga modul ini sudah selesai & teruji (lihat `backend/AI-Context/modul/F1-02..04`), tetapi **belum ada halaman
+frontend-nya**. Kontrak API-nya sudah didokumentasikan di [05-api-contract.md](05-api-contract.md) supaya UI bisa menyusul.
+
+Yang perlu dibuat nanti, beserta hal yang mudah salah:
+
+| Modul | Halaman yang dibutuhkan | Catatan penting |
+|-------|------------------------|-----------------|
+| F1-02 Booking | Kalender booking, form booking (pilih treatment → slot), halaman jadwal praktik & cuti, master ruang/alat | Jangan hitung durasi/`selesai_at` di UI — ambil dari `GET /appointments-slot`. Bentrok & luar jam praktik datang sebagai 422 di field `mulai_at` |
+| F1-03 Kasir | Form bayar multi-metode, layar buka/tutup shift + rekap, tombol void & refund, form penjualan produk | `tagihan.kunjungan` bisa **null**; `metode_bayar` null saat split payment. Tombol void/refund hanya untuk `auth.can('kasir.void')` |
+| F1-04 Inventori | Daftar batch per obat, form penerimaan, stok opname, panel batch akan kedaluwarsa, editor pemakaian BHP di pemeriksaan | Input jumlah desimal hanya bila `obat.fraksional`; editor BHP harus dikunci (read-only) bila `stok_dipotong=true` |
+
+Menu & izin yang perlu ditambahkan di `lib/menu.js` + `router/index.js`: `booking.lihat`, `booking.kelola`,
+`jadwal.kelola`, `kasir.shift`, `kasir.void`, `inventori.kelola`.
+
 ## Verifikasi
 
 `npm run build` lulus. Belum ada test otomatis frontend; uji manual dengan akun admin (Master Data → Treatment: buat treatment,
