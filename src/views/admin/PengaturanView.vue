@@ -3,7 +3,6 @@ import { onMounted, ref } from 'vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
-import ThemeSettingsCard from '@/components/ThemeSettingsCard.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { useKlinikStore } from '@/stores/klinik'
@@ -359,8 +358,6 @@ onMounted(load)
         </div>
       </div>
     </div>
-
-    <ThemeSettingsCard class="lg:col-span-2" />
   </form>
   <PageLoading v-else :error="loadError" text="Memuat pengaturan..." @retry="load" />
 </template>
