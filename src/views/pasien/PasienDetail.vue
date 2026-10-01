@@ -1,20 +1,47 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import BookingFormModal from '@/components/booking/BookingFormModal.vue'
 import FilterSelect from '@/components/FilterSelect.vue'
+import FotoKlinisCard from '@/components/foto/FotoKlinisCard.vue'
+import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
+import PaketPasienCard from '@/components/paket/PaketPasienCard.vue'
+import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
+import PersetujuanFotoPanel from '@/components/foto/PersetujuanFotoPanel.vue'
+import PersetujuanDataPanel from '@/components/pasien/PersetujuanDataPanel.vue'
+import ProfilKlinisCard from '@/components/pasien/ProfilKlinisCard.vue'
 import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
 import PasienFormModal from '@/components/PasienFormModal.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useDetail } from '@/composables/useDetail'
+import api, { errorMessage } from '@/lib/api'
 import { PENJAMIN, STATUS_KUNJUNGAN, jenisKelamin, tanggal, toOptions } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
+import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
 const auth = useAuthStore()
+const toast = useToastStore()
 const { data: pasien, error, load } = useDetail(() => `/pasiens/${route.params.id}`)
 const formOpen = ref(false)
+const bookingOpen = ref(false)
+
+// Lookup IHS Number via NIK (PS-05)
+const cekIhs = ref(false)
+async function lookupIhs() {
+  cekIhs.value = true
+  try {
+    const { data } = await api.post(`/pasiens/${pasien.value.id}/satusehat`)
+    pasien.value.ihs_id = data.ihs_id
+    toast.success(`IHS Number: ${data.ihs_id}`)
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    cekIhs.value = false
+  }
+}
 
 // Respons simpan sudah berisi identitas terbaru; riwayat kunjungan tidak berubah -> tidak perlu muat ulang.
 const onSaved = (data) => Object.assign(pasien.value, data)
@@ -30,6 +57,8 @@ const riwayat = computed(() =>
       (!riwayatFilter.penjamin || k.penjamin === riwayatFilter.penjamin),
   ),
 )
+/** Odontogram & rencana perawatan: pasien punya data gigi atau pernah berkunjung ke poli gigi (DG-01/02). */
+const tampilGigi = computed(() => !!pasien.value?.data_gigi || (pasien.value?.kunjungans ?? []).some((k) => k.poli?.spesialisasi === 'gigi'))
 const riwayatDifilter = computed(() => Object.values(riwayatFilter).some(Boolean))
 const resetRiwayat = () => Object.assign(riwayatFilter, { poli: '', status: '', penjamin: '' })
 
@@ -42,15 +71,25 @@ onMounted(load)
       <RouterLink to="/pasien" class="btn btn-secondary">Kembali</RouterLink>
       <RouterLink v-if="auth.can('audit.lihat')" :to="{ path: '/admin/audit', query: { pasien_id: pasien.id } }" class="btn btn-secondary" title="Siapa saja yang mengakses & mengubah data pasien ini">Jejak Akses</RouterLink>
       <button v-if="auth.can('pasien.kelola')" class="btn btn-secondary" @click="formOpen = true">Ubah Data</button>
+      <button v-if="auth.can('booking.kelola')" class="btn btn-secondary" @click="bookingOpen = true">Booking</button>
       <RouterLink v-if="auth.can('kunjungan.daftar')" :to="{ path: '/pendaftaran', query: { pasien_id: pasien.id } }" class="btn btn-primary">Daftarkan Kunjungan</RouterLink>
     </PageHeader>
+    <BookingFormModal v-model="bookingOpen" :preset="{ pasien }" />
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
       <div class="card">
         <div class="card-header"><h2 class="card-title">Identitas Pasien</h2></div>
         <dl class="card-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
           <dt class="text-slate-500">NIK</dt><dd class="tabular-nums">{{ pasien.nik ?? '-' }}</dd>
           <dt class="text-slate-500">No. BPJS</dt><dd class="tabular-nums">{{ pasien.no_bpjs ?? '-' }}</dd>
+          <!-- IHS Number SATUSEHAT (PS-05) -->
+          <dt class="text-slate-500">IHS SATUSEHAT</dt>
+          <dd class="flex flex-wrap items-center gap-2 tabular-nums">
+            {{ pasien.ihs_id ?? '-' }}
+            <button v-if="auth.can('pasien.kelola', 'integrasi.kelola') && pasien.nik" type="button" class="text-xs underline" :disabled="cekIhs" @click="lookupIhs">
+              {{ cekIhs ? 'mengecek…' : pasien.ihs_id ? 'cek ulang' : 'cek via NIK' }}
+            </button>
+          </dd>
           <dt class="text-slate-500">Jenis kelamin</dt><dd>{{ jenisKelamin(pasien.jenis_kelamin) }}</dd>
           <dt class="text-slate-500">TTL</dt><dd>{{ pasien.tempat_lahir ?? '-' }}, {{ tanggal(pasien.tanggal_lahir) }} ({{ pasien.umur }})</dd>
           <dt class="text-slate-500">Gol. darah</dt><dd>{{ pasien.golongan_darah ?? '-' }}</dd>
@@ -59,6 +98,11 @@ onMounted(load)
           <dt class="text-slate-500">Alamat</dt><dd>{{ pasien.alamat ?? '-' }}</dd>
           <dt class="text-slate-500">Alergi</dt><dd :class="pasien.alergi ? 'font-medium text-rose-600' : ''">{{ pasien.alergi ?? 'Tidak ada' }}</dd>
         </dl>
+        <!-- Consent UU PDP (PS-04): pemrosesan data & marketing terpisah -->
+        <div class="border-t border-line px-5 py-4">
+          <p class="mb-2 text-xs font-semibold text-slate-600">Persetujuan data pribadi (UU PDP)</p>
+          <PersetujuanDataPanel :pasien="pasien" />
+        </div>
       </div>
 
       <div class="card lg:col-span-2">
@@ -100,8 +144,25 @@ onMounted(load)
           </table>
         </div>
       </div>
+      <!-- Profil klinis & alergi terstruktur (PS-03) — data klinis, hanya rme.lihat -->
+      <div v-if="auth.can('rme.lihat')" class="lg:col-span-3"><ProfilKlinisCard :pasien="pasien" /></div>
+      <!-- Paket multi-sesi: sisa sesi, jual paket (kasir), perpanjang/alihkan/refund (manajer) -->
+      <div class="lg:col-span-3"><PaketPasienCard :pasien="pasien" /></div>
+      <!-- Kedokteran gigi: odontogram terkini (+ status pada kunjungan sebelumnya) & rencana perawatan -->
+      <template v-if="auth.can('rme.lihat') && tampilGigi">
+        <div class="lg:col-span-3"><OdontogramCard :pasien="pasien" /></div>
+        <div class="lg:col-span-3"><RencanaPerawatanCard :pasien="pasien" /></div>
+      </template>
+      <!-- Foto klinis semua kunjungan + perbandingan before-after (FT-02); tanpa rme.lihat hanya status persetujuan foto -->
       <div v-if="auth.can('rme.lihat')" class="lg:col-span-3">
-        <LampiranBerkas :pasien-id="pasien.id" />
+        <FotoKlinisCard :pasien="pasien" />
+      </div>
+      <div v-else class="card lg:col-span-3">
+        <div class="card-header"><h2 class="card-title">Persetujuan Foto Klinis</h2></div>
+        <div class="card-body"><PersetujuanFotoPanel :pasien="pasien" /></div>
+      </div>
+      <div v-if="auth.can('rme.lihat')" class="lg:col-span-3">
+        <LampiranBerkas :pasien-id="pasien.id" tanpa-foto />
       </div>
     </div>
 

@@ -7,7 +7,7 @@ import PageLoading from '@/components/PageLoading.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage } from '@/lib/api'
-import { jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
+import { angka, jenisKelamin, jumlahResepItem, labelResepItem, rupiah, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
 import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
@@ -19,7 +19,9 @@ const { data: resep, error, load } = useDetail(() => `/reseps/${route.params.id}
 const processing = ref(false)
 
 const lunas = computed(() => resep.value?.kunjungan.tagihan?.status === 'lunas')
-const stokKurang = computed(() => resep.value?.items.some((i) => i.jumlah > i.obat.stok))
+/** Racikan (FR-01): stok yang dicek = komponen × banyaknya racikan. */
+const kurang = (i) => (i.racikan ? i.komponens.some((k) => k.jumlah * i.jumlah > k.obat.stok) : i.jumlah > i.obat.stok)
+const stokKurang = computed(() => resep.value?.items.some(kurang))
 const total = computed(() => resep.value?.items.reduce((s, i) => s + i.harga * i.jumlah, 0) ?? 0)
 
 async function serahkan() {
@@ -79,10 +81,19 @@ onMounted(load)
             <thead><tr><th>Obat</th><th class="text-right">Jumlah</th><th>Aturan pakai</th><th class="text-right">Stok</th><th class="text-right">Subtotal</th></tr></thead>
             <tbody>
               <tr v-for="i in resep.items" :key="i.id">
-                <td>{{ i.obat.nama }}</td>
-                <td class="text-right tabular-nums">{{ i.jumlah }} {{ i.obat.satuan }}</td>
+                <td>
+                  <p :class="{ 'font-medium': i.racikan }">{{ labelResepItem(i) }}</p>
+                  <ul v-if="i.racikan" class="mt-1 space-y-0.5 text-xs text-slate-600">
+                    <li v-for="k in i.komponens" :key="k.id" :class="{ 'font-semibold text-rose-600': k.jumlah * i.jumlah > k.obat.stok && resep.status === 'menunggu' }">
+                      {{ k.obat.nama }} {{ angka(k.jumlah) }} {{ k.obat.satuan }} × {{ i.jumlah }} = {{ angka(k.jumlah * i.jumlah) }} {{ k.obat.satuan }}
+                      <span class="text-slate-400">(stok {{ angka(k.obat.stok) }})</span>
+                    </li>
+                    <li v-if="i.biaya_racik" class="text-slate-400">Biaya racik {{ rupiah(i.biaya_racik) }} / racikan</li>
+                  </ul>
+                </td>
+                <td class="text-right tabular-nums">{{ jumlahResepItem(i) }}</td>
                 <td class="italic">{{ i.aturan_pakai }}</td>
-                <td :class="i.jumlah > i.obat.stok && resep.status === 'menunggu' ? 'font-semibold text-rose-600' : 'text-slate-500'" class="text-right tabular-nums">{{ i.obat.stok }}</td>
+                <td :class="kurang(i) && resep.status === 'menunggu' ? 'font-semibold text-rose-600' : 'text-slate-500'" class="text-right tabular-nums">{{ i.racikan ? (kurang(i) ? 'kurang' : 'cukup') : i.obat.stok }}</td>
                 <td class="text-right tabular-nums">{{ rupiah(i.harga * i.jumlah) }}</td>
               </tr>
             </tbody>
@@ -104,7 +115,7 @@ onMounted(load)
           <p class="mt-1 text-center text-[11px] text-slate-500">{{ resep.no_resep }} · {{ tanggal(resep.created_at) }}</p>
           <hr class="my-2" />
           <p class="font-semibold">{{ resep.kunjungan.pasien.nama }} ({{ resep.kunjungan.pasien.no_rm }})</p>
-          <p>{{ i.obat.nama }} — {{ i.jumlah }} {{ i.obat.satuan }}</p>
+          <p>{{ labelResepItem(i) }} — {{ jumlahResepItem(i) }}</p>
           <p class="mt-2 text-center text-base font-bold">{{ i.aturan_pakai }}</p>
         </div>
       </div>

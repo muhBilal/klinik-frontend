@@ -7,6 +7,7 @@ import AsyncSelect from '@/components/AsyncSelect.vue'
 import FilterSelect from '@/components/FilterSelect.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PasienFormModal from '@/components/PasienFormModal.vue'
+import PersetujuanDataPanel from '@/components/pasien/PersetujuanDataPanel.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useList } from '@/composables/useList'
@@ -144,6 +145,10 @@ onMounted(() => {
               <p v-if="pasien.alergi" class="mt-1 text-xs font-medium text-rose-600">Alergi: {{ pasien.alergi }}</p>
             </div>
             <button type="button" class="btn btn-ghost btn-sm" @click="pasien = null">Ganti</button>
+          </div>
+          <!-- Consent UU PDP (PS-04): bila klinik mewajibkan, pendaftaran ditolak sampai pasien menandatangani -->
+          <div v-if="pasien && !pasienLoading" class="mt-2 rounded-xl border border-line bg-white/40 px-3 py-2">
+            <PersetujuanDataPanel :pasien="pasien" />
           </div>
           <div v-else class="flex gap-2">
             <div class="flex-1">

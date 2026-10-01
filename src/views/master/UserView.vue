@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import MasterCrud from '@/components/MasterCrud.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { cachedGet } from '@/lib/cache'
+import { tanggal } from '@/lib/format'
 
 const polis = ref([])
 const perans = ref([])
@@ -17,6 +18,7 @@ const columns = [
   { key: 'peran', label: 'Peran', format: (v, row) => v?.nama ?? row.role },
   { key: 'cabang', label: 'Cabang', format: (v) => v?.nama ?? 'Semua cabang' },
   { key: 'poli', label: 'Poli', format: (v) => v?.nama ?? '-' },
+  { key: 'sip_berlaku_sampai', label: 'SIP s.d.', format: (v, row) => (row.sip ? (v ? tanggal(v) : 'Tanpa tanggal') : '-') },
   { key: 'two_factor_confirmed_at', label: '2FA', format: (v) => (v ? 'Aktif' : '-') },
   { key: 'is_active', label: 'Status' },
 ]
@@ -34,6 +36,17 @@ const fields = computed(() => [
   },
   { key: 'poli_id', label: 'Poli', type: 'select', required: true, options: polis.value.map((p) => ({ value: p.id, label: p.nama })), show: (f) => peranDokter.value.has(f.role) },
   { key: 'sip', label: 'No. SIP', show: (f) => peranDokter.value.has(f.role) },
+  {
+    key: 'sip_berlaku_sampai',
+    label: 'SIP berlaku sampai',
+    type: 'date',
+    show: (f) => peranDokter.value.has(f.role),
+    hint: 'Dokter tanpa SIP aktif tidak dapat menandatangani rekam medis atau dibooking setelah tanggal ini.',
+  },
+  { key: 'nik', label: 'NIK', placeholder: '16 digit', show: (f) => peranDokter.value.has(f.role), hint: 'Untuk pencarian IHS Practitioner SATUSEHAT.' },
+  // STR (AD-05; UU 17/2023: STR berlaku seumur hidup → tanggal boleh kosong)
+  { key: 'str', label: 'No. STR', show: (f) => peranDokter.value.has(f.role) },
+  { key: 'str_berlaku_sampai', label: 'STR berlaku sampai', type: 'date', show: (f) => peranDokter.value.has(f.role), hint: 'Kosongkan bila STR seumur hidup.' },
   { key: 'is_active', label: 'Akun aktif', type: 'checkbox' },
 ])
 

@@ -1,4 +1,4 @@
-# E-Klinik — Frontend
+# Lefaklinik — Frontend
 
 Antarmuka sistem informasi klinik: Vue 3 SPA dengan Vite, Vue Router, Pinia, Tailwind CSS 4, dan Axios.
 Membutuhkan backend REST API dari repo [klinik-backend](https://github.com/muhBilal/klinik-backend).

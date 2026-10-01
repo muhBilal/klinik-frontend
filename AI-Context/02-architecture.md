@@ -17,6 +17,9 @@ src/
 │   ├── format.js           rupiah, angka, tanggal, waktu, jam, hariIni, jenisKelamin, debounce, ukuranBerkas, konstanta label
 │   │                       (PENJAMIN, METODE_BAYAR, KATEGORI_BERKAS, ...). Label peran TIDAK di sini — dari API (`role_label`, /perans)
 │   ├── menu.js             Konfigurasi menu: MODUL (key, title, description, icon) → item halaman (label, to, izin, icon, match)
+│   ├── foto.js             Foto klinis: proses gambar di browser (resize, thumbnail, EXIF dibuang), unggah, tautan massal (F1-06)
+│   ├── gigi.js             Notasi FDI (BARIS_GIGI, label permukaan, normalPermukaan, formatGigi, namaGigi, FASE_RENCANA) +
+│   │                       referensiGigi() — kode/label/warna kondisi dari GET /odontogram/referensi (F1-07)
 │   └── print.js            printElement(selector, title, { lebar }) — cetak elemen di jendela baru, lebar kertas struk opsional
 ├── stores/
 │   ├── auth.js             token, user, can(...izin), cabangAktif/cabangs/cabang/lintasCabang, setCabang(), perlu2fa,
@@ -24,7 +27,8 @@ src/
 │   ├── klinik.js           info publik GET /info: nama klinik, kontak, catatan kaki & lebar struk — muat() / muat(true)
 │   └── toast.js            success(), error(), info()
 ├── composables/useList.js  State list: items, meta, loading, filters, load(page), reload(), search() (debounce)
-├── components/             Komponen reusable (lihat 04-conventions.md)
+├── components/             Komponen reusable (lihat 04-conventions.md); AppLogo = logo produk (public/favicon.svg);
+│                           subfolder per domain: rme/ (F1-05), foto/ (F1-06), gigi/ (F1-07), paket/ (F1-08)
 └── views/                  Halaman per modul (lihat 03-pages.md)
 ```
 

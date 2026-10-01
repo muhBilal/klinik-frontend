@@ -2,7 +2,8 @@
 /**
  * Halaman CRUD generik untuk master data.
  * columns: [{ key, label, format?(value, row), class? }]
- * fields:  [{ key, label, type, options?, required?, full?, placeholder? }]
+ * fields:  [{ key, label, type, options?, required?, full?, placeholder?, rows?, hint? }] — type `textarea` untuk teks panjang
+ * modalSize: lebar modal form (class max-w-*)
  * Event `changed` setelah data tersimpan/terhapus.
  */
 import { onMounted, reactive, ref } from 'vue'
@@ -27,6 +28,7 @@ const props = defineProps({
   itemLabel: { type: String, default: 'data' },
   /** Prefix cache data referensi yang harus dibuang setelah data berubah (lihat lib/cache.js). */
   invalidates: { type: Array, default: () => [] },
+  modalSize: { type: String, default: 'max-w-lg' },
 })
 
 const emit = defineEmits(['changed'])
@@ -94,6 +96,8 @@ onMounted(() => load())
 
 <template>
   <PageHeader :title="title" :subtitle="subtitle">
+    <!-- Aksi tambahan di header (mis. impor CSV); `reload` memuat ulang daftar -->
+    <slot name="aksi" :reload="reload" />
     <button class="btn btn-primary" @click="buka()">+ Tambah {{ itemLabel }}</button>
   </PageHeader>
 
@@ -132,11 +136,12 @@ onMounted(() => load())
     <AppPagination :meta="meta" @change="load" />
   </div>
 
-  <AppModal v-model="open" :title="`${editing ? 'Ubah' : 'Tambah'} ${itemLabel}`">
+  <AppModal v-model="open" :title="`${editing ? 'Ubah' : 'Tambah'} ${itemLabel}`" :size="modalSize">
     <form id="form-master" class="grid gap-4 sm:grid-cols-2" @submit.prevent="simpan">
       <template v-for="f in fields" :key="f.key">
-        <label v-if="f.type === 'checkbox'" class="flex items-center gap-2 text-sm sm:col-span-2">
-          <input v-model="form[f.key]" type="checkbox" class="accent-brand-600" /> {{ f.label }}
+        <label v-if="f.type === 'checkbox'" class="flex items-start gap-2 text-sm sm:col-span-2">
+          <input v-model="form[f.key]" type="checkbox" class="mt-0.5 accent-brand-600" />
+          <span>{{ f.label }}<span v-if="f.hint" class="block text-xs text-slate-400">{{ f.hint }}</span></span>
         </label>
         <div v-else-if="!f.show || f.show(form)" :class="{ 'sm:col-span-2': f.full }">
           <label class="label">{{ f.label }}{{ f.required && !(f.type === 'password' && editing) ? ' *' : '' }}</label>
@@ -144,6 +149,15 @@ onMounted(() => load())
             <option value="">— Pilih —</option>
             <option v-for="o in f.options" :key="o.value" :value="o.value">{{ o.label }}</option>
           </select>
+          <textarea
+            v-else-if="f.type === 'textarea'"
+            v-model="form[f.key]"
+            :rows="f.rows ?? 4"
+            :placeholder="f.placeholder"
+            :required="f.required"
+            class="input"
+            :class="{ 'input-error': errors[f.key] }"
+          />
           <input
             v-else
             v-model="form[f.key]"
@@ -155,6 +169,7 @@ onMounted(() => load())
             :class="{ 'input-error': errors[f.key] }"
           />
           <p v-if="errors[f.key]" class="field-error">{{ errors[f.key] }}</p>
+          <p v-else-if="f.hint" class="mt-1 text-xs text-slate-400">{{ f.hint }}</p>
         </div>
       </template>
     </form>

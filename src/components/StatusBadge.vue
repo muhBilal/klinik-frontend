@@ -21,7 +21,42 @@ const MAP = {
   belum_bayar: ['Belum Bayar', RED],
   lunas: ['Lunas', GREEN],
   aktif: ['Aktif', GREEN],
+  // Informed consent
+  disetujui: ['Disetujui', GREEN],
+  ditolak: ['Ditolak', RED],
+  dicabut: ['Dicabut', GRAY],
+  // Persetujuan foto
+  berlaku: ['Berlaku', GREEN],
+  diganti: ['Diganti', GRAY],
+  // Paket multi-sesi (status_efektif)
+  menunggu_bayar: ['Menunggu Bayar', VIOLET],
+  habis: ['Habis', GRAY],
+  kedaluwarsa: ['Kedaluwarsa', RED],
+  direfund: ['Direfund', GRAY],
+  dialihkan: ['Dialihkan', GRAY],
+  // Voucher & promo
+  belum_mulai: ['Belum Mulai', INDIGO],
+  berakhir: ['Berakhir', GRAY],
+  kuota_habis: ['Kuota Habis', ORANGE],
+  // Rencana perawatan gigi
+  draf: ['Draf', ORANGE],
+  dibatalkan: ['Dibatalkan', GRAY],
+  rencana: ['Rencana', INDIGO],
   nonaktif: ['Nonaktif', GRAY],
+  // Booking (F1-02)
+  dijadwalkan: ['Dijadwalkan', INDIGO],
+  dikonfirmasi: ['Dikonfirmasi', VIOLET],
+  hadir: ['Hadir', GREEN],
+  tidak_hadir: ['Tidak Hadir', RED],
+  // Integrasi SATUSEHAT
+  terkirim: ['Terkirim', GREEN],
+  gagal: ['Gagal', RED],
+  // WhatsApp
+  wa_antre: ['Antre', ORANGE],
+  wa_terkirim: ['Terkirim', INDIGO],
+  wa_diterima: ['Diterima', VIOLET],
+  wa_dibaca: ['Dibaca', GREEN],
+  wa_gagal: ['Gagal', RED],
 }
 
 const badge = computed(() => MAP[props.status] ?? [props.status, GRAY])

@@ -1,7 +1,10 @@
 <script setup>
 /**
- * Katalog treatment (PRD TR-01): kategori, durasi + buffer, harga dasar, harga per cabang, BHP standar.
+ * Katalog treatment (PRD TR-01): kategori, durasi + buffer, harga dasar, harga per cabang, BHP standar,
+ * serta atribut RME: kode ICD-9-CM default, bentuk catatan tindakan, dan template informed consent wajib (RM-02/03/05).
  * Harga cabang: "dasar" = ikut harga dasar (tidak dikirim), "khusus" = tarif cabang, "tidak" = tidak dilayani di cabang itu.
+ * Ruang & alat wajib (BK-08): booking treatment ini harus memakai salah satu ruang/alat yang dicentang per tipe. Hanya ruang/alat
+ * cabang yang terlihat (cabang aktif) yang dikirim; backend mempertahankan pilihan cabang lain.
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
@@ -16,7 +19,8 @@ import { useList } from '@/composables/useList'
 import { useQueryAction } from '@/composables/useQueryAction'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
-import { OPSI_STATUS_AKTIF, angka, rupiah } from '@/lib/format'
+import { JENIS_CATATAN, OPSI_STATUS_AKTIF, angka, rupiah } from '@/lib/format'
+import { referensiGigi } from '@/lib/gigi'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
@@ -26,15 +30,26 @@ const { items, meta, loading, filters, load, reload, search, isFiltered, reset }
 
 const kategoris = ref([])
 const cabangs = ref([])
+const templateConsents = ref([])
+const protokolFotos = ref([])
+const kondisiGigi = ref([])
+const sumberDayas = ref([])
 const opsiKategori = computed(() => kategoris.value.map((k) => ({ value: k.id, label: `${k.nama}${k.is_active ? '' : ' (nonaktif)'}` })))
 
 // Kategori & cabang dibutuhkan form; form bisa dibuka sebelum mount selesai (?baru=1), jadi ditunggu di buka().
 let referensi = null
 function muatReferensi() {
-  referensi ??= Promise.all([cachedGet('/kategori-tindakans'), cachedGet('/cabangs')])
-    .then(([k, c]) => {
+  referensi ??= Promise.all([
+    cachedGet('/kategori-tindakans'), cachedGet('/cabangs'), cachedGet('/template-consents', { aktif: 1 }), cachedGet('/protokol-fotos', { aktif: 1 }),
+    referensiGigi(), cachedGet('/sumber-dayas', { per_page: 100 }),
+  ])
+    .then(([k, c, t, p, g, sd]) => {
       kategoris.value = k
       cabangs.value = c
+      templateConsents.value = t
+      protokolFotos.value = p
+      kondisiGigi.value = g.daftar
+      sumberDayas.value = sd.data
     })
     .catch((e) => {
       referensi = null
@@ -48,6 +63,19 @@ const MODE_HARGA = [
   ['khusus', 'Harga khusus'],
   ['tidak', 'Tidak dilayani'],
 ]
+
+/** Ruang/alat yang bisa dipilih, dikelompokkan per cabang lalu tipe. */
+const grupSumberDaya = computed(() => {
+  const grup = new Map()
+  for (const sd of sumberDayas.value) {
+    const key = sd.cabang_id
+    if (!grup.has(key)) grup.set(key, { cabang: sd.cabang, items: [] })
+    grup.get(key).items.push(sd)
+  }
+  return [...grup.values()]
+})
+/** Ruang/alat cabang lain yang tersimpan tetapi tidak terlihat dari cabang aktif. */
+const sumberDayaLain = computed(() => (form.sumber_daya_tersimpan ?? []).filter((sd) => !sumberDayas.value.some((x) => x.id === sd.id)))
 
 const durasi = (t) => `${t.durasi_menit} mnt${t.buffer_menit ? ` + ${t.buffer_menit}` : ''}`
 
@@ -104,8 +132,18 @@ async function buka(row = null) {
     buffer_menit: detail?.buffer_menit ?? 0,
     tarif: detail?.tarif ?? 0,
     is_active: detail?.is_active ?? true,
+    icd9cm: detail?.icd9cm ?? null,
+    jenis_catatan: detail?.jenis_catatan ?? 'umum',
+    template_consent_id: detail?.template_consent_id ?? '',
+    template_consent: detail?.template_consent ?? null,
+    protokol_foto_id: detail?.protokol_foto_id ?? '',
+    protokol_foto: detail?.protokol_foto ?? null,
+    per_gigi: detail?.per_gigi ?? false,
+    kondisi_gigi_hasil: detail?.kondisi_gigi_hasil ?? '',
     hargas: gridHarga(detail),
     bhps: (detail?.bhps ?? []).map((b) => ({ obat_id: b.obat_id, kode: b.obat.kode, nama: b.obat.nama, satuan: b.obat.satuan, jumlah: b.jumlah })),
+    sumber_daya_ids: (detail?.sumber_dayas ?? []).map((sd) => sd.id),
+    sumber_daya_tersimpan: detail?.sumber_dayas ?? [],
   })
   formOpen.value = true
 }
@@ -124,8 +162,15 @@ function payload() {
     buffer_menit: form.buffer_menit === '' ? null : form.buffer_menit,
     tarif: form.tarif,
     is_active: form.is_active,
+    icd9cm_id: form.icd9cm?.id ?? null,
+    jenis_catatan: form.jenis_catatan,
+    template_consent_id: form.template_consent_id || null,
+    protokol_foto_id: form.protokol_foto_id || null,
+    per_gigi: form.per_gigi || !!form.kondisi_gigi_hasil,
+    kondisi_gigi_hasil: form.kondisi_gigi_hasil || null,
     hargas: hargaDikirim.value.map((h) => ({ cabang_id: h.cabang_id, tarif: h.mode === 'khusus' ? h.tarif : form.tarif, tersedia: h.mode === 'khusus' })),
     bhps: form.bhps.map(({ obat_id, jumlah }) => ({ obat_id, jumlah })),
+    sumber_daya_ids: form.sumber_daya_ids.filter((id) => sumberDayas.value.some((sd) => sd.id === id)),
   }
 }
 
@@ -198,17 +243,22 @@ onMounted(() => {
             <th v-if="auth.cabang" class="text-right">{{ auth.cabang.nama }}</th>
             <th>Harga cabang</th>
             <th class="text-right">BHP</th>
+            <th class="text-right">Ruang/alat</th>
             <th>Status</th>
             <th />
           </tr>
         </thead>
         <tbody>
-          <TableSkeleton v-if="loading && !items.length" :cols="auth.cabang ? 9 : 8" />
+          <TableSkeleton v-if="loading && !items.length" :cols="auth.cabang ? 10 : 9" />
           <tr v-for="t in items" :key="t.id">
             <td class="tabular-nums text-xs">{{ t.kode }}</td>
             <td>
               <p class="font-medium">{{ t.nama }}</p>
-              <p class="text-xs text-slate-500">{{ t.kategori?.nama ?? 'Tanpa kategori' }}</p>
+              <p class="text-xs text-slate-500">
+                {{ t.kategori?.nama ?? 'Tanpa kategori' }}<template v-if="t.icd9cm"> · ICD-9-CM {{ t.icd9cm.kode }}</template>
+                <span v-if="t.template_consent_id" class="text-amber-700"> · wajib consent</span>
+                <template v-if="t.per_gigi"> · per gigi<template v-if="t.kondisi_gigi_hasil"> → {{ t.kondisi_gigi_hasil }}</template></template>
+              </p>
             </td>
             <td class="whitespace-nowrap tabular-nums text-slate-600" title="Durasi tindakan + buffer sterilisasi/persiapan">{{ durasi(t) }}</td>
             <td class="text-right tabular-nums">{{ rupiah(t.tarif) }}</td>
@@ -218,6 +268,7 @@ onMounted(() => {
             </td>
             <td class="text-slate-600">{{ t.hargas_count ? `${t.hargas_count} cabang khusus` : '-' }}</td>
             <td class="text-right tabular-nums text-slate-600">{{ t.bhps_count ? `${t.bhps_count} bahan` : '-' }}</td>
+            <td class="text-right tabular-nums text-slate-600">{{ t.sumber_dayas_count ? `${t.sumber_dayas_count} wajib` : '-' }}</td>
             <td><StatusBadge :status="t.is_active ? 'aktif' : 'nonaktif'" /></td>
             <td class="text-right whitespace-nowrap">
               <button class="btn btn-ghost btn-sm" :disabled="detailLoading === t.id" @click="buka(t)">
@@ -229,7 +280,7 @@ onMounted(() => {
             </td>
           </tr>
           <tr v-if="!loading && !items.length">
-            <td :colspan="auth.cabang ? 9 : 8" class="py-10 text-center text-slate-400">Belum ada treatment.</td>
+            <td :colspan="auth.cabang ? 10 : 9" class="py-10 text-center text-slate-400">Belum ada treatment.</td>
           </tr>
         </tbody>
       </table>
@@ -282,6 +333,67 @@ onMounted(() => {
         </label>
       </div>
 
+      <!-- Rekam medis: kode tindakan, bentuk catatan, informed consent (RM-02/03/05) -->
+      <section class="space-y-3">
+        <h3 class="text-sm font-semibold text-slate-800">Rekam medis</h3>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label class="label">Kode ICD-9-CM default</label>
+            <div v-if="form.icd9cm" class="flex items-center justify-between gap-2 rounded-2xl bg-white/60 px-3 py-2 text-sm">
+              <span><b class="tabular-nums">{{ form.icd9cm.kode }}</b> {{ form.icd9cm.nama }}</span>
+              <button type="button" class="text-xs text-slate-400 hover:text-slate-700" @click="form.icd9cm = null">ganti</button>
+            </div>
+            <AsyncSelect v-else endpoint="/icd9cms" placeholder="Cari kode / nama tindakan ICD-9-CM..." @select="(icd) => (form.icd9cm = icd)">
+              <template #default="{ item }"><b class="tabular-nums">{{ item.kode }}</b> {{ item.nama }}</template>
+            </AsyncSelect>
+            <p v-if="errors.icd9cm_id" class="field-error">{{ errors.icd9cm_id }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">Disalin ke tindakan kunjungan (bisa diubah dokter); dipakai laporan & SATUSEHAT (Procedure).</p>
+          </div>
+          <div>
+            <label class="label" for="t-jenis-catatan">Bentuk catatan tindakan</label>
+            <select id="t-jenis-catatan" v-model="form.jenis_catatan" class="input">
+              <option v-for="(label, val) in JENIS_CATATAN" :key="val" :value="val">{{ label }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="label" for="t-consent">Informed consent</label>
+            <select id="t-consent" v-model="form.template_consent_id" class="input" :class="{ 'input-error': errors.template_consent_id }">
+              <option value="">— Tidak wajib consent —</option>
+              <option v-for="c in templateConsents" :key="c.id" :value="c.id">Wajib: {{ c.nama }}</option>
+              <option v-if="form.template_consent && !templateConsents.some((c) => c.id === form.template_consent.id)" :value="form.template_consent.id">
+                Wajib: {{ form.template_consent.nama }} (nonaktif)
+              </option>
+            </select>
+            <p v-if="errors.template_consent_id" class="field-error">{{ errors.template_consent_id }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">Wajib = pemeriksaan tidak bisa ditutup sebelum pasien menandatangani consent.</p>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="label" for="t-protokol">Protokol foto klinis</label>
+            <select id="t-protokol" v-model="form.protokol_foto_id" class="input" :class="{ 'input-error': errors.protokol_foto_id }">
+              <option value="">— Tanpa protokol (pilih saat memotret) —</option>
+              <option v-for="p in protokolFotos" :key="p.id" :value="p.id">{{ p.nama }} ({{ p.posisi.length }} posisi)</option>
+              <option v-if="form.protokol_foto && !protokolFotos.some((p) => p.id === form.protokol_foto.id)" :value="form.protokol_foto.id">{{ form.protokol_foto.nama }} (nonaktif)</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-400">Dipakai otomatis saat mengambil foto before-after treatment ini.</p>
+          </div>
+          <!-- Kedokteran gigi (DG-01/07) -->
+          <div class="flex items-start pt-6">
+            <label class="flex items-center gap-2 text-sm">
+              <input v-model="form.per_gigi" type="checkbox" class="accent-brand-600" :disabled="!!form.kondisi_gigi_hasil" />
+              Tindakan per gigi (wajib nomor gigi, ditagih per gigi)
+            </label>
+          </div>
+          <div>
+            <label class="label" for="t-kondisi-gigi">Kondisi gigi setelah tindakan</label>
+            <select id="t-kondisi-gigi" v-model="form.kondisi_gigi_hasil" class="input" :class="{ 'input-error': errors.kondisi_gigi_hasil }">
+              <option value="">— Tidak mengubah odontogram —</option>
+              <option v-for="k in kondisiGigi" :key="k.kode" :value="k.kode">{{ k.kode }} · {{ k.label }}{{ k.cakupan === 'permukaan' ? ' (per permukaan)' : '' }}</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-400">Mis. tambal komposit → <b>cof</b>, cabut → <b>mis</b>. Odontogram diperbarui otomatis saat tindakan dicatat.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Harga per cabang -->
       <section>
         <h3 class="text-sm font-semibold text-slate-800">Harga per cabang</h3>
@@ -319,6 +431,34 @@ onMounted(() => {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <!-- Ruang & alat wajib (BK-08) -->
+      <section class="space-y-2">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-800">Ruang & alat wajib</h3>
+          <p class="text-xs text-slate-500">
+            Booking treatment ini wajib memakai salah satu ruang/alat yang dicentang untuk setiap tipe (mis. salah satu ruang laser
+            <b>dan</b> mesin laser). Tidak dicentang = tidak butuh ruang/alat tertentu.
+          </p>
+        </div>
+        <p v-if="errors.sumber_daya_ids" class="field-error">{{ errors.sumber_daya_ids }}</p>
+        <div v-for="g in grupSumberDaya" :key="g.cabang?.id" class="rounded-xl border border-line bg-white/30 p-3">
+          <p class="mb-2 text-xs font-semibold text-slate-600">{{ g.cabang?.nama }}</p>
+          <div class="flex flex-wrap gap-2">
+            <label v-for="sd in g.items" :key="sd.id" class="choice cursor-pointer px-3 py-1.5 text-sm" :class="{ 'choice-active': form.sumber_daya_ids?.includes(sd.id) }">
+              <input v-model="form.sumber_daya_ids" type="checkbox" class="sr-only" :value="sd.id" />
+              <span class="text-xs text-slate-400">{{ sd.tipe === 'alat' ? 'Alat' : 'Ruang' }}</span> {{ sd.nama }}
+              <span v-if="!sd.is_active" class="text-xs text-slate-400">(nonaktif)</span>
+            </label>
+          </div>
+        </div>
+        <p v-if="!grupSumberDaya.length" class="text-xs text-slate-400">
+          Belum ada ruang/alat di cabang ini. Tambahkan di <RouterLink to="/master/ruang-alat" class="underline">Ruang & Alat</RouterLink>.
+        </p>
+        <p v-if="sumberDayaLain.length" class="text-xs text-slate-500">
+          Juga wajib di cabang lain: {{ sumberDayaLain.map((sd) => `${sd.nama} (${sd.cabang?.nama})`).join(', ') }} — tidak diubah dari sini.
+        </p>
       </section>
 
       <!-- BHP standar -->

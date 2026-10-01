@@ -4,6 +4,7 @@ import { computed, reactive, ref } from 'vue'
 import AppIcon from '@/components/AppIcon.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import ThemeSettingsCard from '@/components/ThemeSettingsCard.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { toSquareDataUrl } from '@/lib/image'
@@ -333,5 +334,7 @@ async function salinKode() {
         </template>
       </div>
     </div>
+
+    <ThemeSettingsCard class="lg:col-span-2" />
   </div>
 </template>

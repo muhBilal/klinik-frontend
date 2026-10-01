@@ -34,14 +34,33 @@
 | Komponen | Props / Event | Catatan |
 |----------|---------------|---------|
 | `AppModal` | `v-model`, `title`, `size` (`max-w-lg`), slot default + `#footer` | Teleport ke body, Esc & klik backdrop menutup. Tombol submit di footer pakai `form="id-form"`. |
-| `AsyncSelect` | `endpoint`, `params`, `placeholder`, `@select`, slot `#default="{ item }"` | Autocomplete ke endpoint index (`q`, `per_page=10`), navigasi keyboard, input dikosongkan setelah pilih. |
+| `AsyncSelect` | `endpoint`, `params`, `placeholder`, `@select`, slot `#default="{ item }"` | Autocomplete ke endpoint index (`q`, `per_page=10`), navigasi keyboard, input dikosongkan setelah pilih. Enter tidak pernah mengirim form induk. |
 | `AppPagination` | `meta`, `@change(page)` | Memakai meta dari `useList`. |
 | `StatusBadge` | `status` | Map warna/label untuk semua status kunjungan/resep/tagihan + `aktif`/`nonaktif`. Tambah status baru di sini. |
 | `PageHeader` | `title`, `subtitle`, slot aksi | |
-| `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, `invalidates`, slot `#cell-{key}`, event `changed` | CRUD generik untuk master (endpoint paginated atau array). `fields[].type`: text/number/email/password/time/select/checkbox (tipe lain diteruskan ke `<input type>`); `options`, `required`, `full`, `show(form)`, `placeholder`. Password kosong saat edit = tidak diubah. |
+| `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, `invalidates`, `modalSize`, slot `#cell-{key}`, event `changed` | CRUD generik untuk master (endpoint paginated atau array). `fields[].type`: text/number/email/password/time/select/checkbox/**textarea** (tipe lain diteruskan ke `<input type>`); `options`, `required`, `full`, `show(form)`, `placeholder`, `rows`, `hint` (teks bantuan). Password kosong saat edit = tidak diubah. Checkbox baru default `true` kecuali diberi `defaults`. |
 | `LampiranBerkas` | `pasienId`, `kunjunganId?`, `readonly` | Lampiran klinis terenkripsi: daftar (rme.lihat), unggah & hapus (berkas.kelola), "Lihat" meminta tautan bertanda tangan (tercatat audit) → pratinjau gambar di modal / PDF di tab baru. |
 | `PasienFormModal` | `v-model`, `pasien` (null = baru), `@saved(pasien)` | Dipakai di list pasien, detail, dan pendaftaran. |
-| `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan, resep. |
+| `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan (+ ICD-9-CM, petugas, catatan), consent (klik = lihat), resep, tanda tangan, addendum. `rme_disembunyikan` → pesan 🔒 saja. |
+| `SignaturePad` | `v-model` (PNG data URL), `label`, `disabled`, `invalid`; expose `hapus()` | Tanda tangan jari/stylus di tablet. |
+| `rme/FaceChart` | `v-model` (titik), `v-model:terpilih`, `readonly`, `@tambah({x,y,area})` | Diagram wajah; titik relatif 0..1. |
+| `rme/CatatanTindakanModal` | `v-model`, `kunjunganTindakanId`, `editable`, `@saved` | Catatan, face chart, parameter alat, BHP. |
+| `rme/ConsentFormModal` / `rme/ConsentLihatModal` | `kunjungan`, `tindakan` / `uuid`, `bisaCabut` | Ambil consent (naskah backend + tanda tangan) / lihat, cetak, cabut. |
+| `foto/FotoKlinisCard` | `pasien`, `kunjunganId?`, `tindakans`, `bisaAmbil`; expose `ambil(tindakan?)` | Persetujuan foto + kamera + galeri (F1-06). |
+| `foto/GaleriFoto`, `foto/BandingFoto`, `foto/KameraFoto`, `foto/PersetujuanFotoPanel` | lihat `08-fitur-fase-1.md` | Galeri & before-after, kamera terpandu, consent foto. |
+| `pasien/ProfilKlinisCard` | `pasien`, `ringkas`; expose `muat()`, `peringatan`, `obatAlergi`; `@changed` | Profil klinis & alergi + peringatan (PS-03); `ringkas` = baris peringatan di header pemeriksaan. |
+| `pasien/PersetujuanDataPanel` | `pasien`; expose `muat()`; `@changed({pemrosesan, marketing})` | Consent UU PDP (PS-04): status, tanda tangan, cabut, riwayat, cetak. |
+| `rme/RacikanModal` | `v-model`, `racikan` (null = baru); `@saved(racikan)` | Resep racikan (FR-01): nama, bentuk, isi, banyaknya, komponen per racikan. |
+| `ImporMasterButton` | `jenis` (icd10/icd9cm/obat); `@selesai` | Impor CSV master + modal hasil (AD-10). Di `MasterCrud` lewat slot `#aksi="{ reload }"`. |
+| `KopDokumen` / `KakiDokumen` | `cabang` | Kop & kaki dokumen cetak dari pengaturan `dokumen.*` (AD-04). |
+| `booking/BookingFormModal` | `v-model`, `appointment` (null = baru), `preset` ({ pasien, petugas_id, tanggal, jam }), `@saved(appointment)` | Booking baru/reschedule: treatment, petugas, ruang/alat wajib (BK-08), slot kosong dari `/appointments-slot`. |
+| `paket/PaketPasienCard` | `pasien`, `ringkas`; expose `muatUlang()`, `@changed` | Paket pasien: sisa per treatment (bar), riwayat pemakaian, jual, perpanjang/alihkan/refund sisa. `ringkas` = hanya paket aktif, tanpa aksi, tersembunyi bila kosong. |
+| `paket/JualPaketModal` | `v-model`, `pasien?` (null = pilih pasien) | Pilih paket katalog → tagihan → `/kasir/{tagihan_id}`. |
+| `gigi/OdontogramCard` | `pasien`, `kunjunganId?`, `editable`, `bisaTambahTindakan`, `@tambah-tindakan({gigi, permukaan})`; expose `muatUlang()` | Odontogram + panel gigi terpilih + perubahan kunjungan / riwayat (F1-07). |
+| `gigi/OdontogramChart` | `kondisis`, `peta`, `terpilih`, `tampilSulung`, `@pilih({gigi, permukaan})` | Gambar SVG FDI; `g[data-gigi]`, `polygon[data-permukaan]`. |
+| `gigi/PilihGigi` | `v-model:gigi`, `v-model:permukaan`, `tanpaPermukaan`, `disabled`, `invalid`, `idInput` | Select nomor gigi (grup kuadran) + tombol M/O/D/B/L. |
+| `gigi/RencanaPerawatanCard` / `gigi/RencanaPerawatanModal` | `pasien`, `kunjungan?`, `bisaKerjakan`, `itemDipakai`, `gigiAwal`, `@kerjakan(item)` | Rencana perawatan gigi + persetujuan, revisi, batal, cetak estimasi / form susun rencana. |
+| `rme/AddendumModal`, `rme/TemplateSoapModal` | `kunjunganId` / `poliId`, `tindakanIds`, `@terapkan({template, mode})` | Addendum RME; pilih template SOAP. |
 | `ToastHost`, `AppIcon` | — / `path`, `size` | Ikon = path SVG heroicons outline. |
 | `AppSpinner` | `size` (`size-4`) | Spinner warna `currentColor`; di tombol taruh sebelum teks. |
 | `PageLoading` | `error`, `text`, `@retry` | Placeholder halaman detail (spinner / pesan error + coba lagi). |
@@ -55,6 +74,21 @@
 - Jangan membandingkan `auth.user.role` — peran kustom bisa dibuat admin.
 - Label peran dari API (`user.role_label`, `GET /perans`), bukan konstanta di frontend.
 - Konten rekam medis (SOAP, diagnosa, lampiran) hanya untuk `can('rme.lihat')`; backend tidak mengirimnya ke peran lain.
+
+## Logo produk
+
+- **Sumber tunggal: `public/favicon.svg`** — huruf K bersudut biru (12 faset), latar transparan, digambar ulang sebagai vektor dari
+  gambar logo yang diberikan user (1 Okt 2026). Ganti file ini untuk mengganti logo di mana pun.
+- Pakai komponen **`<AppLogo class="size-11" />`** (`components/AppLogo.vue`, `<img>` ke favicon.svg) — jangan menyalin SVG ke template.
+  Dipakai di header `AppLayout`, drawer mobile, dan `LoginView` (di panel biru diberi alas putih `bg-white rounded-2xl` agar kontras).
+- Ikon turunan dibuat dari favicon.svg dengan **`npm run ikon`** (`scripts/buat-ikon.mjs`, Chrome headless lewat `playwright-core`;
+  set `CHROME_PATH` bila Chrome tidak di lokasi default Windows): `favicon.ico` (16/32/48, juga disalin ke `backend/public/`),
+  `icon-192.png`, `icon-512.png` (manifest), `apple-touch-icon.png` (180 px, latar putih). Jalankan ulang setiap logo berubah.
+- `index.html` memuat favicon SVG + ICO, apple-touch-icon, `site.webmanifest` (nama "lefaklinik", `theme_color` #0567B5), `<title>` "Lefaklinik".
+- **Nama produk: lefaklinik** (sejak 1 Okt 2026, sebelumnya e-klinik). Wordmark di header & drawer `AppLayout`: `<b>lefa</b>` tebal +
+  `klinik` tipis, ditulis huruf kecil; di kalimat/judul ditulis "Lefaklinik". Nama teknis tetap `eklinik` (folder, database, container,
+  `config/eklinik.php`, email demo `@eklinik.test`, kunci `localStorage`) — jangan diganti tanpa migrasi data.
+- Logo = identitas **produk**. Kop dokumen cetak (struk, tiket, etiket, consent) tetap memakai identitas **klinik** dari pengaturan.
 
 ## Identitas klinik & cetak
 
@@ -89,3 +123,13 @@
 | `window.open` setelah `await` | Diblokir popup blocker; buka jendela kosong dulu lalu isi `location` (lihat `LampiranBerkas.buka`). |
 | CORS error | Pastikan origin (mis. `http://localhost:5173`) ada di `FRONTEND_URL` backend. |
 | Token di `localStorage` | Trade-off kesederhanaan vs risiko XSS. Jangan pernah render HTML dari data user (`v-html`). |
+| `<option :value="null">` | Vue tidak menulis atribut `value`, jadi `select.value` DOM = teks opsinya. Cek pilihan lewat `v-model`/`selectedIndex`, bukan `select.value` (penting untuk skrip E2E). |
+| Naskah consent / tanda tangan | Jangan merakit naskah di frontend — tampilkan `isi` dari `pratinjau` (backend me-render ulang & menyimpan snapshot). Detail consent (`/informed-consents/{uuid}`) tercatat audit tiap dibuka: minta saat modal dibuka, jangan prefetch. |
+| Foto klinis dari `<input type=file>` | Selalu lewat `siapkanFoto()` (`lib/foto.js`) agar EXIF/GPS terbuang & thumbnail terbentuk; jangan unggah berkas mentah ke kategori `foto_klinis`. |
+| Tautan foto & audit | Setiap tautan (termasuk thumbnail) tercatat audit — minta untuk foto yang tampil saja, jangan prefetch seluruh riwayat. |
+| Pemeriksaan yang sudah ditandatangani | Jangan tampilkan form edit; koreksi lewat `AddendumModal`. Backend menolak semua perubahan. |
+| Grid halaman (`grid lg:grid-cols-3`) melebar di mobile karena tabel | Tanpa `grid-cols-*` di mobile kolomnya `auto` → min-content tabel (riwayat, struk) melebarkan halaman. Tulis `grid grid-cols-1 gap-5 lg:grid-cols-…` (minmax(0,1fr)) + bungkus tabel `overflow-x-auto`. Ukur `scrollWidth` **setelah** transisi halaman selesai (±1,5 dtk). |
+| Prettier | Repo **tidak** punya konfigurasi Prettier; `npx prettier --write` memakai default (titik koma, kutip ganda, 80 kolom) dan merusak gaya. Jangan dijalankan. |
+| Konten lebar di dalam kolom grid (mis. SVG odontogram `min-w-[640px]`) | Item grid punya `min-width: auto` → seluruh halaman mobile ikut melebar. Bungkus dengan `overflow-x-auto [contain:inline-size]` (lihat `OdontogramCard`) agar hanya pembungkusnya yang bisa digeser. Cek `document.documentElement.scrollWidth` = lebar viewport di E2E. |
+| Baris tindakan pemeriksaan | `:key="t._key"` (bukan `tindakan_id`): tindakan yang sama boleh beberapa baris (beda gigi). Tindakan per gigi selalu baris baru; yang lain tetap digabung (`jumlah++`). |
+| Kode / warna kondisi gigi | Jangan disalin ke frontend — `referensiGigi()` (`lib/gigi.js`). Gambar odontogram hanya menerima `peta` dari situ. |

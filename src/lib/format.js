@@ -53,7 +53,102 @@ export const STATUS_KUNJUNGAN = {
   batal: 'Batal',
 }
 
+/** Status booking (enum StatusAppointment backend, F1-02). */
+export const STATUS_APPOINTMENT = {
+  dijadwalkan: 'Dijadwalkan',
+  dikonfirmasi: 'Dikonfirmasi',
+  hadir: 'Hadir',
+  batal: 'Batal',
+  tidak_hadir: 'Tidak hadir',
+}
+
+/** Nama hari, indeks mengikuti `Date.getDay()` / `Carbon::dayOfWeek` (0 = Minggu). */
+export const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+
+/** Tanggal lokal `Date` → "YYYY-MM-DD". */
+export function isoTanggal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** "YYYY-MM-DD" + n hari → "YYYY-MM-DD" (zona waktu lokal). */
+export function tambahHari(iso, n) {
+  const d = new Date(`${iso}T00:00:00`)
+  d.setDate(d.getDate() + n)
+  return isoTanggal(d)
+}
+
+/** Label baris resep: nama obat, atau "Racikan X (krim 30 g)" (FR-01). */
+export function labelResepItem(i) {
+  if (!i.racikan) return i.obat?.nama ?? '-'
+  const isi = i.jumlah_racikan ? ` ${angka(i.jumlah_racikan)} ${i.satuan_racikan ?? ''}`.trimEnd() : ''
+  return `Racikan ${i.nama_racikan} (${i.bentuk}${isi})`
+}
+
+/** Jumlah baris resep untuk etiket/daftar: "10 tablet" atau "2 racikan". */
+export function jumlahResepItem(i) {
+  return i.racikan ? `${i.jumlah} racikan` : `${i.jumlah} ${i.obat?.satuan ?? ''}`.trimEnd()
+}
+
 export const JENIS_MUTASI = { masuk: 'Masuk', keluar: 'Keluar', penyesuaian: 'Stok opname' }
+
+/** Bentuk catatan tindakan per treatment (enum JenisCatatanTindakan backend). */
+export const JENIS_CATATAN = { umum: 'Catatan umum', injeksi: 'Face chart injeksi', energi: 'Parameter laser / energy device' }
+
+/** Reaksi kulit setelah tindakan energy device (CatatanTindakan::PARAMETER backend). */
+export const REAKSI_KULIT = {
+  tidak_ada: 'Tidak ada',
+  eritema_ringan: 'Eritema ringan',
+  eritema_sedang: 'Eritema sedang',
+  eritema_berat: 'Eritema berat',
+  edema: 'Edema',
+  purpura: 'Purpura',
+  lepuh: 'Lepuh (blister)',
+  hiperpigmentasi: 'Hiperpigmentasi',
+  lainnya: 'Lainnya',
+}
+
+/** Parameter energy device: [key, label, satuan, step]. Urutan = urutan tampil di form. */
+export const PARAMETER_ALAT = [
+  ['panjang_gelombang_nm', 'Panjang gelombang', 'nm', '1'],
+  ['fluence_j_cm2', 'Fluence', 'J/cm²', '0.01'],
+  ['spot_size_mm', 'Spot size', 'mm', '0.1'],
+  ['durasi_pulsa_ms', 'Durasi pulsa', 'ms', '0.01'],
+  ['frekuensi_hz', 'Frekuensi', 'Hz', '0.1'],
+  ['energi_total_j', 'Energi total', 'J', '0.1'],
+  ['jumlah_shot', 'Jumlah shot', 'shot', '1'],
+  ['jumlah_pass', 'Jumlah pass', 'pass', '1'],
+]
+
+/** Hubungan penanda tangan informed consent dengan pasien (enum HubunganPenandatangan). */
+export const HUBUNGAN_PENANDATANGAN = {
+  pasien: 'Pasien sendiri',
+  orang_tua: 'Orang tua',
+  suami_istri: 'Suami / istri',
+  anak: 'Anak',
+  saudara: 'Saudara kandung',
+  wali: 'Wali',
+}
+
+/** Tahap foto klinis relatif terhadap tindakan (enum TahapFoto). */
+export const TAHAP_FOTO = { sebelum: 'Sebelum', sesudah: 'Sesudah', kontrol: 'Kontrol' }
+
+/** Tingkat persetujuan foto (enum TingkatPersetujuanFoto) — bertingkat: yang lebih tinggi mencakup yang di bawahnya. */
+export const TINGKAT_FOTO = { klinis: 'Klinis saja', edukasi: 'Klinis & edukasi', marketing: 'Klinis, edukasi & marketing' }
+
+/** Spesialisasi poli (enum Spesialisasi) — `gigi` menampilkan odontogram & rencana perawatan di pemeriksaan. */
+export const SPESIALISASI = { umum: 'Umum', gigi: 'Kedokteran gigi', kulit: 'Dermatologi & venereologi', estetika: 'Estetika medis', lainnya: 'Lainnya' }
+
+/** Bagian rekam medis yang dikoreksi lewat addendum (enum BagianAddendum). */
+export const BAGIAN_ADDENDUM = {
+  subjektif: 'Subjektif',
+  objektif: 'Objektif',
+  asesmen: 'Asesmen',
+  plan: 'Plan',
+  diagnosa: 'Diagnosa',
+  tindakan: 'Tindakan',
+  resep: 'Resep',
+  lainnya: 'Lainnya',
+}
 
 export const SATUAN_OBAT = ['tablet', 'kapsul', 'botol', 'tube', 'sachet', 'ampul', 'vial', 'pcs']
 

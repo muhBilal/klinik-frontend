@@ -18,6 +18,8 @@ const props = defineProps({
   /** Diisi = lampiran kunjungan ini saja (unggahan baru ikut terikat ke kunjungan). Kosong = semua lampiran pasien. */
   kunjunganId: { type: Number, default: null },
   readonly: { type: Boolean, default: false },
+  /** Sembunyikan foto klinis (ditampilkan kartu Foto Klinis tersendiri, F1-06). */
+  tanpaFoto: { type: Boolean, default: false },
 })
 
 const auth = useAuthStore()
@@ -26,14 +28,15 @@ const toast = useToastStore()
 const bisaKelola = computed(() => !props.readonly && auth.can('berkas.kelola'))
 const items = ref([])
 const loading = ref(false)
-const form = reactive({ file: null, kategori: 'foto_klinis', keterangan: '' })
+const form = reactive({ file: null, kategori: props.tanpaFoto ? 'hasil_penunjang' : 'foto_klinis', keterangan: '' })
 const errors = ref({})
 const uploading = ref(false)
 const inputFile = ref(null)
 const preview = ref(null)
 const membuka = ref(null)
 const menghapus = ref(null)
-const kategoriOptions = toOptions(KATEGORI_BERKAS)
+const kategoriOptions = toOptions(KATEGORI_BERKAS).filter((o) => !props.tanpaFoto || o.value !== 'foto_klinis')
+const daftar = computed(() => (props.tanpaFoto ? items.value.filter((b) => b.kategori !== 'foto_klinis') : items.value))
 
 async function load() {
   loading.value = true
@@ -114,7 +117,7 @@ watch(() => [props.pasienId, props.kunjunganId], load)
 <template>
   <div class="card">
     <div class="card-header">
-      <h2 class="card-title">Lampiran & Foto Klinis</h2>
+      <h2 class="card-title">{{ tanpaFoto ? 'Lampiran' : 'Lampiran & Foto Klinis' }}</h2>
       <AppSpinner v-if="loading" class="text-slate-400" />
     </div>
     <div class="card-body space-y-4">
@@ -141,8 +144,8 @@ watch(() => [props.pasienId, props.kunjunganId], load)
         </button>
       </form>
 
-      <ul v-if="items.length" class="divide-y divide-line">
-        <li v-for="b in items" :key="b.uuid" class="flex flex-wrap items-center gap-3 py-2.5 text-sm">
+      <ul v-if="daftar.length" class="divide-y divide-line">
+        <li v-for="b in daftar" :key="b.uuid" class="flex flex-wrap items-center gap-3 py-2.5 text-sm">
           <span class="chip">{{ KATEGORI_BERKAS[b.kategori] ?? b.kategori }}</span>
           <div class="min-w-0 flex-1">
             <p class="truncate font-medium text-slate-800">{{ b.nama_file }}</p>

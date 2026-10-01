@@ -1,6 +1,6 @@
 <script setup>
 /**
- * Global Search / Algolia DocSearch Modal untuk E-Klinik.
+ * Global Search / Algolia DocSearch Modal untuk Lefaklinik.
  * Mendukung shortcut Ctrl/⌘+K, Alt+K, atau '/' dari mana saja.
  * Fitur:
  * - Algolia fuzzy matching & typo tolerance (Damerau-Levenshtein)
@@ -73,6 +73,16 @@ const ACTIONS = [
     izin: ['kunjungan.daftar'],
     icon: ICON.clipboard,
     keywords: ['kunjungan baru', 'daftar poli', 'antrian baru', 'tiket kunjungan'],
+  },
+  {
+    id: 'aksi:booking-baru',
+    label: 'Booking Baru',
+    category: 'Aksi Cepat',
+    hint: 'Buat booking pasien: treatment, dokter/terapis, ruang & slot kosong',
+    to: '/booking/kalender?baru=1',
+    izin: ['booking.kelola'],
+    icon: ICON.clock,
+    keywords: ['booking', 'janji temu', 'reservasi', 'appointment', 'jadwalkan'],
   },
   {
     id: 'aksi:obat-baru',
