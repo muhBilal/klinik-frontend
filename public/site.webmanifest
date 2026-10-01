@@ -1,6 +1,6 @@
 {
-  "name": "e-klinik",
-  "short_name": "e-klinik",
+  "name": "lefaklinik",
+  "short_name": "lefaklinik",
   "description": "Sistem manajemen klinik estetika",
   "start_url": "/",
   "display": "standalone",

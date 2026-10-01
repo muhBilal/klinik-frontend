@@ -1,6 +1,6 @@
 <script setup>
 /**
- * Logo e-klinik (huruf K bersudut, latar transparan). Sumber tunggal: `public/favicon.svg` — ganti file itu untuk
+ * Logo lefaklinik (huruf K bersudut, latar transparan). Sumber tunggal: `public/favicon.svg` — ganti file itu untuk
  * mengganti logo di seluruh aplikasi (favicon, header, login, drawer). Ikon PNG/ICO dibuat dari file yang sama
  * (lihat `frontend/AI-Context/04-conventions.md` bagian Logo).
  */

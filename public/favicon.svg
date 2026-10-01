@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 680" role="img" aria-label="e-klinik">
-  <!-- Logo e-klinik: huruf K bersudut (batang tegak + dua lengan), latar transparan. Sumber tunggal logo aplikasi. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 680" role="img" aria-label="lefaklinik">
+  <!-- Logo lefaklinik: huruf K bersudut (batang tegak + dua lengan), latar transparan. Sumber tunggal logo aplikasi. -->
   <g stroke-linejoin="round">
     <!-- Batang tegak -->
     <polygon points="71,31 133,89 133,589 71,649" fill="#0D99DB" stroke="#0D99DB" stroke-width="2" />

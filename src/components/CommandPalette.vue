@@ -1,6 +1,6 @@
 <script setup>
 /**
- * Global Search / Algolia DocSearch Modal untuk E-Klinik.
+ * Global Search / Algolia DocSearch Modal untuk Lefaklinik.
  * Mendukung shortcut Ctrl/⌘+K, Alt+K, atau '/' dari mana saja.
  * Fitur:
  * - Algolia fuzzy matching & typo tolerance (Damerau-Levenshtein)

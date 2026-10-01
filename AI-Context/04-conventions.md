@@ -78,7 +78,10 @@
 - Ikon turunan dibuat dari favicon.svg dengan **`npm run ikon`** (`scripts/buat-ikon.mjs`, Chrome headless lewat `playwright-core`;
   set `CHROME_PATH` bila Chrome tidak di lokasi default Windows): `favicon.ico` (16/32/48, juga disalin ke `backend/public/`),
   `icon-192.png`, `icon-512.png` (manifest), `apple-touch-icon.png` (180 px, latar putih). Jalankan ulang setiap logo berubah.
-- `index.html` memuat favicon SVG + ICO, apple-touch-icon, `site.webmanifest` (nama "e-klinik", `theme_color` #0567B5).
+- `index.html` memuat favicon SVG + ICO, apple-touch-icon, `site.webmanifest` (nama "lefaklinik", `theme_color` #0567B5), `<title>` "Lefaklinik".
+- **Nama produk: lefaklinik** (sejak 1 Okt 2026, sebelumnya e-klinik). Wordmark di header & drawer `AppLayout`: `<b>lefa</b>` tebal +
+  `klinik` tipis, ditulis huruf kecil; di kalimat/judul ditulis "Lefaklinik". Nama teknis tetap `eklinik` (folder, database, container,
+  `config/eklinik.php`, email demo `@eklinik.test`, kunci `localStorage`) — jangan diganti tanpa migrasi data.
 - Logo = identitas **produk**. Kop dokumen cetak (struk, tiket, etiket, consent) tetap memakai identitas **klinik** dari pengaturan.
 
 ## Identitas klinik & cetak

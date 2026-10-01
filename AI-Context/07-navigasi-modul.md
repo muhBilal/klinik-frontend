@@ -4,7 +4,7 @@ Navigasi dua tingkat (sejak 30 Sep 2026). Rail kiri tetap bergaya lama (pil kaca
 tetapi **satu tombol = satu modul**; navbar berisi **halaman milik modul yang dipilih**.
 
 ```
- [K] e-klinik              Resep  [Obat & Stok]              Cari…  Admin (A) ⏻     ← header: logo · tab halaman modul · alat
+ [K] lefaklinik           Resep  [Obat & Stok]              Cari…  Admin (A) ⏻     ← header: logo · tab halaman modul · alat
  ╭──╮
  │⌂ │  Beranda
  │♙ │  Pendaftaran            <RouterView />
