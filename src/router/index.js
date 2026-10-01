@@ -8,7 +8,8 @@ import AppLayout from '@/layouts/AppLayout.vue'
  * `meta.izin` = halaman boleh dibuka bila user punya SALAH SATU izin (samakan dengan middleware `izin:` backend
  * dan `izin` item di lib/menu.js). Tanpa `meta.izin` = semua user login.
  */
-const PEMERIKSAAN = ['pemeriksaan.panggil', 'pemeriksaan.vital', 'pemeriksaan.dokter']
+// rme.tindakan: perawat/terapis yang hanya mencatat tindakan & sesi paket (tanpa tanda vital) tetap bisa membuka antrian & pemeriksaan
+const PEMERIKSAAN = ['pemeriksaan.panggil', 'pemeriksaan.vital', 'pemeriksaan.dokter', 'rme.tindakan']
 
 const routes = [
   { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { guest: true } },
@@ -25,7 +26,7 @@ const routes = [
       { path: 'kunjungan/:id', name: 'kunjungan.detail', component: () => import('@/views/KunjunganDetail.vue') },
 
       { path: 'antrian', name: 'antrian', component: () => import('@/views/pemeriksaan/AntrianView.vue'), meta: { izin: PEMERIKSAAN } },
-      { path: 'pemeriksaan/:id', name: 'pemeriksaan', component: () => import('@/views/pemeriksaan/PemeriksaanView.vue'), meta: { izin: ['pemeriksaan.vital', 'pemeriksaan.dokter'] } },
+      { path: 'pemeriksaan/:id', name: 'pemeriksaan', component: () => import('@/views/pemeriksaan/PemeriksaanView.vue'), meta: { izin: ['pemeriksaan.vital', 'pemeriksaan.dokter', 'rme.tindakan'] } },
 
       { path: 'farmasi/resep', name: 'resep', component: () => import('@/views/farmasi/ResepList.vue'), meta: { izin: ['farmasi.resep'] } },
       { path: 'farmasi/resep/:id', name: 'resep.detail', component: () => import('@/views/farmasi/ResepDetail.vue'), meta: { izin: ['farmasi.resep'] } },
@@ -33,6 +34,8 @@ const routes = [
 
       { path: 'kasir', name: 'kasir', component: () => import('@/views/kasir/TagihanList.vue'), meta: { izin: ['kasir.tagihan'] } },
       { path: 'kasir/:id', name: 'kasir.detail', component: () => import('@/views/kasir/TagihanDetail.vue'), meta: { izin: ['kasir.tagihan'] } },
+      { path: 'laporan/penjualan', name: 'laporan.penjualan', component: () => import('@/views/laporan/LaporanPenjualanView.vue'), meta: { izin: ['laporan.keuangan'] } },
+      { path: 'laporan/paket', name: 'laporan.paket', component: () => import('@/views/laporan/LaporanPaketView.vue'), meta: { izin: ['laporan.keuangan'] } },
       { path: 'komisi', name: 'komisi', component: () => import('@/views/komisi/KomisiPeriodeView.vue'), meta: { izin: ['komisi.kelola', 'komisi.setujui'] } },
       { path: 'komisi/:id', name: 'komisi.detail', component: () => import('@/views/komisi/KomisiPeriodeDetail.vue'), meta: { izin: ['komisi.kelola', 'komisi.setujui'] } },
       { path: 'slip-komisi', name: 'komisi.saya', component: () => import('@/views/komisi/KomisiSayaView.vue') },

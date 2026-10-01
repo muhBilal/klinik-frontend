@@ -133,6 +133,13 @@ Resep detail juga memuat `cabang` (kop etiket).
 - `GET /pengaturan` + `foto: { wajib_consent, naskah_consent }`. Enum: tahap `sebelum`/`sesudah`/`kontrol`, tingkat
   `klinis`/`edukasi`/`marketing`, status persetujuan `berlaku`/`diganti`/`dicabut`. Audit baru: `protokol_foto`, `persetujuan_foto`.
 
+## Laporan & dashboard (F1-11)
+- `GET /laporan/penjualan` & `/laporan/paket` (`?mulai&selesai`) — bentuk lengkap di `backend/AI-Context/modul/F1-11-laporan.md`; uang
+  dalam rupiah bulat; `cabang` null = semua cabang; 422 `selesai` (terbalik / > 366 hari).
+- `GET /dashboard` + `booking: { total, tidak_hadir }`, `top_treatment: [{ tindakan_id, nama, jumlah }]`, `per_cabang: [{ cabang_id, kode,
+  nama, kunjungan, tidak_hadir, pendapatan|null }] | null` (hanya saat semua cabang).
+- Rekap shift (`/shift-kas/*` → `rekap`): tunai & `kas_seharusnya` kini tanpa kembalian.
+
 ## Data klinis & persetujuan UU PDP (F1-10)
 - `GET/PUT /pasiens/{id}/klinis` → `{ klinis: {..., pembaru: {id, name}} | null, alergis: [...] }`. PUT `{ fitzpatrick, status_kehamilan,
   konfirmasi_kehamilan, riwayat_obat, riwayat_penyakit, alergis: [{ id?, kategori, zat, obat_id, reaksi, keparahan }] }`; 422
@@ -165,6 +172,11 @@ Resep detail juga memuat `cabang` (kop etiket).
   jumlah_sesi, nilai_per_sesi, terpakai, dipesan, sisa, tindakan }] }`; detail + `pemakaian[]` (tindakan kunjungan: kunjungan, petugas, cabang)
   & `refund_sisa: { diizinkan, sisa_nilai, potongan_persen, potongan, nominal }`.
 - `POST /pasiens/{id}/pakets { paket_id, catatan }` → paket + `tagihan_id` (bayar di `/kasir/{tagihan_id}`).
+- Pesanan dari pemeriksaan: `POST /kunjungans/{id}/pakets { paket_id, catatan }` → paket `menunggu_bayar` + `kunjungan_id` (tanpa tagihan),
+  `DELETE /kunjungans/{id}/pakets/{paketPasien}`; `GET /pasiens/{id}/pakets?aktif=1&kunjungan_id=` ikut memuat pesanan kunjungan itu (+ `kunjungan`,
+  `pembuat`). Kasir: `DELETE /tagihans/{id}/pakets/{paketPasien}` → tagihan detail (disusun ulang); `paket_pasiens[]` di tagihan + `harga`, `kunjungan_id`.
+- `PUT /kunjungans/{id}/pemeriksaan`: kirim hanya kolom yang berubah + `tindakan_ids_awal[]` bersama `tindakans`; respons seperti GET
+  (`rme_disembunyikan`); 422 `tindakans` bila perawat/terapis menghapus baris petugas lain.
 - Tagihan detail + `promo: {kode, nama, jenis, nilai}`, `diskon_promo`, `paket_pasiens[]`, `items[].tindakan_id/paket_id`; `kunjungan` bisa
   **null** (tagihan mandiri, pakai `pasien` & `keterangan`). Grand total = (total − diskon − diskon_promo) + pajak_persen.
 - Pemeriksaan: `tindakans[].paket_pasien_item_id` (+ `paket_item.paket_pasien.no_paket` di respons); 422 `tindakans.{i}.paket_pasien_item_id`.

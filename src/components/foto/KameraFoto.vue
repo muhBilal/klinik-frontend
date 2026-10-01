@@ -5,12 +5,13 @@
  * Tanpa kamera (desktop / halaman bukan HTTPS) tersedia unggah berkas; gambar tetap diproses ulang (EXIF dibuang).
  */
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import AppIcon from '@/components/AppIcon.vue'
 import AppModal from '@/components/AppModal.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { siapkanFoto, unggahFoto } from '@/lib/foto'
-import { TAHAP_FOTO } from '@/lib/format'
+import { IKON, TAHAP_FOTO } from '@/lib/format'
 import { useToastStore } from '@/stores/toast'
 
 const open = defineModel({ type: Boolean, default: false })
@@ -220,7 +221,7 @@ onBeforeUnmount(() => {
           :disabled="mengunggah"
           @click="langkah = i; lepasPratinjau()"
         >
-          <span v-if="sudah(p)">✓ </span>{{ i + 1 }}. {{ p.label }}
+          <AppIcon v-if="sudah(p)" :path="IKON.centang" size="size-3.5" class="mr-1 inline align-[-2px]" /><span v-if="sudah(p)" class="sr-only">Sudah difoto: </span>{{ i + 1 }}. {{ p.label }}
         </button>
         <span v-if="protokol" class="self-center text-xs text-slate-500">{{ jumlahSelesai }}/{{ posisiList.length }} posisi</span>
       </div>

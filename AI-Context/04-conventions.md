@@ -41,7 +41,7 @@
 | `MasterCrud` | `title`, `endpoint`, `columns`, `fields`, `defaults`, `searchable`, `itemLabel`, `invalidates`, `modalSize`, slot `#cell-{key}`, event `changed` | CRUD generik untuk master (endpoint paginated atau array). `fields[].type`: text/number/email/password/time/select/checkbox/**textarea** (tipe lain diteruskan ke `<input type>`); `options`, `required`, `full`, `show(form)`, `placeholder`, `rows`, `hint` (teks bantuan). Password kosong saat edit = tidak diubah. Checkbox baru default `true` kecuali diberi `defaults`. |
 | `LampiranBerkas` | `pasienId`, `kunjunganId?`, `readonly` | Lampiran klinis terenkripsi: daftar (rme.lihat), unggah & hapus (berkas.kelola), "Lihat" meminta tautan bertanda tangan (tercatat audit) → pratinjau gambar di modal / PDF di tab baru. |
 | `PasienFormModal` | `v-model`, `pasien` (null = baru), `@saved(pasien)` | Dipakai di list pasien, detail, dan pendaftaran. |
-| `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan (+ ICD-9-CM, petugas, catatan), consent (klik = lihat), resep, tanda tangan, addendum. `rme_disembunyikan` → pesan 🔒 saja. |
+| `RekamMedisRingkas` | `kunjungan` | Ringkasan vital, SOAP, diagnosa, tindakan (+ ICD-9-CM, petugas, catatan), consent (klik = lihat), resep, tanda tangan, addendum. `rme_disembunyikan` → pesan akses terbatas saja. |
 | `SignaturePad` | `v-model` (PNG data URL), `label`, `disabled`, `invalid`; expose `hapus()` | Tanda tangan jari/stylus di tablet. |
 | `rme/FaceChart` | `v-model` (titik), `v-model:terpilih`, `readonly`, `@tambah({x,y,area})` | Diagram wajah; titik relatif 0..1. |
 | `rme/CatatanTindakanModal` | `v-model`, `kunjunganTindakanId`, `editable`, `@saved` | Catatan, face chart, parameter alat, BHP. |
@@ -51,6 +51,7 @@
 | `klinis/PeringatanKlinis` | `klinis`, `alergis`, `jenisKelamin`, `tanggalLahir`, slot aksi | Chip alergi (merah), hamil/menyusui + tanggal, Fitzpatrick, riwayat obat & penyakit (F1-10). `[data-peringatan-klinis]`. |
 | `klinis/DataKlinisModal` / `klinis/DataKlinisCard` | `v-model`, `pasien`, `klinis`, `alergis`, `@saved({klinis, alergis})` / `pasien` | Ubah data klinis (alergi per baris grid + tautan obat) / kartu di detail pasien. |
 | `pdp/PersetujuanDataPanel` | `pasien`, `ringkas`, `@changed({pemrosesan, marketing})` | Persetujuan UU PDP: status, formulir (pemrosesan + opt-in terpisah, tanda tangan), cabut per jenis, riwayat, lihat/cetak. `[data-persetujuan-data]`. |
+| `laporan/PeriodeFilter` | `v-model:mulai`, `v-model:selesai` (`YYYY-MM-DD`), `@change` | Tanggal dari–sampai + pintasan Hari ini / 7 hari / Bulan ini / Bulan lalu (F1-11). |
 | `komisi/SlipKomisi` | `periode`, `petugas`, `barises` | Slip komisi (kop klinik, baris, subtotal per peran, tanda tangan); `#slip-komisi` untuk `printElement`. |
 | `paket/PaketPasienCard` | `pasien`, `ringkas`; expose `muatUlang()`, `@changed` | Paket pasien: sisa per treatment (bar), riwayat pemakaian, jual, perpanjang/alihkan/refund sisa. `ringkas` = hanya paket aktif, tanpa aksi, tersembunyi bila kosong. |
 | `paket/JualPaketModal` | `v-model`, `pasien?` (null = pilih pasien) | Pilih paket katalog → tagihan → `/kasir/{tagihan_id}`. |
@@ -59,7 +60,7 @@
 | `gigi/PilihGigi` | `v-model:gigi`, `v-model:permukaan`, `tanpaPermukaan`, `disabled`, `invalid`, `idInput` | Select nomor gigi (grup kuadran) + tombol M/O/D/B/L. |
 | `gigi/RencanaPerawatanCard` / `gigi/RencanaPerawatanModal` | `pasien`, `kunjungan?`, `bisaKerjakan`, `itemDipakai`, `gigiAwal`, `@kerjakan(item)` | Rencana perawatan gigi + persetujuan, revisi, batal, cetak estimasi / form susun rencana. |
 | `rme/AddendumModal`, `rme/TemplateSoapModal` | `kunjunganId` / `poliId`, `tindakanIds`, `@terapkan({template, mode})` | Addendum RME; pilih template SOAP. |
-| `ToastHost`, `AppIcon` | — / `path`, `size` | Ikon = path SVG heroicons outline. |
+| `ToastHost`, `AppIcon` | — / `path`, `size` | Ikon = path SVG heroicons outline; path umum di `IKON` (`lib/format.js`). **Jangan pakai emoji** (gembok, tanda seru, centang, bintang) sebagai ikon — cukup teks + warna, atau AppIcon + teks `sr-only`. |
 | `AppSpinner` | `size` (`size-4`) | Spinner warna `currentColor`; di tombol taruh sebelum teks. |
 | `PageLoading` | `error`, `text`, `@retry` | Placeholder halaman detail (spinner / pesan error + coba lagi). |
 | `TableSkeleton` | `cols`, `rows` (5) | Baris placeholder di dalam `<tbody>`. |
@@ -131,6 +132,7 @@
 | Path route & penanda menu aktif | Item menu aktif bila path **diawali** `to` → `/komisi` juga menandai `/komisi-saya`. Beri path yang tidak saling berawalan (`/komisi`, `/slip-komisi`). |
 | Tabel berisi input/select di modal | Di 390 px kolom menciut sampai select/input tak terbaca (lihat harga per cabang). Untuk baris berisi kontrol, pakai grid yang turun baris di layar sempit (contoh: komisi di `TindakanView`). |
 | Data klinis pasien | Jangan tampilkan alergi/hamil dari objek pasien identitas (kolom `alergi` sudah tidak ada). Pakai `pasien.klinis`/`pasien.alergis` dari detail kunjungan ber-RME, `/pasiens/{id}/klinis`, atau `kunjungan.pasien` di resep; peringatan obat lewat `alergiObat()` (`lib/klinis.js`). |
+| Muat ulang data karena filter (di luar `useList`) | Permintaan bisa selesai tidak berurutan → data filter lama menimpa yang baru. Simpan nomor urut permintaan dan hanya pakai respons terakhir (lihat `muat()` di `LaporanPenjualanView`); `useList` sudah membatalkan permintaan lama. |
 | Prettier | Repo **tidak** punya konfigurasi Prettier; `npx prettier --write` memakai default (titik koma, kutip ganda, 80 kolom) dan merusak gaya. Jangan dijalankan. |
 | Konten lebar di dalam kolom grid (mis. SVG odontogram `min-w-[640px]`) | Item grid punya `min-width: auto` → seluruh halaman mobile ikut melebar. Bungkus dengan `overflow-x-auto [contain:inline-size]` (lihat `OdontogramCard`) agar hanya pembungkusnya yang bisa digeser. Cek `document.documentElement.scrollWidth` = lebar viewport di E2E. |
 | Baris tindakan pemeriksaan | `:key="t._key"` (bukan `tindakan_id`): tindakan yang sama boleh beberapa baris (beda gigi). Tindakan per gigi selalu baris baru; yang lain tetap digabung (`jumlah++`). |

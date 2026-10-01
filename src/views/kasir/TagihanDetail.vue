@@ -27,6 +27,11 @@ const processing = ref(false)
 const bayar = reactive({ metode_bayar: 'tunai', dibayar: '', diskon: 0 })
 const kodePromo = ref('')
 const memasangPromo = ref(false)
+const melepasPaket = ref(null)
+/** Paket yang dipesan dokter/terapis di pemeriksaan & ikut ditagihkan di tagihan kunjungan ini (belum dibayar). */
+const pesananKunjungan = computed(() =>
+  tagihan.value?.kunjungan_id ? (tagihan.value.paket_pasiens ?? []).filter((p) => p.status === 'menunggu_bayar' && p.kunjungan_id) : [],
+)
 
 const KATEGORI = { konsultasi: 'Konsultasi', tindakan: 'Tindakan', obat: 'Obat', produk: 'Produk', paket: 'Paket', deposit: 'Deposit', lainnya: 'Lainnya' }
 
@@ -78,6 +83,22 @@ async function lepasPromo() {
     toast.error(errorMessage(e))
   } finally {
     memasangPromo.value = false
+  }
+}
+
+/** Pasien tidak jadi membeli paket pesanan pemeriksaan: paket batal, sesi yang dikerjakan hari ini ditagih tarif normal (TR-02). */
+async function lepasPaket(p) {
+  if (!confirm(`Batalkan paket ${p.nama} dari tagihan ini? Sesi yang sudah dikerjakan hari ini akan ditagih tarif normal.`)) return
+  melepasPaket.value = p.id
+  const adaPromo = !!tagihan.value.promo_id
+  try {
+    tagihan.value = (await api.delete(`/tagihans/${route.params.id}/pakets/${p.id}`)).data
+    toast.success(`Paket ${p.nama} dibatalkan; tagihan disusun ulang.`)
+    if (adaPromo && !tagihan.value.promo_id) toast.info('Kode promo dilepas karena tidak lagi memenuhi syarat.')
+  } catch (e) {
+    toast.error(errorMessage(e))
+  } finally {
+    melepasPaket.value = null
   }
 }
 
@@ -182,6 +203,16 @@ onMounted(load)
       <div class="card self-start lg:col-span-2">
         <div class="card-header"><h2 class="card-title">Pembayaran</h2><StatusBadge :status="tagihan.status" /></div>
         <div v-if="tagihan.status === 'belum_bayar'" class="card-body space-y-4">
+          <!-- Paket yang dipesan dokter/terapis saat pemeriksaan: pasien masih bisa tidak jadi membeli -->
+          <div v-for="p in pesananKunjungan" :key="p.id" class="flex flex-wrap items-center gap-2 rounded-2xl border border-brand-300/50 bg-brand-500/10 px-3 py-2 text-sm">
+            <p class="min-w-0 flex-1">
+              Paket <b>{{ p.nama }}</b> <span class="text-xs text-slate-500">{{ p.no_paket }} · {{ rupiah(p.harga) }}</span>
+              <span class="block text-xs text-slate-600">Dipesan saat pemeriksaan; aktif setelah tagihan ini lunas.</span>
+            </p>
+            <button type="button" class="btn btn-ghost btn-sm text-rose-600" :disabled="melepasPaket === p.id" :aria-label="`Batalkan paket ${p.nama}`" @click="lepasPaket(p)">
+              <AppSpinner v-if="melepasPaket === p.id" size="size-3" />Batalkan paket
+            </button>
+          </div>
           <!-- Voucher & kode promo (TR-06) -->
           <div>
             <label class="label" for="kode-promo">Kode voucher / promo</label>

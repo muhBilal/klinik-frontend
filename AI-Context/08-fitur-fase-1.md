@@ -1,7 +1,7 @@
 # 08 — Fitur Fase 1 (MVP Estetika) di Frontend
 
 Isi: F1-01 Katalog treatment · F1-02/03/04 (backend saja, kecuali editor BHP) · **F1-05 RME estetika** · **F1-06 Foto klinis** ·
-**F1-07 Kedokteran gigi** · **F1-08 Paket & promo** · **F1-09 Komisi** · **F1-10 Data klinis & UU PDP**.
+**F1-07 Kedokteran gigi** · **F1-08 Paket & promo** · **F1-09 Komisi** · **F1-10 Data klinis & UU PDP** · **F1-11 Laporan**.
 
 Ringkasan UI per fitur Fase 1 PRD. Aturan bisnis & API lengkap per fitur ada di repo backend
 `backend/AI-Context/modul/F1-0x-*.md`; progres keseluruhan di `backend/AI-Context/07-roadmap-progress.md`.
@@ -60,7 +60,7 @@ Backend & aturan: `backend/AI-Context/modul/F1-05-rme-estetika.md`.
 | Lihat / cetak / cabut consent (tercatat audit tiap dibuka) | `components/rme/ConsentLihatModal.vue` |
 | Addendum | `components/rme/AddendumModal.vue` |
 | Pilih template SOAP (poli kunjungan + umum; opsi semua poli; mode isi kosong / tambahkan / timpa) | `components/rme/TemplateSoapModal.vue` |
-| Ringkasan RME: ICD-9-CM, petugas, catatan tindakan, consent (klik = lihat), tanda tangan, addendum, 🔒 | `components/RekamMedisRingkas.vue` |
+| Ringkasan RME: ICD-9-CM, petugas, catatan tindakan, consent (klik = lihat), tanda tangan, addendum, akses terbatas | `components/RekamMedisRingkas.vue` |
 | Detail kunjungan: cek keutuhan (verifikasi hash), tambah addendum (cabang aktif) | `views/KunjunganDetail.vue` |
 | Master: Template SOAP (halaman khusus), Template Consent & ICD-9-CM (MasterCrud), ICD-10 + penanda sensitif | `views/master/TemplateSoapView.vue`, `TemplateConsentView.vue`, `Icd9cmView.vue`, `Icd10View.vue` |
 | Katalog treatment: bagian "Rekam medis" (ICD-9-CM default, bentuk catatan, consent wajib) | `views/master/TindakanView.vue` |
@@ -72,14 +72,14 @@ Perilaku penting `PemeriksaanView`:
 - Tombol **Selesai & tanda tangani**: simpan (silent) → `POST /selesai`. 422 `informed_consent` (array) ditampilkan sebagai daftar di
   alert merah; 422 `sip` sebagai toast. Dokter tercatat tanpa `user.sip_aktif` melihat peringatan sebelum menutup.
 - Tindakan dikirim dengan `id` (upsert). Tombol catatan/consent pada tindakan yang belum disimpan menyimpan pemeriksaan dulu.
-- Kartu Tindakan juga tampil untuk tenaga ber-izin `rme.tindakan` tanpa `pemeriksaan.dokter` (perawat, terapis): mereka tidak bisa
-  mengubah daftar/jumlah/petugas, tetapi bisa mengisi catatan tindakan & mengambil consent.
+- Kartu Tindakan untuk tenaga ber-izin `rme.tindakan` tanpa `pemeriksaan.dokter` (perawat, terapis): menambah tindakan & memakai sesi paket,
+  mengubah/menghapus baris sendiri; baris petugas lain terkunci kecuali pilihan paket ("· dicatat …"); catatan tindakan & consent.
 - Label tombol catatan mengikuti `jenis_catatan` treatment: **Face chart** (injeksi), **Parameter alat** (energi), **Catatan tindakan**.
   Modal langsung membuka tab yang sesuai.
 - Consent wajib (treatment ber-`template_consent_id`) → tombol primer "Ambil informed consent (wajib)" dan hitungan "N tindakan
   menunggu informed consent" di kepala kartu. Consent yang ada tampil sebagai badge status (klik = lihat/cetak/cabut).
-- Diagnosa sensitif (IMS/HIV) otomatis mencentang & mengunci "🔒 Akses terbatas"; template ber-`akses_terbatas` juga mencentangnya.
-- Favorit: bintang di tiap diagnosa (toggle `/kode-favorits`), chip "Favorit" di bawah pencarian untuk tambah cepat, ★ di hasil pencarian.
+- Diagnosa sensitif (IMS/HIV) otomatis mencentang & mengunci "Akses terbatas"; template ber-`akses_terbatas` juga mencentangnya.
+- Favorit: bintang di tiap diagnosa (toggle `/kode-favorits`), chip "Favorit" di bawah pencarian untuk tambah cepat, ikon bintang (AppIcon + teks `sr-only`) di hasil pencarian.
 - Mode baca (ditutup): tombol & kartu "Tanda Tangan RME" berisi penanda tangan, SIP, waktu, daftar addendum, "+ Addendum".
 
 Face chart & batch: memilih produk untuk satu titik mengisi titik lain yang belum berproduk; batch default = batch FEFO pertama
@@ -92,7 +92,7 @@ transform `AppModal`; border di pembungkus agar koordinat tidak bergeser. Ukuran
 
 Verifikasi F1-05: `npm run build` lulus + E2E Chrome headless (playwright-core, stack dev terisolasi port 8010 + Vite): template →
 botox → face chart 4 titik → consent + tanda tangan → selesai & tanda tangani → cek keutuhan → addendum → cetak consent; kunjungan
-IMS dibuka dokter lain (🔒); halaman master & pengaturan. Tanpa error konsol.
+IMS dibuka dokter lain (akses terbatas); halaman master & pengaturan. Tanpa error konsol.
 
 ## F1-06 Foto klinis before-after (PRD FT-01..04, RM-04)
 
@@ -103,7 +103,7 @@ Backend & aturan: `backend/AI-Context/modul/F1-06-foto-klinis.md`.
 | Proses gambar di browser (maks. 2048 px, thumbnail 360 px, EXIF terbuang), unggah foto, tautan massal, label posisi | `lib/foto.js` |
 | Kartu gabungan: persetujuan foto + tombol Ambil foto + galeri; `ambil(tindakan)` di-expose | `components/foto/FotoKlinisCard.vue` |
 | Status/tanda tangan/ganti/cabut/riwayat/cetak persetujuan foto bertingkat | `components/foto/PersetujuanFotoPanel.vue` |
-| Kamera terpandu: protokol, tindakan terkait, tahap, langkah posisi (✓ per tahap), bingkai panduan, pratinjau → Simpan & lanjut; fallback unggah berkas | `components/foto/KameraFoto.vue` |
+| Kamera terpandu: protokol, tindakan terkait, tahap, langkah posisi (ikon centang + teks `sr-only` per tahap), bingkai panduan, pratinjau → Simpan & lanjut; fallback unggah berkas | `components/foto/KameraFoto.vue` |
 | Galeri: per kunjungan, lingkup kunjungan ini/semua, filter protokol/posisi/tahap, pilih 2, "⇆ awal", viewer + hapus | `components/foto/GaleriFoto.vue` |
 | Bandingkan: slider (clip-path + range) & berdampingan | `components/foto/BandingFoto.vue` |
 | Pemeriksaan: kartu Foto Klinis + tombol **Foto** per tindakan (protokol dari treatment); lampiran lain tanpa foto | `views/pemeriksaan/PemeriksaanView.vue`, `components/LampiranBerkas.vue` (`tanpa-foto`) |
@@ -168,6 +168,8 @@ Backend & aturan: `backend/AI-Context/modul/F1-08-paket-promo.md`.
 | Kartu paket pasien: sisa per treatment, status efektif, bayar (menunggu bayar), riwayat pemakaian, perpanjang/alihkan/refund sisa (simulasi nominal) | `components/paket/PaketPasienCard.vue` |
 | Jual paket (pilih pasien bila belum ada → paket → tagihan) | `components/paket/JualPaketModal.vue` |
 | Pemeriksaan: "Pakai paket … tersedia N sesi" per tindakan (otomatis), Rp 0 di estimasi, kartu paket ringkas | `views/pemeriksaan/PemeriksaanView.vue` |
+| Pemeriksaan (revisi): **Pesan paket** (`JualPaketModal` mode `kunjungan`), daftar pesanan + Batalkan, estimasi + harga pesanan, kartu paket samping memuat pesanan kunjungan (`kunjunganId`) | `views/pemeriksaan/PemeriksaanView.vue`, `components/paket/JualPaketModal.vue`, `components/paket/PaketPasienCard.vue` |
+| Kasir (revisi): **Batalkan paket** pesanan pemeriksaan pada tagihan kunjungan belum bayar (tagihan disusun ulang; toast bila promo dilepas) | `views/kasir/TagihanDetail.vue` |
 | Kasir: "+ Jual paket", tagihan tanpa kunjungan di daftar & detail, kode voucher (pakai/lepas), pajak & promo di total, info paket aktif | `views/kasir/TagihanList.vue`, `views/kasir/TagihanDetail.vue` |
 | Detail pasien: kartu Paket Treatment · Pengaturan: Paket Treatment (transfer, refund sisa, potongan) + prefix nomor paket | `views/pasien/PasienDetail.vue`, `views/admin/PengaturanView.vue` |
 | Menu (Paket Treatment di Master Data, Voucher & Promo di Keuangan), route, badge status paket/promo, label audit | `lib/menu.js`, `router/index.js`, `components/StatusBadge.vue`, `views/admin/AuditLogView.vue` |
@@ -178,6 +180,9 @@ Perilaku penting:
   — urutan terbalik membuat angka sempat salah (ditemukan di E2E).
 - Tindakan yang ditambahkan otomatis memakai paket bila ada sisa (toast); dokter bisa memilih "Bayar normal". Pilihan baru tidak bisa
   melebihi sisa (opsi dinonaktifkan); backend tetap menolak 422.
+- Tersedia per opsi = sisa backend + sesi yang dipesan baris tersimpan kunjungan ini − pemakaian baris lain di form. Pemakaian otomatis
+  memilih paket aktif dulu (masa berlaku terdekat, lalu terlama), pesanan baru paling akhir; opsi pesanan bertanda "pesanan baru"; select
+  dibatasi `max-w-full` (tidak melebar di 390 px). Baris tersimpan yang pemakaian paketnya berubah ditandai "belum disimpan".
 - Paket aktif setelah tagihan lunas; kartu menampilkan tombol "Bayar Rp …" ke halaman kasir selama `menunggu_bayar`.
 - Kasir tidak lagi berasumsi `tagihan.kunjungan` ada (sebelumnya daftar kasir error untuk tagihan mandiri).
 - Peran kasir kini memegang `pasien.lihat` (cari pasien untuk jual paket, buka detail pasien tanpa RME).
@@ -203,6 +208,22 @@ Perilaku penting:
 - Slip di detail rekap memakai baris yang sudah dimuat (filter per petugas); "Komisi Saya" meminta slip per periode.
 - Path sengaja tidak saling berawalan agar penanda menu aktif benar.
 
+## F1-11 Laporan & dashboard harian (PRD LP-01..03)
+
+Backend & aturan hitung: `backend/AI-Context/modul/F1-11-laporan.md`.
+
+| Bagian | File |
+|--------|------|
+| Laporan penjualan: kartu ringkasan (penjualan bersih, transaksi, diskon & promo, refund), baris pajak/total/setelah refund, bar per hari, tabel per treatment (jumlah, bruto, neto, sesi & nilai paket), per dokter (+ porsi), per metode (diterima/dikembalikan/bersih), per cabang, per kategori; Cetak | `views/laporan/LaporanPenjualanView.vue` |
+| Laporan paket: kartu terjual, pendapatan diakui, refund & hangus, sisa kewajiban (hari ini); per paket; segera kedaluwarsa ≤ 30 hari (link pasien, sisa hari merah ≤ 7) | `views/laporan/LaporanPaketView.vue` |
+| Filter periode + pintasan | `components/laporan/PeriodeFilter.vue` |
+| Dashboard: kartu Booking hari ini (no-show), Top treatment hari ini, Per cabang hari ini (semua cabang), pintasan Laporan penjualan; grid `grid-cols-1` untuk mobile | `views/DashboardView.vue` |
+| Menu Keuangan, route, `KATEGORI_TAGIHAN`, `isoTanggal()` | `lib/menu.js`, `router/index.js`, `lib/format.js` |
+
+Perilaku penting: hanya respons permintaan terakhir yang ditampilkan (ganti periode cepat); data lama tetap tampil redup saat memuat.
+Verifikasi F1-11: `npm run build` + E2E Chrome headless dengan data demo (dashboard admin & kasir, laporan bulan lalu, laporan paket,
+akses dokter ditolak, mobile 390 px, race periode dengan permintaan pertama diperlambat). Tanpa error konsol.
+
 ## F1-10 Data klinis pasien & persetujuan UU PDP (PRD PS-03, PS-04)
 
 Backend & aturan: `backend/AI-Context/modul/F1-10-data-klinis-pdp.md`.
@@ -213,7 +234,7 @@ Backend & aturan: `backend/AI-Context/modul/F1-10-data-klinis-pdp.md`.
 | Modal ubah data klinis: alergi per baris (kategori, zat, keparahan, reaksi, tautkan obat lewat `AsyncSelect /obats`), Fitzpatrick, hamil/menyusui (+ konfirmasi ulang), riwayat obat & penyakit | `components/klinis/DataKlinisModal.vue` |
 | Kartu Data Klinis di detail pasien (rme.lihat) | `components/klinis/DataKlinisCard.vue`, `views/pasien/PasienDetail.vue` |
 | Panel persetujuan UU PDP: status, formulir (naskah pemrosesan + centang wajib; opt-in promosi bawaan "Tidak bersedia", kanal, naskah ikut kanal; penanda tangan; `SignaturePad`), cabut opt-in / cabut persetujuan (ikut mencabut opt-in), riwayat, lihat & cetak | `components/pdp/PersetujuanDataPanel.vue` |
-| Pemeriksaan: kartu peringatan klinis di bawah identitas + tombol "Data klinis"; toast & baris resep "⚠ Pasien alergi …" | `views/pemeriksaan/PemeriksaanView.vue`, `lib/klinis.js` |
+| Pemeriksaan: kartu peringatan klinis di bawah identitas + tombol "Data klinis"; toast & baris resep "Pasien alergi …" | `views/pemeriksaan/PemeriksaanView.vue`, `lib/klinis.js` |
 | Farmasi: alergi (+ keparahan/reaksi), status hamil/menyusui, peringatan per item resep | `views/farmasi/ResepDetail.vue` |
 | Pendaftaran: panel persetujuan ringkas di kartu pasien + pesan 422 `persetujuan_data`; grid `grid-cols-1` (sebelumnya melebar di mobile) | `views/pendaftaran/PendaftaranView.vue` |
 | Daftar pasien: filter persetujuan, chip status; alergi dihapus dari daftar & form pasien | `views/pasien/PasienList.vue`, `components/PasienFormModal.vue` |
@@ -235,7 +256,9 @@ treatment mobile 390 px. Tanpa error konsol.
 
 Verifikasi F1-08: `npm run build` + E2E Chrome headless (kasir jual → promo → bayar; dokter pakai sesi; manajer riwayat/perpanjang/kebijakan
 refund; promo baru; master; mobile 390 px tanpa scroll horizontal di detail pasien, tagihan, daftar kasir). Tanpa error konsol selain 422
-kode promo salah yang disengaja.
+kode promo salah yang disengaja. Revisi (1 Okt 2026): E2E `pesan-paket` (pesan/batal pesanan, sesi 1 otomatis, terapis
+terkunci di baris dokter, Selesai dari form lama diminta memeriksa dulu, kasir satu tagihan → paket aktif, kasir Batalkan paket → tagihan
+disusun ulang, mobile 390 px, tanpa emoji).
 
 ## Verifikasi
 

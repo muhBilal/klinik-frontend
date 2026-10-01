@@ -4,7 +4,7 @@ import MasterCrud from '@/components/MasterCrud.vue'
 const columns = [
   { key: 'kode', label: 'Kode', class: 'tabular-nums font-semibold w-28' },
   { key: 'nama', label: 'Nama Diagnosa' },
-  { key: 'sensitif', label: 'Akses', format: (v) => (v ? '🔒 Sensitif' : '-'), class: 'w-32' },
+  { key: 'sensitif', label: 'Akses', format: (v) => (v ? 'Sensitif' : '-'), class: 'w-32' },
 ]
 const fields = [
   { key: 'kode', label: 'Kode ICD-10', required: true, placeholder: 'J06.9' },

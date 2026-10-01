@@ -18,6 +18,8 @@ Kolom **Izin** = `meta.izin` di router (salah satu; administrator memegang semua
 | `/farmasi/obat` | `farmasi/ObatList` | farmasi.obat | `GET/POST/PUT /obats`, `DELETE` (master.kelola), `GET/POST /obats/{id}/mutasi` |
 | `/kasir` | `kasir/TagihanList` | kasir.tagihan | `GET /tagihans` (tagihan dengan/tanpa kunjungan); "+ Jual paket" (`JualPaketModal`: `/pasiens`, `/pakets?aktif=1`, `POST /pasiens/{id}/pakets`) |
 | `/kasir/:id` | `kasir/TagihanDetail` | kasir.tagihan | `GET /tagihans/{id}`, `POST/DELETE .../promo` (kode voucher), `POST .../bayar`; tagihan mandiri (paket/produk) tanpa kunjungan; pajak & potongan promo di layar; cetak struk (kop klinik/cabang, catatan kaki & lebar kertas dari pengaturan) |
+| `/laporan/penjualan` | `laporan/LaporanPenjualanView` | laporan.keuangan | `GET /laporan/penjualan?mulai&selesai` (ringkasan, per hari, treatment, dokter, metode, cabang, kategori); Cetak |
+| `/laporan/paket` | `laporan/LaporanPaketView` | laporan.keuangan | `GET /laporan/paket?mulai&selesai` (ringkasan, per paket, segera kedaluwarsa → `/pasien/:id`); Cetak |
 | `/komisi` | `komisi/KomisiPeriodeView` | komisi.kelola, komisi.setujui | `GET/POST /komisi-periodes` (cabang aktif); tombol "Komisi per treatment" → `/master/tindakan` (komisi.kelola + master.kelola) |
 | `/komisi/:id` | `komisi/KomisiPeriodeDetail` | komisi.kelola, komisi.setujui | `GET /komisi-periodes/{id}`, `POST .../hitung`, `.../setujui` (komisi.setujui), `.../penyesuaian`, `DELETE` (draf), `/petugas`; slip cetak |
 | `/slip-komisi` | `komisi/KomisiSayaView` | — (menu: pemeriksaan.*, rme.tindakan) | `GET /komisi-saya`, `?periode_id=` |
@@ -47,9 +49,11 @@ klik nama/avatar di header. Lihat [07-navigasi-modul.md](07-navigasi-modul.md).
 ## Perilaku penting per halaman
 
 - **PemeriksaanView**
-  - Tanpa izin `pemeriksaan.dokter` (perawat, terapis): hanya tanda vital + S (subjektif) yang bisa diedit; diagnosa/resep disembunyikan; payload hanya berisi field vital+SOAP. Kartu Tindakan tetap tampil (read-only) bagi pemegang `rme.tindakan` untuk mengisi catatan tindakan & mengambil consent.
+  - Tanpa izin `pemeriksaan.dokter` (perawat, terapis): tanda vital + S (bila `pemeriksaan.vital`); diagnosa/resep disembunyikan. Pemegang `rme.tindakan` menambah tindakan & memakai sesi paket serta memesan paket; baris yang dicatat petugas lain terkunci (kecuali pilihan paket); ICD-9-CM & tutup tetap dokter. Isi RME tidak dimuat (`rme_disembunyikan` / tanpa `rme.lihat`) → hanya tanda vital & anamnesis.
+  - Payload hanya berisi yang **berubah** sejak form dimuat (tanda vital/SOAP per kolom; `tindakans` + `tindakan_ids_awal` bila daftar berubah). "Selesai & tanda tangani" berhenti bila petugas lain mengubah daftar tindakan sejak form dimuat.
+  - Paket (F1-08 revisi): tombol **Pesan paket** + daftar pesanan (Batalkan — pemakaian sesinya dilepas & disimpan dulu), estimasi memuat harga pesanan, sesi pertama otomatis dipakai (baris tersimpan langsung disimpan).
   - RME estetika (F1-05): template SOAP, favorit, akses terbatas, ICD-9-CM & petugas per tindakan, face chart / parameter alat, informed consent + tanda tangan, "Selesai & tanda tangani", addendum — lihat [08-fitur-fase-1.md](08-fitur-fase-1.md) bagian F1-05.
-  - Dengan `pemeriksaan.dokter`: payload menyertakan `diagnosas`, `tindakans`, `resep`, `catatan_resep` (replace-all di backend).
+  - Dengan `pemeriksaan.dokter`: payload menyertakan `diagnosas`, `resep`, `catatan_resep` (replace-all di backend) dan `tindakans` bila berubah.
   - "Selesai & tanda tangani" = simpan dulu (silent) → `POST /selesai` → kembali ke `/antrian`. Wajib ≥1 diagnosa, SIP aktif, consent wajib lengkap.
   - Mode baca bila status bukan `menunggu`/`diperiksa`. Subjektif otomatis diisi dari `keluhan` saat kosong.
   - Menampilkan peringatan klinis pasien (alergi, hamil/menyusui, Fitzpatrick, riwayat — F1-10), IMT, estimasi biaya, lampiran & foto klinis kunjungan, riwayat kunjungan (dengan nama cabang).

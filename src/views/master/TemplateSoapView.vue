@@ -152,7 +152,7 @@ onMounted(async () => {
           <tr v-for="t in items" :key="t.id">
             <td>
               <p class="font-medium">{{ t.nama }}</p>
-              <p v-if="t.akses_terbatas" class="text-xs text-rose-700">🔒 akses terbatas</p>
+              <p v-if="t.akses_terbatas" class="text-xs text-rose-700">akses terbatas</p>
             </td>
             <td class="text-slate-600">{{ t.poli?.nama ?? 'Semua poli' }}</td>
             <td class="text-slate-600">{{ t.tindakan?.nama ?? '-' }}</td>

@@ -33,6 +33,12 @@ const stats = computed(() => {
       icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
     },
     {
+      label: 'Booking hari ini',
+      value: angka(d.booking.total),
+      note: `${d.booking.tidak_hadir} tidak hadir (no-show)`,
+      icon: 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5',
+    },
+    {
       label: 'Resep menunggu',
       value: angka(d.resep_menunggu),
       note: `${d.tagihan_belum_bayar} tagihan belum dibayar`,
@@ -58,6 +64,7 @@ const statusCards = computed(() => {
   ]
 })
 
+const maxTop = computed(() => Math.max(1, ...(data.value?.top_treatment ?? []).map((t) => t.jumlah)))
 const maxPoli = computed(() => Math.max(1, ...(data.value?.kunjungan.per_poli ?? []).map((p) => p.kunjungans_count)))
 
 const shortcuts = computed(() =>
@@ -66,6 +73,7 @@ const shortcuts = computed(() =>
     { to: '/antrian', label: 'Buka antrian poli', izin: ['pemeriksaan.panggil'] },
     { to: '/farmasi/resep', label: 'Proses resep', izin: ['farmasi.resep'] },
     { to: '/kasir', label: 'Buka kasir', izin: ['kasir.tagihan'] },
+    { to: '/laporan/penjualan', label: 'Laporan penjualan', izin: ['laporan.keuangan'] },
   ].filter((s) => auth.can(...s.izin)),
 )
 
@@ -78,7 +86,7 @@ onMounted(load)
   </PageHeader>
 
   <div v-if="data" class="space-y-5">
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2" :class="stats.length > 4 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'">
       <div
         v-for="s in stats"
         :key="s.label"
@@ -96,7 +104,7 @@ onMounted(load)
       </div>
     </div>
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
       <div class="card lg:col-span-2">
         <div class="card-header"><h2 class="card-title">Status pelayanan hari ini</h2></div>
         <div class="card-body">
@@ -134,20 +142,55 @@ onMounted(load)
         <p v-else class="card-body text-sm text-slate-400">Semua stok obat aman.</p>
       </div>
     </div>
+
+    <!-- LP-01: top treatment hari ini & ringkasan per cabang (saat melihat semua cabang) -->
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Top treatment hari ini</h2></div>
+        <div v-if="data.top_treatment.length" class="card-body space-y-3">
+          <div v-for="t in data.top_treatment" :key="t.tindakan_id" class="flex items-center gap-3 text-sm">
+            <span class="w-36 shrink-0 truncate text-slate-600" :title="t.nama">{{ t.nama }}</span>
+            <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-900/[0.06]">
+              <div class="h-full rounded-full bg-brand-900 transition-[width] duration-500" :style="{ width: `${(t.jumlah / maxTop) * 100}%` }" />
+            </div>
+            <span class="w-8 text-right font-medium tabular-nums">{{ t.jumlah }}</span>
+          </div>
+        </div>
+        <p v-else class="card-body text-sm text-slate-400">Belum ada tindakan hari ini.</p>
+      </div>
+      <div v-if="data.per_cabang" class="card lg:col-span-2">
+        <div class="card-header"><h2 class="card-title">Per cabang hari ini</h2></div>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead>
+              <tr><th>Cabang</th><th class="text-right">Kunjungan</th><th class="text-right">No-show</th><th v-if="auth.can('laporan.keuangan')" class="text-right">Pendapatan</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="c in data.per_cabang" :key="c.cabang_id">
+                <td>{{ c.nama }} <span class="text-xs text-slate-400">{{ c.kode }}</span></td>
+                <td class="text-right tabular-nums">{{ c.kunjungan }}</td>
+                <td class="text-right tabular-nums" :class="{ 'text-rose-600': c.tidak_hadir }">{{ c.tidak_hadir }}</td>
+                <td v-if="auth.can('laporan.keuangan')" class="text-right tabular-nums">{{ rupiah(c.pendapatan) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   </div>
 
   <PageLoading v-else-if="error" :error="error" @retry="load" />
 
   <!-- Skeleton selama ringkasan dimuat -->
   <div v-else class="space-y-5" aria-busy="true">
-    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div v-for="i in 4" :key="i" class="card card-body space-y-3">
         <div class="h-3.5 w-1/2 animate-pulse rounded bg-slate-200/70" />
         <div class="h-8 w-1/3 animate-pulse rounded bg-slate-200/70" />
         <div class="h-3 w-2/3 animate-pulse rounded bg-slate-100" />
       </div>
     </div>
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
       <div class="card card-body h-72 animate-pulse bg-white/30 lg:col-span-2" />
       <div class="card card-body h-72 animate-pulse bg-white/30" />
     </div>

@@ -100,7 +100,7 @@ async function salinTeks() {
             >
               <span class="font-medium">{{ t.nama }}</span>
               <span class="block text-xs opacity-70">
-                {{ t.poli?.nama ?? 'Semua poli' }}<template v-if="t.tindakan"> · {{ t.tindakan.nama }}</template><template v-if="t.akses_terbatas"> · 🔒 akses terbatas</template>
+                {{ t.poli?.nama ?? 'Semua poli' }}<template v-if="t.tindakan"> · {{ t.tindakan.nama }}</template><template v-if="t.akses_terbatas"> · akses terbatas</template>
               </span>
             </button>
           </li>

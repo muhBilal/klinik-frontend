@@ -1,7 +1,9 @@
 <script setup>
 /**
- * Jual paket multi-sesi (PRD TR-02): pilih pasien (bila belum ditentukan) & paket dari katalog → backend membuat paket
- * (menunggu bayar) + tagihan mandiri → langsung ke halaman tagihan untuk dibayar (kode promo bisa dipasang di sana).
+ * Paket multi-sesi (PRD TR-02), dua mode:
+ * - jual langsung (kasir): pilih pasien (bila belum ditentukan) & paket → paket menunggu bayar + tagihan mandiri → halaman tagihan;
+ * - `kunjungan` diisi (dokter/terapis di pemeriksaan): paket dipesan untuk kunjungan itu → ditagihkan bersama tagihan kunjungan saat
+ *   pemeriksaan ditutup; sesi pertama boleh langsung dipakai di kunjungan yang sama. Emit `dipesan(paket)`.
  */
 import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
@@ -14,7 +16,11 @@ import { rupiah } from '@/lib/format'
 import { useToastStore } from '@/stores/toast'
 
 const open = defineModel({ type: Boolean, default: false })
-const props = defineProps({ pasien: { type: Object, default: null } })
+const props = defineProps({
+  pasien: { type: Object, default: null },
+  kunjungan: { type: Object, default: null },
+})
+const emit = defineEmits(['dipesan'])
 const toast = useToastStore()
 const router = useRouter()
 
@@ -40,7 +46,15 @@ async function proses() {
   if (!dipilihPasien.value || !paketId.value) return
   menjual.value = true
   try {
-    const { data } = await api.post(`/pasiens/${dipilihPasien.value.id}/pakets`, { paket_id: paketId.value, catatan: catatan.value || null })
+    const body = { paket_id: paketId.value, catatan: catatan.value || null }
+    if (props.kunjungan) {
+      const { data } = await api.post(`/kunjungans/${props.kunjungan.id}/pakets`, body)
+      toast.success(`Paket ${data.nama} dipesan — ditagihkan bersama tagihan kunjungan ini.`)
+      open.value = false
+      emit('dipesan', data)
+      return
+    }
+    const { data } = await api.post(`/pasiens/${dipilihPasien.value.id}/pakets`, body)
     toast.success(`Paket ${data.no_paket} dibuat. Selesaikan pembayaran untuk mengaktifkannya.`)
     open.value = false
     router.push(`/kasir/${data.tagihan_id}`)
@@ -53,7 +67,7 @@ async function proses() {
 </script>
 
 <template>
-  <AppModal v-model="open" title="Jual Paket" size="max-w-2xl">
+  <AppModal v-model="open" :title="kunjungan ? 'Pesan Paket untuk Pasien' : 'Jual Paket'" size="max-w-2xl">
     <form id="form-jual-paket" class="space-y-3" @submit.prevent="proses">
       <div v-if="!pasien">
         <p class="label">Pasien *</p>
@@ -66,7 +80,11 @@ async function proses() {
         </AsyncSelect>
       </div>
       <p v-else class="text-sm text-slate-600">Untuk <b>{{ pasien.nama }}</b>.</p>
-      <p class="text-xs text-slate-500">Paket aktif setelah tagihan lunas; masa berlaku dihitung sejak lunas.</p>
+      <p v-if="kunjungan" class="text-xs text-slate-500">
+        Harga paket ditagihkan bersama tagihan kunjungan ini; pasien cukup membayar sekali di kasir. Sesi pertama boleh langsung dipakai
+        hari ini. Paket aktif setelah tagihan lunas; masa berlaku dihitung sejak lunas.
+      </p>
+      <p v-else class="text-xs text-slate-500">Paket aktif setelah tagihan lunas; masa berlaku dihitung sejak lunas.</p>
 
       <label v-for="k in katalog" :key="k.id" class="choice flex cursor-pointer items-start gap-3 text-sm" :class="{ 'choice-active': paketId === k.id }">
         <input v-model="paketId" type="radio" :value="k.id" class="mt-1 accent-brand-900" />
@@ -85,7 +103,7 @@ async function proses() {
     </form>
     <template #footer>
       <button type="button" class="btn btn-secondary" @click="open = false">Batal</button>
-      <button form="form-jual-paket" class="btn btn-primary" :disabled="menjual || !paketId || !dipilihPasien"><AppSpinner v-if="menjual" />Buat tagihan</button>
+      <button form="form-jual-paket" class="btn btn-primary" :disabled="menjual || !paketId || !dipilihPasien"><AppSpinner v-if="menjual" />{{ kunjungan ? 'Pesan paket' : 'Buat tagihan' }}</button>
     </template>
   </AppModal>
 </template>

@@ -165,7 +165,7 @@ onMounted(muat)
                   </td>
                   <td class="w-28 text-right tabular-nums">{{ rupiah(item.tarif * item.jumlah) }}</td>
                   <td class="w-40 text-right text-xs">
-                    <span v-if="item.status === 'selesai'" class="text-emerald-700">✓ {{ tanggal(item.selesai_at) }}</span>
+                    <span v-if="item.status === 'selesai'" class="text-emerald-700">Selesai {{ tanggal(item.selesai_at) }}</span>
                     <span v-else-if="dipakaiDiSini(item)" class="text-slate-500">ada di tindakan</span>
                     <span v-else-if="sedangDikerjakan(item)" class="text-amber-700">dikerjakan · {{ item.pelaksanaan.kunjungan.no_registrasi }}</span>
                     <button v-else-if="bisaKerjakan && item.status === 'rencana' && ['draf', 'disetujui'].includes(r.status)" type="button" class="btn btn-secondary btn-sm" @click="kerjakan(item, r)">Kerjakan</button>

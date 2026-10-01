@@ -80,7 +80,7 @@ onMounted(load)
           </dd>
           <template v-if="kehamilan">
             <dt class="text-slate-500">Kehamilan</dt>
-            <dd class="font-semibold text-rose-600">⚠ {{ STATUS_KEHAMILAN[kehamilan.status_kehamilan] }} <span class="text-xs font-normal text-slate-500">· {{ tanggal(kehamilan.status_kehamilan_at) }}</span></dd>
+            <dd class="font-semibold text-rose-600">{{ STATUS_KEHAMILAN[kehamilan.status_kehamilan] }} <span class="text-xs font-normal text-slate-500">· {{ tanggal(kehamilan.status_kehamilan_at) }}</span></dd>
           </template>
           <dt class="text-slate-500">Dokter</dt><dd>{{ resep.dokter?.name ?? '-' }}</dd>
           <dt class="text-slate-500">Tagihan</dt><dd><StatusBadge :status="resep.kunjungan.tagihan?.status ?? 'belum_bayar'" /></dd>
@@ -99,7 +99,7 @@ onMounted(load)
               <tr v-for="i in resep.items" :key="i.id">
                 <td>
                   {{ i.obat.nama }}
-                  <p v-if="alergiItem(i)" class="text-xs font-semibold text-rose-600">⚠ Pasien alergi {{ alergiItem(i).zat }} — konfirmasi ke dokter</p>
+                  <p v-if="alergiItem(i)" class="text-xs font-semibold text-rose-600">Pasien alergi {{ alergiItem(i).zat }} — konfirmasi ke dokter</p>
                 </td>
                 <td class="text-right tabular-nums">{{ i.jumlah }} {{ i.obat.satuan }}</td>
                 <td class="italic">{{ i.aturan_pakai }}</td>

@@ -2,7 +2,8 @@
 /**
  * Paket multi-sesi milik pasien (PRD TR-02): sisa sesi per treatment, masa berlaku, riwayat pemakaian, jual paket (kasir),
  * dan tindakan kebijakan (perpanjang, alihkan ke pasien lain, refund sisa) untuk pemegang `kasir.void`.
- * `ringkas` = tampilan samping pemeriksaan: hanya paket yang masih bisa dipakai, tanpa aksi; disembunyikan bila tidak ada.
+ * `ringkas` = tampilan samping pemeriksaan: hanya paket yang masih bisa dipakai (+ pesanan di kunjungan `kunjunganId`), tanpa aksi;
+ * disembunyikan bila tidak ada.
  */
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import AppModal from '@/components/AppModal.vue'
@@ -18,6 +19,7 @@ import { useToastStore } from '@/stores/toast'
 const props = defineProps({
   pasien: { type: Object, required: true },
   ringkas: { type: Boolean, default: false },
+  kunjunganId: { type: Number, default: null },
 })
 const emit = defineEmits(['changed'])
 const auth = useAuthStore()
@@ -39,7 +41,8 @@ const jumlahLain = computed(() => pakets.value.filter((p) => !BISA_DIPAKAI.inclu
 async function muat() {
   memuat.value = true
   try {
-    pakets.value = (await api.get(`/pasiens/${props.pasien.id}/pakets`, { params: props.ringkas ? { aktif: 1 } : {} })).data
+    const params = props.ringkas ? { aktif: 1, ...(props.kunjunganId ? { kunjungan_id: props.kunjunganId } : {}) } : {}
+    pakets.value = (await api.get(`/pasiens/${props.pasien.id}/pakets`, { params })).data
   } catch (e) {
     toast.error(errorMessage(e))
   } finally {
@@ -131,6 +134,9 @@ onMounted(muat)
               <template v-else-if="p.status === 'aktif'"> · tanpa batas waktu</template>
               <template v-if="!p.lintas_cabang && p.cabang"> · hanya {{ p.cabang.nama }}</template>
             </p>
+            <p v-if="p.kunjungan && p.status === 'menunggu_bayar'" class="text-xs text-slate-500">
+              Dipesan {{ p.pembuat?.name ?? '' }} di kunjungan {{ p.kunjungan.no_registrasi }} — ditagihkan bersama tagihan kunjungan
+            </p>
             <p v-if="p.dialihkan_dari" class="text-xs text-slate-500">Dialihkan dari {{ p.dialihkan_dari.no_paket }} ({{ p.dialihkan_dari.pasien?.nama }})</p>
             <p v-if="p.dialihkan_ke" class="text-xs text-slate-500">Sisa dialihkan ke {{ p.dialihkan_ke.no_paket }} ({{ p.dialihkan_ke.pasien?.nama }})</p>
             <p v-if="p.status === 'direfund'" class="text-xs text-slate-500">Refund {{ rupiah(p.refund_nominal) }} · {{ waktu(p.direfund_at) }}</p>
@@ -154,7 +160,9 @@ onMounted(muat)
           <RouterLink v-if="p.status === 'menunggu_bayar' && p.tagihan && auth.can('kasir.tagihan')" :to="`/kasir/${p.tagihan.id}`" class="btn btn-primary btn-sm">
             Bayar {{ rupiah(p.tagihan.grand_total) }}
           </RouterLink>
-          <span v-else-if="p.status === 'menunggu_bayar'" class="text-xs text-amber-700">Aktif setelah tagihan {{ p.tagihan?.no_tagihan }} lunas</span>
+          <span v-else-if="p.status === 'menunggu_bayar'" class="text-xs text-amber-700">
+            {{ p.tagihan ? `Aktif setelah tagihan ${p.tagihan.no_tagihan} lunas` : 'Ditagihkan saat pemeriksaan ditutup' }}
+          </span>
           <button type="button" class="btn btn-ghost btn-sm" @click="toggleRiwayat(p)">{{ terbuka === p.id ? 'Tutup riwayat' : 'Riwayat pemakaian' }}</button>
           <template v-if="auth.can('kasir.void') && p.status === 'aktif'">
             <button type="button" class="btn btn-ghost btn-sm" @click="bukaAksi('perpanjang', p)">Perpanjang</button>

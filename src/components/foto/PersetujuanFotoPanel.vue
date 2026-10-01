@@ -122,7 +122,7 @@ async function lihat(uuid) {
     <div class="flex flex-wrap items-center gap-2">
       <AppSpinner v-if="loading && !data" size="size-3" class="text-slate-400" />
       <template v-else-if="aktif">
-        <span class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800">✓ Persetujuan foto: {{ TINGKAT_FOTO[aktif.tingkat] }}</span>
+        <span class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800">Persetujuan foto: {{ TINGKAT_FOTO[aktif.tingkat] }}</span>
         <span class="text-xs text-slate-500">{{ tanggal(aktif.ditandatangani_at) }}</span>
       </template>
       <span v-else-if="data" class="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800">Belum ada persetujuan foto yang berlaku</span>

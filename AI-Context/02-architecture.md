@@ -29,7 +29,7 @@ src/
 │   └── toast.js            success(), error(), info()
 ├── composables/useList.js  State list: items, meta, loading, filters, load(page), reload(), search() (debounce)
 ├── components/             Komponen reusable (lihat 04-conventions.md); AppLogo = logo produk (public/favicon.svg);
-│                           subfolder per domain: rme/ (F1-05), foto/ (F1-06), gigi/ (F1-07), paket/ (F1-08), komisi/ (F1-09), klinis/ & pdp/ (F1-10)
+│                           subfolder per domain: rme/ (F1-05), foto/ (F1-06), gigi/ (F1-07), paket/ (F1-08), komisi/ (F1-09), klinis/ & pdp/ (F1-10), laporan/ (F1-11)
 └── views/                  Halaman per modul (lihat 03-pages.md)
 ```
 

@@ -132,7 +132,7 @@ async function lihat(uuid) {
       <AppSpinner v-if="loading && !data" size="size-3" class="text-slate-400" />
       <template v-else-if="data">
         <span v-if="data.pemrosesan" class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-          ✓ Persetujuan data<template v-if="!ringkas"> · {{ tanggal(data.pemrosesan.ditandatangani_at) }}</template>
+          Persetujuan data berlaku<template v-if="!ringkas"> · {{ tanggal(data.pemrosesan.ditandatangani_at) }}</template>
         </span>
         <span v-else class="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800">Belum ada persetujuan pemrosesan data</span>
         <span v-if="data.marketing" class="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs font-semibold text-brand-800">Opt-in promosi: {{ teksKanal(data.marketing.kanal) }}</span>
