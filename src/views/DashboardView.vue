@@ -58,6 +58,18 @@ const statusCards = computed(() => {
   ]
 })
 
+// LP-01: booking & no-show, top treatment, perbandingan cabang
+const bookingCards = computed(() => {
+  const b = data.value?.booking?.hari_ini ?? {}
+  return [
+    { label: 'Dijadwalkan', value: b.dijadwalkan, dot: 'bg-indigo-500' },
+    { label: 'Dikonfirmasi', value: b.dikonfirmasi, dot: 'bg-violet-500' },
+    { label: 'Hadir', value: b.hadir, dot: 'bg-emerald-600' },
+    { label: 'Tidak hadir', value: b.tidak_hadir, dot: 'bg-red-500' },
+  ]
+})
+const maxTreatment = computed(() => Math.max(1, ...(data.value?.top_treatment ?? []).map((t) => t.jumlah)))
+
 const maxPoli = computed(() => Math.max(1, ...(data.value?.kunjungan.per_poli ?? []).map((p) => p.kunjungans_count)))
 
 const shortcuts = computed(() =>
@@ -78,6 +90,20 @@ onMounted(load)
   </PageHeader>
 
   <div v-if="data" class="space-y-5">
+    <!-- SIP/STR akan / sudah kedaluwarsa (AD-05) -->
+    <div v-if="data.izin_praktik?.length" class="alert alert-warning">
+      <p class="font-medium">Izin praktik perlu diperbarui</p>
+      <ul class="mt-1 space-y-0.5 text-sm">
+        <li v-for="z in data.izin_praktik" :key="`${z.user_id}-${z.dokumen}`">
+          <b>{{ z.nama }}</b> · {{ z.dokumen }} {{ z.nomor ?? '' }}:
+          <template v-if="z.sisa_hari === null">belum tercatat</template>
+          <template v-else-if="z.sisa_hari < 0"><span class="font-semibold text-rose-700">berakhir {{ tanggal(z.berlaku_sampai) }}</span></template>
+          <template v-else>berakhir {{ tanggal(z.berlaku_sampai) }} ({{ z.sisa_hari }} hari lagi)</template>
+        </li>
+      </ul>
+      <RouterLink v-if="auth.can('pengguna.kelola')" to="/master/user" class="mt-1 inline-block text-xs underline">Perbarui di Pengguna</RouterLink>
+    </div>
+
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div
         v-for="s in stats"
@@ -132,6 +158,66 @@ onMounted(load)
           </li>
         </ul>
         <p v-else class="card-body text-sm text-slate-400">Semua stok obat aman.</p>
+      </div>
+    </div>
+
+    <div class="grid gap-5 lg:grid-cols-3">
+      <!-- Booking hari ini & no-show 30 hari (KPI PRD bagian 2) -->
+      <div v-if="data.booking" class="card lg:col-span-2">
+        <div class="card-header">
+          <h2 class="card-title">Booking hari ini</h2>
+          <RouterLink to="/booking/kalender" class="text-xs font-medium text-brand-700 hover:underline">Kalender</RouterLink>
+        </div>
+        <div class="card-body space-y-4">
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <div v-for="c in bookingCards" :key="c.label" class="tile">
+              <p class="text-3xl font-semibold tracking-tight text-slate-900">{{ c.value ?? 0 }}</p>
+              <p class="mt-1 flex items-center gap-1.5 text-xs text-slate-500"><span :class="c.dot" class="size-2 rounded-full" />{{ c.label }}</p>
+            </div>
+          </div>
+          <p class="text-sm text-slate-600">
+            No-show 30 hari terakhir:
+            <b v-if="data.booking.no_show_30_hari.persen !== null" :class="data.booking.no_show_30_hari.persen >= 10 ? 'text-rose-600' : 'text-emerald-700'" class="tabular-nums">
+              {{ data.booking.no_show_30_hari.persen }}%
+            </b>
+            <span v-else class="text-slate-400">belum ada data</span>
+            <span class="text-xs text-slate-500"> ({{ data.booking.no_show_30_hari.tidak_hadir }} dari {{ data.booking.no_show_30_hari.hadir + data.booking.no_show_30_hari.tidak_hadir }} booking; target &lt; 10%)</span>
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Top treatment hari ini</h2></div>
+        <div v-if="data.top_treatment?.length" class="card-body space-y-3">
+          <div v-for="t in data.top_treatment" :key="t.tindakan_id" class="flex items-center gap-3 text-sm">
+            <span class="w-36 shrink-0 truncate text-slate-600" :title="t.nama">{{ t.nama }}</span>
+            <div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-900/[0.06]">
+              <div class="h-full rounded-full bg-brand-900" :style="{ width: `${(t.jumlah / maxTreatment) * 100}%` }" />
+            </div>
+            <span class="w-6 text-right font-medium tabular-nums">{{ t.jumlah }}</span>
+          </div>
+        </div>
+        <p v-else class="card-body text-sm text-slate-400">Belum ada treatment hari ini.</p>
+      </div>
+
+      <!-- Perbandingan cabang (AD-01) untuk pengguna lintas cabang -->
+      <div v-if="data.per_cabang" class="card lg:col-span-3">
+        <div class="card-header">
+          <h2 class="card-title">Per cabang hari ini</h2>
+          <RouterLink v-if="auth.can('laporan.keuangan')" to="/laporan" class="text-xs font-medium text-brand-700 hover:underline">Laporan lengkap</RouterLink>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="table">
+            <thead><tr><th>Cabang</th><th class="text-right">Kunjungan</th><th v-if="auth.can('laporan.keuangan')" class="text-right">Pendapatan</th></tr></thead>
+            <tbody>
+              <tr v-for="c in data.per_cabang" :key="c.id">
+                <td>{{ c.nama }} <span class="text-xs text-slate-400">{{ c.kode }}</span></td>
+                <td class="text-right tabular-nums">{{ c.kunjungan }}</td>
+                <td v-if="auth.can('laporan.keuangan')" class="text-right tabular-nums">{{ rupiah(c.pendapatan) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>

@@ -74,6 +74,16 @@ const ACTIONS = [
     keywords: ['kunjungan baru', 'daftar poli', 'antrian baru', 'tiket kunjungan'],
   },
   {
+    id: 'aksi:booking-baru',
+    label: 'Booking Baru',
+    category: 'Aksi Cepat',
+    hint: 'Buat booking pasien: treatment, dokter/terapis, ruang & slot kosong',
+    to: '/booking/kalender?baru=1',
+    izin: ['booking.kelola'],
+    icon: ICON.clock,
+    keywords: ['booking', 'janji temu', 'reservasi', 'appointment', 'jadwalkan'],
+  },
+  {
     id: 'aksi:obat-baru',
     label: 'Tambah Master Obat',
     category: 'Aksi Cepat',

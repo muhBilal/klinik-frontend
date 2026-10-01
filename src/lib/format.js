@@ -53,6 +53,42 @@ export const STATUS_KUNJUNGAN = {
   batal: 'Batal',
 }
 
+/** Status booking (enum StatusAppointment backend, F1-02). */
+export const STATUS_APPOINTMENT = {
+  dijadwalkan: 'Dijadwalkan',
+  dikonfirmasi: 'Dikonfirmasi',
+  hadir: 'Hadir',
+  batal: 'Batal',
+  tidak_hadir: 'Tidak hadir',
+}
+
+/** Nama hari, indeks mengikuti `Date.getDay()` / `Carbon::dayOfWeek` (0 = Minggu). */
+export const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+
+/** Tanggal lokal `Date` → "YYYY-MM-DD". */
+export function isoTanggal(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+/** "YYYY-MM-DD" + n hari → "YYYY-MM-DD" (zona waktu lokal). */
+export function tambahHari(iso, n) {
+  const d = new Date(`${iso}T00:00:00`)
+  d.setDate(d.getDate() + n)
+  return isoTanggal(d)
+}
+
+/** Label baris resep: nama obat, atau "Racikan X (krim 30 g)" (FR-01). */
+export function labelResepItem(i) {
+  if (!i.racikan) return i.obat?.nama ?? '-'
+  const isi = i.jumlah_racikan ? ` ${angka(i.jumlah_racikan)} ${i.satuan_racikan ?? ''}`.trimEnd() : ''
+  return `Racikan ${i.nama_racikan} (${i.bentuk}${isi})`
+}
+
+/** Jumlah baris resep untuk etiket/daftar: "10 tablet" atau "2 racikan". */
+export function jumlahResepItem(i) {
+  return i.racikan ? `${i.jumlah} racikan` : `${i.jumlah} ${i.obat?.satuan ?? ''}`.trimEnd()
+}
+
 export const JENIS_MUTASI = { masuk: 'Masuk', keluar: 'Keluar', penyesuaian: 'Stok opname' }
 
 /** Bentuk catatan tindakan per treatment (enum JenisCatatanTindakan backend). */

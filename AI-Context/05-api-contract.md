@@ -177,6 +177,8 @@ Resep detail juga memuat `cabang` (kop etiket).
   yaitu setelah pemeriksaan diselesaikan. Tampilkan `jumlah_standar` sebagai pembanding.
 
 ## Booking (F1-02)
+- `GET /appointments-kebutuhan?tindakan_ids[]=` → ruang/alat wajib per treatment & tipe (BK-08); `appointments-slot` menerima `kecuali_id` (reschedule).
+  Form booking: `components/booking/BookingFormModal.vue`.
 - `GET /appointments?dari=&sampai=` (izin `booking.lihat`): `{ id, no_booking, pasien_id, poli_id, petugas_id, mulai_at,
   selesai_at, status, catatan, kunjungan_id, pasien: { id, no_rm, nama, no_hp }, poli, petugas: { id, name },
   tindakans: [{ id, tindakan_id, durasi_menit, buffer_menit, tindakan: { id, kode, nama } }],

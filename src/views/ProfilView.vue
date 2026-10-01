@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { computed, reactive, ref } from 'vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import ThemeSettingsCard from '@/components/ThemeSettingsCard.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
@@ -234,5 +235,7 @@ async function salinKode() {
         </template>
       </div>
     </div>
+
+    <ThemeSettingsCard class="lg:col-span-2" />
   </div>
 </template>

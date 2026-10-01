@@ -34,7 +34,7 @@
 | Komponen | Props / Event | Catatan |
 |----------|---------------|---------|
 | `AppModal` | `v-model`, `title`, `size` (`max-w-lg`), slot default + `#footer` | Teleport ke body, Esc & klik backdrop menutup. Tombol submit di footer pakai `form="id-form"`. |
-| `AsyncSelect` | `endpoint`, `params`, `placeholder`, `@select`, slot `#default="{ item }"` | Autocomplete ke endpoint index (`q`, `per_page=10`), navigasi keyboard, input dikosongkan setelah pilih. |
+| `AsyncSelect` | `endpoint`, `params`, `placeholder`, `@select`, slot `#default="{ item }"` | Autocomplete ke endpoint index (`q`, `per_page=10`), navigasi keyboard, input dikosongkan setelah pilih. Enter tidak pernah mengirim form induk. |
 | `AppPagination` | `meta`, `@change(page)` | Memakai meta dari `useList`. |
 | `StatusBadge` | `status` | Map warna/label untuk semua status kunjungan/resep/tagihan + `aktif`/`nonaktif`. Tambah status baru di sini. |
 | `PageHeader` | `title`, `subtitle`, slot aksi | |
@@ -48,6 +48,12 @@
 | `rme/ConsentFormModal` / `rme/ConsentLihatModal` | `kunjungan`, `tindakan` / `uuid`, `bisaCabut` | Ambil consent (naskah backend + tanda tangan) / lihat, cetak, cabut. |
 | `foto/FotoKlinisCard` | `pasien`, `kunjunganId?`, `tindakans`, `bisaAmbil`; expose `ambil(tindakan?)` | Persetujuan foto + kamera + galeri (F1-06). |
 | `foto/GaleriFoto`, `foto/BandingFoto`, `foto/KameraFoto`, `foto/PersetujuanFotoPanel` | lihat `08-fitur-fase-1.md` | Galeri & before-after, kamera terpandu, consent foto. |
+| `pasien/ProfilKlinisCard` | `pasien`, `ringkas`; expose `muat()`, `peringatan`, `obatAlergi`; `@changed` | Profil klinis & alergi + peringatan (PS-03); `ringkas` = baris peringatan di header pemeriksaan. |
+| `pasien/PersetujuanDataPanel` | `pasien`; expose `muat()`; `@changed({pemrosesan, marketing})` | Consent UU PDP (PS-04): status, tanda tangan, cabut, riwayat, cetak. |
+| `rme/RacikanModal` | `v-model`, `racikan` (null = baru); `@saved(racikan)` | Resep racikan (FR-01): nama, bentuk, isi, banyaknya, komponen per racikan. |
+| `ImporMasterButton` | `jenis` (icd10/icd9cm/obat); `@selesai` | Impor CSV master + modal hasil (AD-10). Di `MasterCrud` lewat slot `#aksi="{ reload }"`. |
+| `KopDokumen` / `KakiDokumen` | `cabang` | Kop & kaki dokumen cetak dari pengaturan `dokumen.*` (AD-04). |
+| `booking/BookingFormModal` | `v-model`, `appointment` (null = baru), `preset` ({ pasien, petugas_id, tanggal, jam }), `@saved(appointment)` | Booking baru/reschedule: treatment, petugas, ruang/alat wajib (BK-08), slot kosong dari `/appointments-slot`. |
 | `paket/PaketPasienCard` | `pasien`, `ringkas`; expose `muatUlang()`, `@changed` | Paket pasien: sisa per treatment (bar), riwayat pemakaian, jual, perpanjang/alihkan/refund sisa. `ringkas` = hanya paket aktif, tanpa aksi, tersembunyi bila kosong. |
 | `paket/JualPaketModal` | `v-model`, `pasien?` (null = pilih pasien) | Pilih paket katalog → tagihan → `/kasir/{tagihan_id}`. |
 | `gigi/OdontogramCard` | `pasien`, `kunjunganId?`, `editable`, `bisaTambahTindakan`, `@tambah-tindakan({gigi, permukaan})`; expose `muatUlang()` | Odontogram + panel gigi terpilih + perubahan kunjungan / riwayat (F1-07). |

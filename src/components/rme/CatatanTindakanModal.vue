@@ -41,7 +41,16 @@ const terpilih = ref(-1)
 const petugas = ref([])
 const alats = ref([])
 const batches = reactive({})
-const form = reactive({ jenis: 'umum', petugas_id: '', area: '', catatan: '', sumber_daya_id: '', parameter: {}, titiks: [] })
+const form = reactive({ jenis: 'umum', petugas_id: '', petugas_tambahan: [], area: '', catatan: '', sumber_daya_id: '', parameter: {}, titiks: [] })
+/** Peran petugas tambahan (AN-03) — dasar split komisi (KM-01). */
+const PERAN_TAMBAHAN = { asisten: 'Asisten', terapis: 'Terapis / perawat', dokter: 'Dokter' }
+const opsiTambahan = computed(() => petugas.value.filter((p) => p.id !== Number(form.petugas_id) && !form.petugas_tambahan.some((t) => t.user_id === p.id)))
+function tambahPetugas(e) {
+  const id = Number(e.target.value)
+  if (id) form.petugas_tambahan.push({ user_id: id, peran: 'asisten' })
+  e.target.value = ''
+}
+const namaPetugas = (id) => petugas.value.find((p) => p.id === id)?.name ?? info.value?.petugas_tambahan?.find((t) => t.user_id === id)?.user?.name ?? `#${id}`
 
 const bhps = ref([])
 const bhpLoading = ref(false)
@@ -91,6 +100,7 @@ async function muat() {
     Object.assign(form, {
       jenis: data.jenis,
       petugas_id: info.value.petugas_id ?? '',
+      petugas_tambahan: (info.value.petugas_tambahan ?? []).map((t) => ({ user_id: t.user_id, peran: t.peran })),
       area: c?.area ?? '',
       catatan: c?.catatan ?? '',
       sumber_daya_id: c?.sumber_daya_id ?? '',
@@ -166,7 +176,10 @@ function hapusTitik(i) {
 }
 
 function payload() {
-  const data = { jenis: form.jenis, area: form.area || null, catatan: form.catatan || null, petugas_id: form.petugas_id || null }
+  const data = {
+    jenis: form.jenis, area: form.area || null, catatan: form.catatan || null, petugas_id: form.petugas_id || null,
+    petugas_tambahan: form.petugas_tambahan.filter((t) => t.user_id !== Number(form.petugas_id)),
+  }
   if (form.jenis === 'energi') {
     data.sumber_daya_id = form.sumber_daya_id || null
     data.parameter = Object.fromEntries(Object.entries(form.parameter).filter(([, v]) => v !== '' && v !== null))
@@ -270,6 +283,25 @@ async function simpanBhp() {
               <option v-if="info.petugas && !petugas.some((p) => p.id === info.petugas.id)" :value="info.petugas.id">{{ info.petugas.name }}</option>
             </select>
             <p v-if="errors.petugas_id" class="field-error">{{ errors.petugas_id }}</p>
+          </div>
+          <!-- Petugas tambahan (AN-03): asisten / terapis kedua, dasar pembagian komisi -->
+          <div class="sm:col-span-2">
+            <p class="label">Petugas tambahan</p>
+            <div v-if="form.petugas_tambahan.length" class="mb-2 space-y-1.5">
+              <div v-for="(t, i) in form.petugas_tambahan" :key="t.user_id" class="flex items-center gap-2 rounded-2xl bg-white/50 px-3 py-1.5 text-sm">
+                <span class="flex-1">{{ namaPetugas(t.user_id) }}</span>
+                <select v-model="t.peran" class="input w-44 py-1" :aria-label="`Peran ${namaPetugas(t.user_id)}`" :disabled="!bolehUbah">
+                  <option v-for="(label, val) in PERAN_TAMBAHAN" :key="val" :value="val">{{ label }}</option>
+                </select>
+                <button v-if="bolehUbah" type="button" class="text-slate-400 hover:text-rose-600" :aria-label="`Hapus ${namaPetugas(t.user_id)}`" @click="form.petugas_tambahan.splice(i, 1)">&times;</button>
+              </div>
+            </div>
+            <select v-if="bolehUbah && opsiTambahan.length" class="input" aria-label="Tambah petugas" @change="tambahPetugas">
+              <option value="">+ Tambah asisten / petugas lain…</option>
+              <option v-for="p in opsiTambahan" :key="p.id" :value="p.id">{{ p.name }} · {{ p.peran }}</option>
+            </select>
+            <p v-if="errors['petugas_tambahan.0.user_id'] || errors.petugas_tambahan" class="field-error">{{ errors['petugas_tambahan.0.user_id'] || errors.petugas_tambahan }}</p>
+            <p v-else class="mt-1 text-xs text-slate-400">Komisi dibagi per peran sesuai aturan komisi; petugas dengan peran sama berbagi rata.</p>
           </div>
           <div class="sm:col-span-2">
             <label class="label" for="ct-area">Area tindakan</label>

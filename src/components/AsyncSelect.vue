@@ -63,6 +63,8 @@ function onBlur() {
 }
 
 function onKeydown(e) {
+  // Enter di kotak pencarian tidak pernah mengirim form induk (hasil mungkin belum termuat)
+  if (e.key === 'Enter') e.preventDefault()
   if (!open.value || !results.value.length) return
   if (e.key === 'ArrowDown') {
     e.preventDefault()
@@ -71,7 +73,6 @@ function onKeydown(e) {
     e.preventDefault()
     highlighted.value = (highlighted.value - 1 + results.value.length) % results.value.length
   } else if (e.key === 'Enter') {
-    e.preventDefault()
     choose(results.value[highlighted.value])
   } else if (e.key === 'Escape') {
     open.value = false

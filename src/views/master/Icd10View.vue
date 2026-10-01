@@ -1,4 +1,5 @@
 <script setup>
+import ImporMasterButton from '@/components/ImporMasterButton.vue'
 import MasterCrud from '@/components/MasterCrud.vue'
 
 const columns = [
@@ -27,5 +28,7 @@ const fields = [
     :columns="columns"
     :fields="fields"
     :defaults="{ sensitif: false }"
-  />
+  >
+    <template #aksi="{ reload }"><ImporMasterButton jenis="icd10" @selesai="reload" /></template>
+  </MasterCrud>
 </template>

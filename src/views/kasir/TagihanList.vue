@@ -6,7 +6,9 @@ import JualPaketModal from '@/components/paket/JualPaketModal.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useList } from '@/composables/useList'
-import { METODE_BAYAR, PENJAMIN, rupiah, waktu } from '@/lib/format'
+import api from '@/lib/api'
+import { METODE_BAYAR, PENJAMIN, jam, rupiah, waktu } from '@/lib/format'
+import { useAuthStore } from '@/stores/auth'
 
 const TABS = [
   { value: 'belum_bayar', label: 'Belum dibayar' },
@@ -18,7 +20,23 @@ const { items, meta, loading, filters, load, search } = useList('/tagihans', { s
 
 const jualOpen = ref(false)
 
-onMounted(() => load())
+// Status shift kas kasir yang login (BL-05)
+const auth = useAuthStore()
+const shift = ref(undefined)
+async function muatShift() {
+  if (!auth.can('kasir.shift')) return
+  try {
+    const { data } = await api.get('/shift-kas/aktif', { silent: true })
+    shift.value = data?.id ? data : null
+  } catch {
+    shift.value = undefined
+  }
+}
+
+onMounted(() => {
+  load()
+  muatShift()
+})
 </script>
 
 <template>
@@ -27,6 +45,12 @@ onMounted(() => load())
     <button class="btn btn-secondary" @click="jualOpen = true">+ Jual paket</button>
   </PageHeader>
   <JualPaketModal v-model="jualOpen" />
+
+  <RouterLink v-if="shift !== undefined" to="/shift-kas" class="alert mb-4 flex items-center justify-between gap-3" :class="shift ? '' : 'alert-warning'">
+    <span v-if="shift">Shift kas terbuka sejak {{ jam(shift.dibuka_at) }} · diterima {{ rupiah(shift.rekap.total) }} · kas seharusnya {{ rupiah(shift.rekap.kas_seharusnya) }}</span>
+    <span v-else>Anda belum membuka shift kas. Pembayaran tidak masuk rekap shift.</span>
+    <span class="text-xs font-semibold underline">{{ shift ? 'Tutup shift' : 'Buka shift' }}</span>
+  </RouterLink>
 
   <div class="card">
     <div class="card-header flex-wrap">

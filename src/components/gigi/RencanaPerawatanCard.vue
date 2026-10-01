@@ -6,6 +6,8 @@
  */
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import AppModal from '@/components/AppModal.vue'
+import KakiDokumen from '@/components/KakiDokumen.vue'
+import KopDokumen from '@/components/KopDokumen.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import RencanaPerawatanModal from '@/components/gigi/RencanaPerawatanModal.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -14,7 +16,6 @@ import { jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
 import { formatGigi, labelFase } from '@/lib/gigi'
 import { printElement } from '@/lib/print'
 import { useAuthStore } from '@/stores/auth'
-import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const props = defineProps({
@@ -30,7 +31,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['kerjakan'])
 const auth = useAuthStore()
-const klinik = useKlinikStore()
 const toast = useToastStore()
 
 const rencanas = ref([])
@@ -229,12 +229,7 @@ onMounted(muat)
     <!-- Lembar estimasi untuk dicetak (printElement menyalin elemen ini) -->
     <div class="hidden">
       <article v-if="dicetak" id="cetak-rencana" class="space-y-4 text-sm text-slate-800">
-        <header class="border-b border-slate-300 pb-3 text-center">
-          <p class="text-base font-bold">{{ klinik.nama }}</p>
-          <p class="text-xs text-slate-600">
-            {{ dicetak.cabang?.nama }}<template v-if="dicetak.cabang?.alamat"> · {{ dicetak.cabang.alamat }}</template><template v-if="dicetak.cabang?.telepon"> · {{ dicetak.cabang.telepon }}</template>
-          </p>
-        </header>
+        <KopDokumen :cabang="dicetak.cabang" />
         <h3 class="text-center text-base font-semibold uppercase tracking-wide">Rencana Perawatan & Estimasi Biaya</h3>
         <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
           <dt class="text-slate-500">Pasien</dt><dd>{{ pasien.nama }} · RM {{ pasien.no_rm }} · {{ jenisKelamin(pasien.jenis_kelamin) }}</dd>
@@ -263,6 +258,7 @@ onMounted(muat)
           <div><p class="h-16">Pasien / wali</p><p class="border-t border-slate-400 pt-1">{{ dicetak.penyetuju_nama ?? pasien.nama }}</p></div>
           <div><p class="h-16">Dokter gigi</p><p class="border-t border-slate-400 pt-1">{{ dicetak.dokter?.name ?? '' }}</p></div>
         </div>
+        <KakiDokumen />
       </article>
     </div>
   </div>

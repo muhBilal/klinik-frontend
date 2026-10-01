@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
 import AppPagination from '@/components/AppPagination.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
+import ImporMasterButton from '@/components/ImporMasterButton.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
@@ -26,9 +27,14 @@ const saving = ref(false)
 function bukaForm(obat = null) {
   editing.value = obat
   errors.value = {}
-  Object.assign(form, obat ? { ...obat } : { kode: '', nama: '', satuan: 'tablet', harga: 0, stok_minimum: 10, stok_awal: 0, is_active: true })
+  Object.assign(form, obat
+    ? { jenis: 'obat', no_bpom: '', fraksional: false, jam_pakai_setelah_buka: '', ...obat }
+    : { kode: '', nama: '', satuan: 'tablet', jenis: 'obat', no_bpom: '', fraksional: false, jam_pakai_setelah_buka: '', harga: 0, stok_minimum: 10, stok_awal: 0, is_active: true })
   formOpen.value = true
 }
+
+const JENIS_PRODUK = { obat: 'Obat', skincare: 'Skincare / kosmetik', bhp: 'Bahan habis pakai', alkes: 'Alat kesehatan' }
+const payloadObat = () => ({ ...form, no_bpom: form.no_bpom || null, jam_pakai_setelah_buka: form.fraksional && form.jam_pakai_setelah_buka ? form.jam_pakai_setelah_buka : null })
 
 async function simpanObat() {
   saving.value = true
@@ -36,9 +42,9 @@ async function simpanObat() {
   try {
     if (editing.value) {
       // Perbarui baris di tempat, tanpa memuat ulang tabel
-      Object.assign(editing.value, (await api.put(`/obats/${editing.value.id}`, form)).data)
+      Object.assign(editing.value, (await api.put(`/obats/${editing.value.id}`, payloadObat())).data)
     } else {
-      await api.post('/obats', form)
+      await api.post('/obats', payloadObat())
       reload()
     }
     toast.success('Data obat tersimpan.')
@@ -120,6 +126,7 @@ onMounted(() => load())
 
 <template>
   <PageHeader title="Obat & Stok" subtitle="Master obat, penerimaan stok, dan kartu stok">
+    <ImporMasterButton v-if="auth.can('master.kelola')" jenis="obat" @selesai="reload" />
     <button class="btn btn-primary" @click="bukaForm()">+ Obat Baru</button>
   </PageHeader>
 
@@ -140,7 +147,12 @@ onMounted(() => load())
           <TableSkeleton v-if="loading && !items.length" :cols="7" />
           <tr v-for="o in items" :key="o.id">
             <td class="tabular-nums text-xs">{{ o.kode }}</td>
-            <td class="font-medium">{{ o.nama }}</td>
+            <td>
+              <p class="font-medium">{{ o.nama }}</p>
+              <p class="text-xs text-slate-500">
+                {{ JENIS_PRODUK[o.jenis] ?? 'Obat' }}<template v-if="o.no_bpom"> · BPOM {{ o.no_bpom }}</template><template v-if="o.fraksional"> · fraksional</template>
+              </p>
+            </td>
             <td>{{ o.satuan }}</td>
             <td class="text-right tabular-nums">{{ rupiah(o.harga) }}</td>
             <td class="text-right tabular-nums">
@@ -150,6 +162,7 @@ onMounted(() => load())
             <td><StatusBadge :status="o.is_active ? 'aktif' : 'nonaktif'" /></td>
             <td class="text-right whitespace-nowrap">
               <button class="btn btn-secondary btn-sm" @click="bukaMutasi(o)">Mutasi stok</button>
+              <RouterLink v-if="auth.can('inventori.kelola')" :to="{ path: '/farmasi/stok', query: { obat_id: o.id } }" class="btn btn-ghost btn-sm">Batch</RouterLink>
               <button class="btn btn-ghost btn-sm" @click="bukaKartu(o)">Kartu stok</button>
               <button class="btn btn-ghost btn-sm" @click="bukaForm(o)">Ubah</button>
               <button v-if="auth.can('master.kelola')" class="btn btn-ghost btn-sm text-rose-600" :disabled="deleting === o.id" @click="hapus(o)">
@@ -183,6 +196,24 @@ onMounted(() => load())
         <label class="label">Nama obat *</label>
         <input v-model="form.nama" class="input" :class="{ 'input-error': errors.nama }" required />
         <p v-if="errors.nama" class="field-error">{{ errors.nama }}</p>
+      </div>
+      <div>
+        <label class="label" for="ob-jenis">Jenis produk</label>
+        <select id="ob-jenis" v-model="form.jenis" class="input">
+          <option v-for="(l, v) in JENIS_PRODUK" :key="v" :value="v">{{ l }}</option>
+        </select>
+      </div>
+      <div>
+        <label class="label" for="ob-bpom">No. notifikasi / izin edar BPOM{{ form.jenis === 'skincare' ? ' *' : '' }}</label>
+        <input id="ob-bpom" v-model="form.no_bpom" class="input uppercase" :class="{ 'input-error': errors.no_bpom }" maxlength="30" :placeholder="form.jenis === 'skincare' ? 'NA18210100123' : 'opsional'" :required="form.jenis === 'skincare'" />
+        <p v-if="errors.no_bpom" class="field-error">{{ errors.no_bpom }}</p>
+      </div>
+      <label class="flex items-center gap-2 text-sm">
+        <input v-model="form.fraksional" type="checkbox" class="accent-brand-600" /> Boleh dipakai sebagian (vial, tube, ml)
+      </label>
+      <div v-if="form.fraksional">
+        <label class="label" for="ob-jam">Masa pakai setelah dibuka (jam)</label>
+        <input id="ob-jam" v-model.number="form.jam_pakai_setelah_buka" type="number" min="1" class="input" :class="{ 'input-error': errors.jam_pakai_setelah_buka }" placeholder="mis. 24 untuk botulinum" />
       </div>
       <div>
         <label class="label">Harga jual / satuan *</label>

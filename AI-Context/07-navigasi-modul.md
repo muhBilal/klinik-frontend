@@ -29,14 +29,15 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 
 | Modul (`key`) | Halaman |
 |---------------|---------|
-| Beranda (`beranda`) | Dashboard |
+| Beranda (`beranda`) | Dashboard, Komisi Saya (petugas medis, PRD v2) |
 | Pendaftaran (`pendaftaran`) | Data Pasien, Pendaftaran Kunjungan |
+| Booking (`booking`) | Kalender Booking, Jadwal Praktik (PRD v2) |
 | Pelayanan (`pelayanan`) | Antrian Poli (+ `/pemeriksaan/:id`) |
-| Farmasi (`farmasi`) | Resep, Obat & Stok |
-| Keuangan (`keuangan`) | Kasir, Voucher & Promo (F1-08, `promo.kelola`) |
-| Master Data (`master`) | Poli, Treatment, Paket Treatment (F1-08), Kategori Treatment, Cabang |
+| Farmasi (`farmasi`) | Resep, Stok Batch (`inventori.kelola`, PRD v2), Obat & Stok |
+| Keuangan (`keuangan`) | Kasir, Shift Kas (`kasir.shift`, PRD v2), Laporan (`laporan.keuangan`, PRD v2), Komisi (`komisi.kelola`/`laporan.keuangan`, PRD v2), Voucher & Promo (F1-08, `promo.kelola`) |
+| Master Data (`master`) | Poli, Treatment, Paket Treatment (F1-08), Kategori Treatment, Ruang & Alat, Cabang |
 | Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Protokol Foto (F1-06), Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
-| Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |
+| Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Integrasi (PRD v2), Audit Log |
 
 ## Perilaku (`layouts/AppLayout.vue`)
 
