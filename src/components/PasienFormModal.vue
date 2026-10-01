@@ -1,9 +1,13 @@
 <script setup>
+/**
+ * Form identitas pasien. Deteksi pasien ganda (PRD PS-02): saat NIK, No. HP, atau nama + tanggal lahir diisi, kandidat pasien
+ * yang mirip ditampilkan; pada pasien baru, front office bisa langsung memakai data yang sudah ada.
+ */
 import { reactive, ref, watch } from 'vue'
 import AppModal from '@/components/AppModal.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
-import { hariIni } from '@/lib/format'
+import { debounce, hariIni, jenisKelamin, tanggal } from '@/lib/format'
 import { useToastStore } from '@/stores/toast'
 
 const open = defineModel({ type: Boolean, default: false })
@@ -19,13 +23,38 @@ const form = reactive({ ...kosong })
 const errors = ref({})
 const saving = ref(false)
 
+// ---- Deteksi pasien ganda (PS-02) ----
+const kandidat = ref([])
+const cekDuplikat = debounce(async () => {
+  if (!open.value) return
+  const params = { nama: form.nama, tanggal_lahir: form.tanggal_lahir, no_hp: form.no_hp, nik: form.nik, kecuali_id: props.pasien?.id }
+  if (!(form.nik?.length === 16 || (form.no_hp ?? '').replace(/\D/g, '').length >= 9 || (form.nama && form.tanggal_lahir))) {
+    kandidat.value = []
+    return
+  }
+  try {
+    kandidat.value = (await api.get('/pasiens-duplikat', { params, silent: true })).data
+  } catch {
+    kandidat.value = []
+  }
+}, 500)
+watch(() => [form.nik, form.no_hp, form.nama, form.tanggal_lahir], () => cekDuplikat())
+
+function pakai(p) {
+  toast.info(`Memakai data pasien yang sudah terdaftar: ${p.nama} (RM ${p.no_rm}).`)
+  emit('saved', p)
+  open.value = false
+}
+
 watch(open, (value) => {
   if (!value) return
+  kandidat.value = []
   errors.value = {}
   Object.assign(form, kosong, props.pasien ? Object.fromEntries(Object.keys(kosong).map((k) => [k, props.pasien[k] ?? ''])) : {})
 })
 
 async function submit() {
+  if (!props.pasien && kandidat.value.length && !confirm(`Ada ${kandidat.value.length} pasien yang mirip. Tetap simpan sebagai pasien baru?`)) return
   saving.value = true
   errors.value = {}
   try {
@@ -95,6 +124,20 @@ async function submit() {
       <div class="sm:col-span-2">
         <label class="label">Alamat</label>
         <textarea v-model="form.alamat" rows="2" class="input" />
+      </div>
+      <div v-if="kandidat.length" class="alert alert-warning space-y-2 sm:col-span-2" role="status">
+        <p class="font-medium">Kemungkinan pasien sudah terdaftar:</p>
+        <div v-for="k in kandidat" :key="k.id" class="flex flex-wrap items-center gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium">{{ k.nama }} <span class="text-xs text-slate-500">· RM {{ k.no_rm }}</span></p>
+            <p class="text-xs text-slate-600">
+              {{ jenisKelamin(k.jenis_kelamin) }}, lahir {{ tanggal(k.tanggal_lahir) }}<template v-if="k.no_hp"> · {{ k.no_hp }}</template>
+              · <b>{{ k.alasan.join(', ') }}</b>
+            </p>
+          </div>
+          <button v-if="!pasien" type="button" class="btn btn-secondary btn-sm" @click="pakai(k)">Gunakan pasien ini</button>
+          <RouterLink v-else :to="`/pasien/${k.id}`" class="btn btn-ghost btn-sm" @click="open = false">Lihat</RouterLink>
+        </div>
       </div>
     </form>
     <template #footer>

@@ -96,6 +96,8 @@ onMounted(() => load())
 
 <template>
   <PageHeader :title="title" :subtitle="subtitle">
+    <!-- Aksi tambahan di header (mis. impor CSV); `reload` memuat ulang daftar -->
+    <slot name="aksi" :reload="reload" />
     <button class="btn btn-primary" @click="buka()">+ Tambah {{ itemLabel }}</button>
   </PageHeader>
 

@@ -5,14 +5,17 @@ import { onKeyStroke, useIdle } from '@vueuse/core'
 import AppIcon from '@/components/AppIcon.vue'
 import AppLogo from '@/components/AppLogo.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
 import { MOD_KEY } from '@/lib/keyboard'
 import { visibleMenu } from '@/lib/menu'
 import { useAuthStore } from '@/stores/auth'
 import { useKlinikStore } from '@/stores/klinik'
+import { useThemeStore } from '@/stores/theme'
 import { useToastStore } from '@/stores/toast'
 
 const auth = useAuthStore()
 const klinik = useKlinikStore()
+const theme = useThemeStore()
 const toast = useToastStore()
 const route = useRoute()
 const router = useRouter()
@@ -46,6 +49,14 @@ const ICON = {
   logout: 'M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9',
   menu: 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5',
   close: 'M6 18L18 6M6 6l12 12',
+  theme: 'M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.88 2.88M6.75 17.25h.008v.008H6.75v-.008z',
+  user: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z',
+}
+
+const ICON_THEME = {
+  light: 'M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.236l-1.591 1.591M5.25 12H3m4.236-4.773L5.645 5.636M12 8.25a3.75 3.75 0 100 7.5 3.75 3.75 0 000-7.5z',
+  dark: 'M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z',
+  system: 'M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0H3',
 }
 
 // Navigasi terakhir per modul di sessionStorage (per tab; dikosongkan auth.clear() saat logout — perangkat bersama).
@@ -101,16 +112,6 @@ function tujuanModul(group) {
 
 // Tombol kembali hanya bila ada halaman sebelumnya di dalam aplikasi (vue-router menyimpannya di history.state)
 const canGoBack = computed(() => route.fullPath && !!window.history.state?.back)
-
-const initials = computed(() =>
-  (auth.user?.name ?? '')
-    .replace(/^(dr|drg|ns)\.?\s*/i, '')
-    .split(' ')
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase(),
-)
 
 watch(() => route.fullPath, () => (drawerOpen.value = false))
 
@@ -179,37 +180,46 @@ watch(idle, async (value) => {
         <!-- Tombol Global Search -->
         <button
           type="button"
-          class="flex items-center gap-2 rounded-full border border-white/90 bg-white/75 py-1.5 pr-2.5 pl-3 text-sm font-medium text-slate-600 shadow-xs transition hover:border-[#003DFF]/40 hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#003DFF]/30 active:scale-95"
+          class="flex items-center gap-2 rounded-full border border-white/90 bg-white/75 py-1.5 pr-2.5 pl-3 text-sm font-medium text-slate-600 shadow-xs transition hover:border-[#003DFF]/40 hover:bg-white hover:text-slate-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#003DFF]/30 active:scale-95 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
           :aria-label="`Pencarian (${MOD_KEY}+K)`"
           title="Cari modul atau menu (Ctrl+K)"
           @click="paletteOpen = true"
         >
-          <span class="grid size-5 place-items-center text-[#003DFF]">
+          <span class="grid size-5 place-items-center text-brand-600">
             <AppIcon :path="ICON.search" size="size-4" />
           </span>
-          <span class="hidden text-xs text-slate-500 sm:inline xl:text-sm">Cari modul…</span>
+          <span class="hidden text-xs text-slate-500 sm:inline xl:text-sm dark:text-slate-400">Cari modul…</span>
           <span class="flex items-center gap-0.5">
             <kbd class="kbd text-[10px]">{{ MOD_KEY }}</kbd>
             <kbd class="kbd text-[10px]">K</kbd>
           </span>
         </button>
 
-        <span class="hidden h-5 w-px bg-slate-900/10 sm:block" aria-hidden="true" />
+        <!-- Tombol Switch Tema (Light / Dark / System) -->
+        <button
+          type="button"
+          class="btn-icon"
+          :title="`Tema: ${theme.mode === 'light' ? 'Terang' : theme.mode === 'dark' ? 'Gelap' : 'Otomatis'}. Klik untuk mengubah tema.`"
+          :aria-label="`Ubah tema (saat ini ${theme.mode})`"
+          @click="theme.toggleMode()"
+        >
+          <AppIcon :path="ICON_THEME[theme.mode]" size="size-4.5" />
+        </button>
+
+        <span class="hidden h-5 w-px bg-slate-900/10 dark:bg-slate-700 sm:block" aria-hidden="true" />
 
         <!-- Profil Pengguna (Nama & Avatar) -> halaman profil & keamanan akun -->
         <RouterLink to="/profil" class="flex items-center gap-2.5" title="Profil & keamanan akun">
           <div class="hidden text-right leading-tight xl:block">
-            <p class="text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
-            <p class="text-xs text-slate-500">{{ auth.user?.role_label }}<template v-if="auth.user?.poli"> · {{ auth.user.poli.nama }}</template></p>
+            <p class="text-sm font-semibold text-slate-900 dark:text-white">{{ auth.user?.name }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400">{{ auth.user?.role_label }}<template v-if="auth.user?.poli"> · {{ auth.user.poli.nama }}</template></p>
           </div>
-          <div
-            class="grid size-10 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white shadow-lg ring-2 shadow-sky-600/25 ring-white"
-            :title="auth.user?.name"
-          >
-            {{ initials }}
-          </div>
+          <UserAvatar :user="auth.user" size="size-10" />
         </RouterLink>
 
+        <RouterLink to="/themes" class="btn-icon hidden lg:grid" title="Tema tampilan" aria-label="Tema tampilan">
+          <AppIcon :path="ICON.theme" size="size-4.5" />
+        </RouterLink>
         <button class="btn-icon hidden lg:grid" title="Keluar" aria-label="Keluar" @click="logout">
           <AppIcon :path="ICON.logout" size="size-4.5" />
         </button>
@@ -231,7 +241,7 @@ watch(idle, async (value) => {
     <!-- ===== Rail modul (desktop): satu tombol per modul, di tengah layar secara vertikal ===== -->
     <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col items-center lg:flex print:hidden" aria-label="Modul">
       <button v-if="canGoBack" class="rail-btn" aria-label="Kembali" @click="router.back()">
-        <AppIcon :path="ICON.back" size="size-4.5" />
+        <AppIcon :path="ICON.back" size="size-4.5" class="shrink-0" />
         <span class="rail-tip">Kembali</span>
       </button>
       <nav class="rail-nav glass flex flex-col items-center rounded-full p-1.5" aria-label="Modul">
@@ -257,21 +267,21 @@ watch(idle, async (value) => {
     <Transition enter-from-class="-translate-x-[110%]" enter-active-class="transition duration-300" leave-to-class="-translate-x-[110%]" leave-active-class="transition duration-200">
       <aside v-if="drawerOpen" class="glass-strong fixed inset-y-3 left-3 z-50 flex w-72 flex-col rounded-3xl lg:hidden" aria-label="Menu">
         <div class="flex items-center justify-between px-5 pt-5 pb-2">
-          <span class="flex items-center gap-2 text-[22px] leading-none tracking-tight text-slate-900">
+          <span class="flex items-center gap-2 text-[22px] leading-none tracking-tight text-slate-900 dark:text-white">
             <AppLogo class="size-8" /><span><b class="font-bold">lefa</b><span class="font-light">klinik</span></span>
           </span>
           <button class="btn-icon size-9" aria-label="Tutup menu" @click="drawerOpen = false"><AppIcon :path="ICON.close" size="size-4" /></button>
         </div>
         <nav class="flex-1 space-y-4 overflow-y-auto px-3 py-3">
           <div v-for="group in groups" :key="group.key">
-            <p class="mb-1.5 flex items-center gap-2 px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+            <p class="mb-1.5 flex items-center gap-2 px-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase dark:text-slate-400">
               <AppIcon :path="group.icon" size="size-3.5" />{{ group.label }}
             </p>
             <RouterLink
               v-for="item in group.items"
               :key="item.to"
               :to="item.to"
-              :class="isActive(item) ? 'bg-brand-900 text-white shadow-lg shadow-sky-600/25' : 'text-slate-600 hover:bg-white hover:text-slate-900'"
+              :class="isActive(item) ? 'bg-brand-900 text-white shadow-lg shadow-sky-600/25' : 'text-slate-600 hover:bg-white hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white'"
               class="flex items-center gap-3 rounded-full px-4 py-2.5 text-sm font-medium transition"
             >
               <AppIcon :path="item.icon" size="size-4.5" />
@@ -286,12 +296,15 @@ watch(idle, async (value) => {
             <option v-for="c in auth.cabangs" :key="c.id" :value="String(c.id)">{{ c.nama }}</option>
           </select>
         </div>
-        <div class="m-3 flex items-center gap-3 rounded-2xl border border-white/90 bg-white/65 p-3">
+        <div class="mx-3">
+          <RouterLink to="/themes" class="btn btn-secondary w-full"><AppIcon :path="ICON.theme" size="size-4" /> Tema tampilan</RouterLink>
+        </div>
+        <div class="m-3 flex items-center gap-3 rounded-2xl border border-white/90 bg-white/65 p-3 dark:border-slate-800 dark:bg-slate-900/80">
           <RouterLink to="/profil" class="flex min-w-0 flex-1 items-center gap-3" title="Profil & keamanan akun">
-            <div class="grid size-9 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white">{{ initials }}</div>
+            <UserAvatar :user="auth.user" size="size-9" />
             <div class="min-w-0 flex-1 leading-tight">
-              <p class="truncate text-sm font-semibold text-slate-900">{{ auth.user?.name }}</p>
-              <p class="truncate text-xs text-slate-500">{{ auth.user?.role_label }}</p>
+              <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ auth.user?.name }}</p>
+              <p class="truncate text-xs text-slate-500 dark:text-slate-400">{{ auth.user?.role_label }}</p>
             </div>
           </RouterLink>
           <button class="btn-icon size-9" title="Keluar" aria-label="Keluar" @click="logout"><AppIcon :path="ICON.logout" size="size-4" /></button>

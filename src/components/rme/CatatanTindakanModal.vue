@@ -166,7 +166,9 @@ function hapusTitik(i) {
 }
 
 function payload() {
-  const data = { jenis: form.jenis, area: form.area || null, catatan: form.catatan || null, petugas_id: form.petugas_id || null }
+  const data = {
+    jenis: form.jenis, area: form.area || null, catatan: form.catatan || null, petugas_id: form.petugas_id || null,
+  }
   if (form.jenis === 'energi') {
     data.sumber_daya_id = form.sumber_daya_id || null
     data.parameter = Object.fromEntries(Object.entries(form.parameter).filter(([, v]) => v !== '' && v !== null))

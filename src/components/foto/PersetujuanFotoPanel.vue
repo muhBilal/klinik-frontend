@@ -5,6 +5,8 @@
  */
 import { computed, reactive, ref, watch } from 'vue'
 import AppModal from '@/components/AppModal.vue'
+import KakiDokumen from '@/components/KakiDokumen.vue'
+import KopDokumen from '@/components/KopDokumen.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import SignaturePad from '@/components/SignaturePad.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
@@ -12,7 +14,6 @@ import api, { errorMessage, validationErrors } from '@/lib/api'
 import { HUBUNGAN_PENANDATANGAN, TINGKAT_FOTO, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
 import { useAuthStore } from '@/stores/auth'
-import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const props = defineProps({
@@ -21,7 +22,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['changed'])
 const auth = useAuthStore()
-const klinik = useKlinikStore()
 const toast = useToastStore()
 
 const data = ref(null)
@@ -202,10 +202,7 @@ async function lihat(uuid) {
       <template v-if="dokumen">
         <p v-if="!dokumen.checksum_valid" class="alert alert-danger mb-3">Sidik dokumen tidak cocok: dokumen berubah di luar aplikasi.</p>
         <article id="cetak-persetujuan-foto" class="space-y-3 rounded-2xl border border-line bg-white px-6 py-5 text-sm leading-relaxed text-slate-800">
-          <header class="border-b border-slate-300 pb-2 text-center">
-            <p class="text-base font-bold">{{ klinik.nama }}</p>
-            <p class="text-xs text-slate-600">{{ dokumen.cabang?.nama }}</p>
-          </header>
+          <KopDokumen :cabang="dokumen.cabang" />
           <div class="flex items-start justify-between gap-2">
             <h3 class="font-semibold uppercase tracking-wide">Persetujuan Pengambilan & Penggunaan Foto Klinis</h3>
             <StatusBadge :status="dokumen.status" />
@@ -221,6 +218,7 @@ async function lihat(uuid) {
             Ditandatangani {{ waktu(dokumen.ditandatangani_at) }} · dicatat oleh {{ dokumen.pembuat?.name ?? '-' }}
             <template v-if="dokumen.berakhir_at"> · berakhir {{ waktu(dokumen.berakhir_at) }}</template> · ID {{ dokumen.uuid }}
           </p>
+          <KakiDokumen />
         </article>
       </template>
       <template #footer>

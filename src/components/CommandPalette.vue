@@ -49,6 +49,7 @@ const ICON = {
   arrowReturn: 'M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3',
   clipboard: 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z',
   building: 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z',
+  theme: 'M4.098 19.902a3.75 3.75 0 005.304 0l6.401-6.402M6.75 21A3.75 3.75 0 013 17.25V4.125C3 3.504 3.504 3 4.125 3h5.25c.621 0 1.125.504 1.125 1.125v4.072M6.75 21a3.75 3.75 0 003.75-3.75V8.197M6.75 21h13.125c.621 0 1.125-.504 1.125-1.125v-5.25c0-.621-.504-1.125-1.125-1.125h-4.072M10.5 8.197l2.88-2.88c.438-.439 1.15-.439 1.59 0l3.712 3.713c.44.44.44 1.152 0 1.59l-2.88 2.88M6.75 17.25h.008v.008H6.75v-.008z',
   documentPlus: 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z',
 }
 
@@ -72,6 +73,16 @@ const ACTIONS = [
     izin: ['kunjungan.daftar'],
     icon: ICON.clipboard,
     keywords: ['kunjungan baru', 'daftar poli', 'antrian baru', 'tiket kunjungan'],
+  },
+  {
+    id: 'aksi:booking-baru',
+    label: 'Booking Baru',
+    category: 'Aksi Cepat',
+    hint: 'Buat booking pasien: treatment, dokter/terapis, ruang & slot kosong',
+    to: '/booking/kalender?baru=1',
+    izin: ['booking.kelola'],
+    icon: ICON.clock,
+    keywords: ['booking', 'janji temu', 'reservasi', 'appointment', 'jadwalkan'],
   },
   {
     id: 'aksi:obat-baru',
@@ -112,6 +123,24 @@ const ACTIONS = [
     izin: ['pengguna.kelola'],
     icon: ICON.userPlus,
     keywords: ['tambah user', 'tambah akun', 'dokter baru', 'perawat baru', 'buat user'],
+  },
+  {
+    id: 'aksi:profil',
+    label: 'Profil Saya',
+    category: 'Akun & Sesi',
+    hint: 'Ubah nama, email, dan password akun Anda',
+    to: '/profil',
+    icon: ICON.user,
+    keywords: ['profil', 'akun saya', 'ganti password', 'ubah email', 'ubah nama', 'password'],
+  },
+  {
+    id: 'aksi:tema',
+    label: 'Tema Tampilan',
+    category: 'Akun & Sesi',
+    hint: 'Ganti warna aksen aplikasi',
+    to: '/themes',
+    icon: ICON.theme,
+    keywords: ['tema', 'warna', 'theme', 'tampilan', 'aksen', 'kustomisasi', 'personalisasi'],
   },
   {
     id: 'aksi:keluar',
@@ -403,7 +432,7 @@ function onKeydown(e) {
           <!-- ===== Input Header Ala Algolia ===== -->
           <div class="relative flex items-center gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
             <!-- Icon Algolia Search -->
-            <div class="grid size-10 shrink-0 place-items-center rounded-xl bg-blue-50 text-[#003DFF]">
+            <div class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
               <AppIcon :path="ICON.search" size="size-5" />
             </div>
 
@@ -437,7 +466,7 @@ function onKeydown(e) {
             </button>
 
             <!-- Spinner status -->
-            <AppSpinner v-if="pasienLoading" class="text-[#003DFF]" />
+            <AppSpinner v-if="pasienLoading" class="text-brand-600" />
 
             <!-- ESC Shortcut Badge -->
             <button
@@ -489,7 +518,7 @@ function onKeydown(e) {
                   :aria-selected="entry === activeEntry"
                   :class="[
                     entry === activeEntry
-                      ? 'bg-[#003DFF] text-white shadow-lg shadow-blue-600/25 ring-1 ring-blue-600'
+                      ? 'bg-brand-900 text-white shadow-lg shadow-brand-900/30 ring-1 ring-brand-900'
                       : 'text-slate-700 hover:bg-slate-100/80',
                   ]"
                   class="group relative flex cursor-pointer items-center gap-3.5 rounded-2xl px-3.5 py-3 transition duration-150 select-none"
@@ -513,7 +542,7 @@ function onKeydown(e) {
                     <!-- Breadcrumb Kategori & Label -->
                     <div class="flex items-center gap-1.5 leading-tight">
                       <span
-                        :class="entry === activeEntry ? 'text-blue-100/90' : 'text-slate-400'"
+                        :class="entry === activeEntry ? 'text-brand-100/90' : 'text-slate-400'"
                         class="text-xs font-medium tracking-wide"
                       >
                         {{ entry.category || entry.group }}
@@ -526,7 +555,7 @@ function onKeydown(e) {
                             :class="[
                               entry === activeEntry
                                 ? 'bg-white/30 text-white font-bold'
-                                : 'bg-blue-100 text-blue-900 font-bold',
+                                : 'bg-brand-200 text-brand-950 font-bold',
                             ]"
                             class="rounded-sm px-0.5"
                           >{{ seg.text }}</mark>
@@ -538,7 +567,7 @@ function onKeydown(e) {
                     <!-- Deskripsi / Hint -->
                     <p
                       v-if="entry.description || entry.hint"
-                      :class="entry === activeEntry ? 'text-blue-100/80' : 'text-slate-500'"
+                      :class="entry === activeEntry ? 'text-brand-100/80' : 'text-slate-500'"
                       class="mt-0.5 truncate text-xs font-normal"
                     >
                       <template v-for="(seg, i) in highlightSegments(entry.description || entry.hint, query)" :key="i">
@@ -547,7 +576,7 @@ function onKeydown(e) {
                           :class="[
                             entry === activeEntry
                               ? 'bg-white/25 text-white'
-                              : 'bg-blue-50 text-blue-900 font-semibold',
+                              : 'bg-brand-100 text-brand-950 font-semibold',
                           ]"
                           class="rounded-sm px-0.5"
                         >{{ seg.text }}</mark>
@@ -624,7 +653,7 @@ function onKeydown(e) {
               aria-label="Search by Algolia"
             >
               <span class="text-[11px] font-medium text-slate-400 group-hover:text-slate-600">Search by</span>
-              <span class="inline-flex items-center gap-1 text-[#003DFF] group-hover:brightness-110">
+              <span class="inline-flex items-center gap-1 text-brand-600 group-hover:brightness-110">
                 <!-- Logo Algolia SVG Resmi -->
                 <svg class="size-4 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2.182c5.422 0 9.818 4.396 9.818 9.818 0 5.422-4.396 9.818-9.818 9.818S2.182 17.422 2.182 12c0-5.422 4.396-9.818 9.818-9.818zm1.09 3.273a1.09 1.09 0 00-1.09 1.091v4.364H7.636a1.09 1.09 0 100 2.182h5.455a1.09 1.09 0 001.09-1.091V6.545a1.09 1.09 0 00-1.09-1.09z" />

@@ -88,7 +88,7 @@ function isiDemo(role) {
   <div class="flex min-h-screen items-center justify-center p-4 sm:p-8">
     <div class="glass grid w-full max-w-5xl motion-safe:animate-pop overflow-hidden rounded-[2rem] lg:grid-cols-[1.1fr_1fr]">
       <!-- Panel hero -->
-      <div class="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-sky-500 via-sky-600 to-blue-700 p-10 text-white lg:flex">
+      <div class="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-brand-500 via-brand-700 to-brand-950 p-10 text-white lg:flex">
         <div class="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full border border-white/20 bg-white/10" />
         <div class="pointer-events-none absolute -bottom-32 -left-20 size-80 rounded-full border border-white/10 bg-white/5" />
         <div class="pointer-events-none absolute right-12 bottom-28 size-24 rotate-12 rounded-3xl border border-white/25 bg-white/10 shadow-xl backdrop-blur-md" />

@@ -7,7 +7,7 @@ import PageLoading from '@/components/PageLoading.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage } from '@/lib/api'
-import { KEPARAHAN_ALERGI, STATUS_KEHAMILAN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
+import { KEPARAHAN_ALERGI, STATUS_KEHAMILAN, angka, jenisKelamin, jumlahResepItem, labelResepItem, rupiah, tanggal, waktu } from '@/lib/format'
 import { alergiObat } from '@/lib/klinis'
 import { printElement } from '@/lib/print'
 import { useKlinikStore } from '@/stores/klinik'
@@ -20,7 +20,9 @@ const { data: resep, error, load } = useDetail(() => `/reseps/${route.params.id}
 const processing = ref(false)
 
 const lunas = computed(() => resep.value?.kunjungan.tagihan?.status === 'lunas')
-const stokKurang = computed(() => resep.value?.items.some((i) => i.jumlah > i.obat.stok))
+/** Racikan (FR-01): stok yang dicek = komponen × banyaknya racikan. */
+const kurang = (i) => (i.racikan ? i.komponens.some((k) => k.jumlah * i.jumlah > k.obat.stok) : i.jumlah > i.obat.stok)
+const stokKurang = computed(() => resep.value?.items.some(kurang))
 const total = computed(() => resep.value?.items.reduce((s, i) => s + i.harga * i.jumlah, 0) ?? 0)
 // Keamanan obat (PS-03): alergi pasien & status hamil/menyusui
 const alergis = computed(() => resep.value?.kunjungan.pasien.alergis ?? [])
@@ -28,7 +30,9 @@ const kehamilan = computed(() => {
   const k = resep.value?.kunjungan.pasien.klinis
   return ['hamil', 'menyusui'].includes(k?.status_kehamilan) ? k : null
 })
-const alergiItem = (i) => alergiObat(i.obat, alergis.value)
+// Racikan: alergi dicek per komponen (obat jadi: obat itu sendiri)
+const alergiItem = (i) =>
+  i.racikan ? (i.komponens ?? []).map((k) => alergiObat(k.obat && { id: k.obat_id, ...k.obat }, alergis.value)).find(Boolean) ?? null : alergiObat(i.obat, alergis.value)
 
 async function serahkan() {
   if (!confirm('Serahkan obat ke pasien? Stok akan dikurangi.')) return
@@ -98,12 +102,19 @@ onMounted(load)
             <tbody>
               <tr v-for="i in resep.items" :key="i.id">
                 <td>
-                  {{ i.obat.nama }}
+                  <p :class="{ 'font-medium': i.racikan }">{{ labelResepItem(i) }}</p>
                   <p v-if="alergiItem(i)" class="text-xs font-semibold text-rose-600">Pasien alergi {{ alergiItem(i).zat }} — konfirmasi ke dokter</p>
+                  <ul v-if="i.racikan" class="mt-1 space-y-0.5 text-xs text-slate-600">
+                    <li v-for="k in i.komponens" :key="k.id" :class="{ 'font-semibold text-rose-600': k.jumlah * i.jumlah > k.obat.stok && resep.status === 'menunggu' }">
+                      {{ k.obat.nama }} {{ angka(k.jumlah) }} {{ k.obat.satuan }} × {{ i.jumlah }} = {{ angka(k.jumlah * i.jumlah) }} {{ k.obat.satuan }}
+                      <span class="text-slate-400">(stok {{ angka(k.obat.stok) }})</span>
+                    </li>
+                    <li v-if="i.biaya_racik" class="text-slate-400">Biaya racik {{ rupiah(i.biaya_racik) }} / racikan</li>
+                  </ul>
                 </td>
-                <td class="text-right tabular-nums">{{ i.jumlah }} {{ i.obat.satuan }}</td>
+                <td class="text-right tabular-nums">{{ jumlahResepItem(i) }}</td>
                 <td class="italic">{{ i.aturan_pakai }}</td>
-                <td :class="i.jumlah > i.obat.stok && resep.status === 'menunggu' ? 'font-semibold text-rose-600' : 'text-slate-500'" class="text-right tabular-nums">{{ i.obat.stok }}</td>
+                <td :class="kurang(i) && resep.status === 'menunggu' ? 'font-semibold text-rose-600' : 'text-slate-500'" class="text-right tabular-nums">{{ i.racikan ? (kurang(i) ? 'kurang' : 'cukup') : i.obat.stok }}</td>
                 <td class="text-right tabular-nums">{{ rupiah(i.harga * i.jumlah) }}</td>
               </tr>
             </tbody>
@@ -125,7 +136,7 @@ onMounted(load)
           <p class="mt-1 text-center text-[11px] text-slate-500">{{ resep.no_resep }} · {{ tanggal(resep.created_at) }}</p>
           <hr class="my-2" />
           <p class="font-semibold">{{ resep.kunjungan.pasien.nama }} ({{ resep.kunjungan.pasien.no_rm }})</p>
-          <p>{{ i.obat.nama }} — {{ i.jumlah }} {{ i.obat.satuan }}</p>
+          <p>{{ labelResepItem(i) }} — {{ jumlahResepItem(i) }}</p>
           <p class="mt-2 text-center text-base font-bold">{{ i.aturan_pakai }}</p>
         </div>
       </div>

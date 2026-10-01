@@ -22,6 +22,7 @@ const fields = [
   { key: 'email', label: 'Email', type: 'email' },
   { key: 'jam_buka', label: 'Jam buka', type: 'time' },
   { key: 'jam_tutup', label: 'Jam tutup', type: 'time' },
+  { key: 'satusehat_location_id', label: 'Location ID SATUSEHAT', full: true, placeholder: 'mis. b017aa54-f1df-4ec2-9d84-8823815d7228', hint: 'Dari portal SATUSEHAT; wajib agar kunjungan cabang ini terkirim.' },
   { key: 'is_active', label: 'Cabang aktif', type: 'checkbox' },
 ]
 

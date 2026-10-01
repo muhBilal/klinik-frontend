@@ -86,6 +86,20 @@ onMounted(load)
   </PageHeader>
 
   <div v-if="data" class="space-y-5">
+    <!-- SIP/STR akan / sudah kedaluwarsa (AD-05) -->
+    <div v-if="data.izin_praktik?.length" class="alert alert-warning">
+      <p class="font-medium">Izin praktik perlu diperbarui</p>
+      <ul class="mt-1 space-y-0.5 text-sm">
+        <li v-for="z in data.izin_praktik" :key="`${z.user_id}-${z.dokumen}`">
+          <b>{{ z.nama }}</b> · {{ z.dokumen }} {{ z.nomor ?? '' }}:
+          <template v-if="z.sisa_hari === null">belum tercatat</template>
+          <template v-else-if="z.sisa_hari < 0"><span class="font-semibold text-rose-700">berakhir {{ tanggal(z.berlaku_sampai) }}</span></template>
+          <template v-else>berakhir {{ tanggal(z.berlaku_sampai) }} ({{ z.sisa_hari }} hari lagi)</template>
+        </li>
+      </ul>
+      <RouterLink v-if="auth.can('pengguna.kelola')" to="/master/user" class="mt-1 inline-block text-xs underline">Perbarui di Pengguna</RouterLink>
+    </div>
+
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2" :class="stats.length > 4 ? 'xl:grid-cols-5' : 'xl:grid-cols-4'">
       <div
         v-for="s in stats"

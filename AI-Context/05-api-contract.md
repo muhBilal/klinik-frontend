@@ -28,6 +28,15 @@ Error 422 `tantangan` = sesi login kedaluwarsa (ulangi dari email/password); 422
 }
 ```
 
+## Profil sendiri (avatar & tema)
+- `PATCH /me` → `{ name, email, sip?, avatar }`. `avatar` = data URI (PNG/JPEG/WebP) hasil perkecilan di browser
+  (`src/lib/image.js` → 256px persegi), atau `null` untuk menghapus foto. Maks ~256 KB setelah base64.
+- **Password tidak diubah lewat `PATCH /me`** — pakai `PUT /me/password` (form terpisah di ProfilView) yang juga
+  mencabut sesi di perangkat lain dan mencatat audit.
+- `PUT /me/theme` → `{ hue, chroma, depth }`. Rentang harus sama dengan `sanitize()` di `src/lib/theme.js`
+  (hue 0–360, chroma 0–1.4, depth 0.38–0.68). Tema tersimpan di `user.theme` dan diterapkan `applyStoredTheme()`
+  lewat `setUser()` di auth store, sehingga login / fetchMe / update profil konsisten.
+
 ## Info publik (`GET /info`, tanpa login)
 `{ klinik: { nama, alamat, telepon, email, npwp }, struk: { catatan_kaki }, cetak: { lebar_struk: '58mm' atau '80mm' } }`
 
@@ -216,6 +225,8 @@ Resep detail juga memuat `cabang` (kop etiket).
   yaitu setelah pemeriksaan diselesaikan. Tampilkan `jumlah_standar` sebagai pembanding.
 
 ## Booking (F1-02)
+- `GET /appointments-kebutuhan?tindakan_ids[]=` → ruang/alat wajib per treatment & tipe (BK-08); `appointments-slot` menerima `kecuali_id` (reschedule).
+  Form booking: `components/booking/BookingFormModal.vue`.
 - `GET /appointments?dari=&sampai=` (izin `booking.lihat`): `{ id, no_booking, pasien_id, poli_id, petugas_id, mulai_at,
   selesai_at, status, catatan, kunjungan_id, pasien: { id, no_rm, nama, no_hp }, poli, petugas: { id, name },
   tindakans: [{ id, tindakan_id, durasi_menit, buffer_menit, tindakan: { id, kode, nama } }],

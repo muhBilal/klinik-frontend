@@ -41,8 +41,12 @@ const fields = computed(() => [
     label: 'SIP berlaku sampai',
     type: 'date',
     show: (f) => peranDokter.value.has(f.role),
-    hint: 'Dokter tanpa SIP aktif tidak dapat menandatangani rekam medis.',
+    hint: 'Dokter tanpa SIP aktif tidak dapat menandatangani rekam medis atau dibooking setelah tanggal ini.',
   },
+  { key: 'nik', label: 'NIK', placeholder: '16 digit', show: (f) => peranDokter.value.has(f.role), hint: 'Untuk pencarian IHS Practitioner SATUSEHAT.' },
+  // STR (AD-05; UU 17/2023: STR berlaku seumur hidup → tanggal boleh kosong)
+  { key: 'str', label: 'No. STR', show: (f) => peranDokter.value.has(f.role) },
+  { key: 'str_berlaku_sampai', label: 'STR berlaku sampai', type: 'date', show: (f) => peranDokter.value.has(f.role), hint: 'Kosongkan bila STR seumur hidup.' },
   { key: 'is_active', label: 'Akun aktif', type: 'checkbox' },
 ])
 

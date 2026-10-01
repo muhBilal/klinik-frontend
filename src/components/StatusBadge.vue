@@ -43,6 +43,20 @@ const MAP = {
   dibatalkan: ['Dibatalkan', GRAY],
   rencana: ['Rencana', INDIGO],
   nonaktif: ['Nonaktif', GRAY],
+  // Booking (F1-02)
+  dijadwalkan: ['Dijadwalkan', INDIGO],
+  dikonfirmasi: ['Dikonfirmasi', VIOLET],
+  hadir: ['Hadir', GREEN],
+  tidak_hadir: ['Tidak Hadir', RED],
+  // Integrasi SATUSEHAT
+  terkirim: ['Terkirim', GREEN],
+  gagal: ['Gagal', RED],
+  // WhatsApp
+  wa_antre: ['Antre', ORANGE],
+  wa_terkirim: ['Terkirim', INDIGO],
+  wa_diterima: ['Diterima', VIOLET],
+  wa_dibaca: ['Dibaca', GREEN],
+  wa_gagal: ['Gagal', RED],
 }
 
 const badge = computed(() => MAP[props.status] ?? [props.status, GRAY])

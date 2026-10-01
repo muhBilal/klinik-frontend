@@ -5,12 +5,13 @@
  */
 import { ref, watch } from 'vue'
 import AppModal from '@/components/AppModal.vue'
+import KakiDokumen from '@/components/KakiDokumen.vue'
+import KopDokumen from '@/components/KopDokumen.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import api, { errorMessage } from '@/lib/api'
 import { HUBUNGAN_PENANDATANGAN, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
-import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const open = defineModel({ type: Boolean, default: false })
@@ -21,7 +22,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['changed'])
 const toast = useToastStore()
-const klinik = useKlinikStore()
 
 const consent = ref(null)
 const loading = ref(false)
@@ -75,10 +75,7 @@ const cetak = () => printElement('#cetak-consent', consent.value?.judul ?? 'Info
       </div>
 
       <article id="cetak-consent" class="space-y-4 rounded-2xl border border-line bg-white px-6 py-5 text-sm leading-relaxed text-slate-800">
-        <header class="border-b border-slate-300 pb-3 text-center">
-          <p class="text-base font-bold">{{ klinik.nama }}</p>
-          <p class="text-xs text-slate-600">{{ consent.kunjungan?.cabang?.nama }}<template v-if="consent.kunjungan?.cabang?.alamat"> · {{ consent.kunjungan.cabang.alamat }}</template></p>
-        </header>
+        <KopDokumen :cabang="consent.kunjungan?.cabang" />
         <div class="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h3 class="text-base font-semibold uppercase tracking-wide">{{ consent.judul }}</h3>
@@ -110,6 +107,7 @@ const cetak = () => printElement('#cetak-consent', consent.value?.judul ?? 'Info
         <p class="text-[11px] text-slate-500">
           Ditandatangani secara elektronik {{ waktu(consent.ditandatangani_at) }} · dicatat oleh {{ consent.pembuat?.name ?? '-' }} · ID {{ consent.uuid }}
         </p>
+        <KakiDokumen />
       </article>
 
       <div v-if="cabutOpen" class="mt-4 space-y-2">

@@ -19,6 +19,9 @@ tetapi **satu tombol = satu modul**; navbar berisi **halaman milik modul yang di
 
 Catatan: versi panel sidebar penuh (logo + daftar modul berlabel + tombol ringkas) sempat dibuat lalu **dibatalkan atas
 permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi satu panel setinggi layar.
+Varian "rail ramping yang melebar saat hover" (dengan `.rail-label` & `.rail-sep`) dari cabang `wip-avatar-theme` juga
+**tidak dipakai** saat merge, dengan alasan yang sama: satu sistem rail saja. Foto profil (`UserAvatar`) dan tema
+tampilan dari cabang itu tetap diambil.
 
 ## Sumber data: `lib/menu.js`
 
@@ -31,12 +34,13 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 |---------------|---------|
 | Beranda (`beranda`) | Dashboard, Komisi Saya (F1-09; tenaga medis) |
 | Pendaftaran (`pendaftaran`) | Data Pasien, Pendaftaran Kunjungan |
+| Booking (`booking`) | Kalender Booking, Jadwal Praktik (PRD v2) |
 | Pelayanan (`pelayanan`) | Antrian Poli (+ `/pemeriksaan/:id`) |
-| Farmasi (`farmasi`) | Resep, Obat & Stok |
-| Keuangan (`keuangan`) | Kasir, Voucher & Promo (F1-08, `promo.kelola`), Laporan Penjualan & Laporan Paket (F1-11, `laporan.keuangan`), Komisi (F1-09; komisi per treatment diatur di Master Data → Treatment) |
-| Master Data (`master`) | Poli, Treatment, Paket Treatment (F1-08), Kategori Treatment, Cabang |
+| Farmasi (`farmasi`) | Resep, Stok Batch (`inventori.kelola`, PRD v2), Obat & Stok |
+| Keuangan (`keuangan`) | Kasir, Shift Kas (`kasir.shift`, PRD v2), Voucher & Promo (F1-08, `promo.kelola`), Laporan Penjualan & Laporan Paket (F1-11, `laporan.keuangan`), Komisi (F1-09; komisi per treatment diatur di Master Data → Treatment) |
+| Master Data (`master`) | Poli, Treatment, Paket Treatment (F1-08), Kategori Treatment, Ruang & Alat, Cabang |
 | Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Protokol Foto (F1-06), Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
-| Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |
+| Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Integrasi (PRD v2), Audit Log |
 
 ## Perilaku (`layouts/AppLayout.vue`)
 

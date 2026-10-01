@@ -13,10 +13,10 @@ export default defineConfig({
   server: {
     port: 5173,
     // Dipakai stack Docker dev (backend/docker-compose.dev.yml): /api diteruskan ke nginx di jaringan Docker,
-    // dan polling karena inotify tidak jalan di bind mount tertentu (NTFS/Windows).
+    // dan fallback ke localhost:8000 untuk dev lokal di host tanpa variabel lingkungan.
     proxy: process.env.API_PROXY_TARGET
       ? { '/api': { target: process.env.API_PROXY_TARGET, changeOrigin: true } }
-      : undefined,
+      : { '/api': 'http://localhost:8000' },
     watch: process.env.VITE_USE_POLLING ? { usePolling: true, interval: 300 } : undefined,
   },
 })

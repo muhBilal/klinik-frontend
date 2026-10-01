@@ -6,7 +6,7 @@
 import { computed, ref, watchEffect } from 'vue'
 import ConsentLihatModal from '@/components/rme/ConsentLihatModal.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
-import { BAGIAN_ADDENDUM, PARAMETER_ALAT, REAKSI_KULIT, angka, waktu } from '@/lib/format'
+import { BAGIAN_ADDENDUM, PARAMETER_ALAT, REAKSI_KULIT, angka, jumlahResepItem, labelResepItem, waktu } from '@/lib/format'
 import { formatGigi, labelPermukaan, referensiGigi } from '@/lib/gigi'
 
 const props = defineProps({ kunjungan: { type: Object, required: true } })
@@ -137,7 +137,10 @@ function lihatConsent(uuid) {
 
     <div v-if="kunjungan.resep?.items?.length">
       <p class="text-xs font-semibold text-slate-500">Resep</p>
-      <p v-for="r in kunjungan.resep.items" :key="r.id">{{ r.obat.nama }} — {{ r.jumlah }} {{ r.obat.satuan }}, <i>{{ r.aturan_pakai }}</i></p>
+      <p v-for="r in kunjungan.resep.items" :key="r.id">
+        {{ labelResepItem(r) }} — {{ jumlahResepItem(r) }}, <i>{{ r.aturan_pakai }}</i>
+        <span v-if="r.racikan" class="block text-xs text-slate-500">{{ r.komponens.map((k) => `${k.obat?.nama} ${angka(k.jumlah)} ${k.obat?.satuan ?? ''}`).join(' + ') }}</span>
+      </p>
     </div>
 
     <p v-if="kunjungan.pemeriksaan?.ditandatangani_at" class="rounded-xl bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800">

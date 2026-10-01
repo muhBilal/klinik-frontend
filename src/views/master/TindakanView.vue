@@ -4,6 +4,8 @@
  * serta atribut RME: kode ICD-9-CM default, bentuk catatan tindakan, dan template informed consent wajib (RM-02/03/05).
  * Harga cabang: "dasar" = ikut harga dasar (tidak dikirim), "khusus" = tarif cabang, "tidak" = tidak dilayani di cabang itu.
  * Komisi hanya tampil & dikirim untuk pemegang izin komisi.kelola; nilai kosong = peran itu tanpa komisi (baris tidak dikirim).
+ * Ruang & alat wajib (BK-08): booking treatment ini harus memakai salah satu ruang/alat yang dicentang per tipe. Hanya ruang/alat
+ * cabang yang terlihat (cabang aktif) yang dikirim; backend mempertahankan pilihan cabang lain.
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
@@ -32,13 +34,15 @@ const { items, meta, loading, filters, load, reload, search, isFiltered, reset }
   status: '',
   komisi: bolehKomisi ? 1 : '',
 })
-const jumlahKolom = 8 + (auth.cabang ? 1 : 0) + (bolehKomisi ? 1 : 0)
+// Kolom tetap (termasuk Ruang/alat) + Harga cabang (cabang aktif) + Komisi (komisi.kelola)
+const jumlahKolom = 9 + (auth.cabang ? 1 : 0) + (bolehKomisi ? 1 : 0)
 
 const kategoris = ref([])
 const cabangs = ref([])
 const templateConsents = ref([])
 const protokolFotos = ref([])
 const kondisiGigi = ref([])
+const sumberDayas = ref([])
 const opsiKategori = computed(() => kategoris.value.map((k) => ({ value: k.id, label: `${k.nama}${k.is_active ? '' : ' (nonaktif)'}` })))
 
 // Kategori & cabang dibutuhkan form; form bisa dibuka sebelum mount selesai (?baru=1), jadi ditunggu di buka().
@@ -46,14 +50,15 @@ let referensi = null
 function muatReferensi() {
   referensi ??= Promise.all([
     cachedGet('/kategori-tindakans'), cachedGet('/cabangs'), cachedGet('/template-consents', { aktif: 1 }), cachedGet('/protokol-fotos', { aktif: 1 }),
-    referensiGigi(),
+    referensiGigi(), cachedGet('/sumber-dayas', { per_page: 100 }),
   ])
-    .then(([k, c, t, p, g]) => {
+    .then(([k, c, t, p, g, sd]) => {
       kategoris.value = k
       cabangs.value = c
       templateConsents.value = t
       protokolFotos.value = p
       kondisiGigi.value = g.daftar
+      sumberDayas.value = sd.data
     })
     .catch((e) => {
       referensi = null
@@ -67,6 +72,19 @@ const MODE_HARGA = [
   ['khusus', 'Harga khusus'],
   ['tidak', 'Tidak dilayani'],
 ]
+
+/** Ruang/alat yang bisa dipilih, dikelompokkan per cabang lalu tipe. */
+const grupSumberDaya = computed(() => {
+  const grup = new Map()
+  for (const sd of sumberDayas.value) {
+    const key = sd.cabang_id
+    if (!grup.has(key)) grup.set(key, { cabang: sd.cabang, items: [] })
+    grup.get(key).items.push(sd)
+  }
+  return [...grup.values()]
+})
+/** Ruang/alat cabang lain yang tersimpan tetapi tidak terlihat dari cabang aktif. */
+const sumberDayaLain = computed(() => (form.sumber_daya_tersimpan ?? []).filter((sd) => !sumberDayas.value.some((x) => x.id === sd.id)))
 
 const durasi = (t) => `${t.durasi_menit} mnt${t.buffer_menit ? ` + ${t.buffer_menit}` : ''}`
 
@@ -161,6 +179,8 @@ async function buka(row = null) {
       const k = detail?.komisis?.find((x) => x.peran === peran)
       return { peran, jenis: k?.jenis ?? 'persen', nilai: k?.nilai ?? '' }
     }),
+    sumber_daya_ids: (detail?.sumber_dayas ?? []).map((sd) => sd.id),
+    sumber_daya_tersimpan: detail?.sumber_dayas ?? [],
   })
   formOpen.value = true
 }
@@ -188,6 +208,7 @@ function payload() {
     hargas: hargaDikirim.value.map((h) => ({ cabang_id: h.cabang_id, tarif: h.mode === 'khusus' ? h.tarif : form.tarif, tersedia: h.mode === 'khusus' })),
     bhps: form.bhps.map(({ obat_id, jumlah }) => ({ obat_id, jumlah })),
     ...(bolehKomisi ? { komisis: komisiDikirim.value.map(({ peran, jenis, nilai }) => ({ peran, jenis, nilai })) } : {}),
+    sumber_daya_ids: form.sumber_daya_ids.filter((id) => sumberDayas.value.some((sd) => sd.id === id)),
   }
 }
 
@@ -261,6 +282,7 @@ onMounted(() => {
             <th>Harga cabang</th>
             <th class="text-right">BHP</th>
             <th v-if="bolehKomisi">Komisi</th>
+            <th class="text-right">Ruang/alat</th>
             <th>Status</th>
             <th />
           </tr>
@@ -286,6 +308,7 @@ onMounted(() => {
             <td class="text-slate-600">{{ t.hargas_count ? `${t.hargas_count} cabang khusus` : '-' }}</td>
             <td class="text-right tabular-nums text-slate-600">{{ t.bhps_count ? `${t.bhps_count} bahan` : '-' }}</td>
             <td v-if="bolehKomisi" class="text-xs text-slate-600">{{ ringkasKomisi(t.komisis) }}</td>
+            <td class="text-right tabular-nums text-slate-600">{{ t.sumber_dayas_count ? `${t.sumber_dayas_count} wajib` : '-' }}</td>
             <td><StatusBadge :status="t.is_active ? 'aktif' : 'nonaktif'" /></td>
             <td class="text-right whitespace-nowrap">
               <button class="btn btn-ghost btn-sm" :disabled="detailLoading === t.id" @click="buka(t)">
@@ -492,6 +515,34 @@ onMounted(() => {
             <p class="col-span-2 text-xs tabular-nums text-slate-500 sm:col-span-1 sm:text-right">{{ contohKomisi(k) }}</p>
           </div>
         </div>
+      </section>
+
+      <!-- Ruang & alat wajib (BK-08) -->
+      <section class="space-y-2">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-800">Ruang & alat wajib</h3>
+          <p class="text-xs text-slate-500">
+            Booking treatment ini wajib memakai salah satu ruang/alat yang dicentang untuk setiap tipe (mis. salah satu ruang laser
+            <b>dan</b> mesin laser). Tidak dicentang = tidak butuh ruang/alat tertentu.
+          </p>
+        </div>
+        <p v-if="errors.sumber_daya_ids" class="field-error">{{ errors.sumber_daya_ids }}</p>
+        <div v-for="g in grupSumberDaya" :key="g.cabang?.id" class="rounded-xl border border-line bg-white/30 p-3">
+          <p class="mb-2 text-xs font-semibold text-slate-600">{{ g.cabang?.nama }}</p>
+          <div class="flex flex-wrap gap-2">
+            <label v-for="sd in g.items" :key="sd.id" class="choice cursor-pointer px-3 py-1.5 text-sm" :class="{ 'choice-active': form.sumber_daya_ids?.includes(sd.id) }">
+              <input v-model="form.sumber_daya_ids" type="checkbox" class="sr-only" :value="sd.id" />
+              <span class="text-xs text-slate-400">{{ sd.tipe === 'alat' ? 'Alat' : 'Ruang' }}</span> {{ sd.nama }}
+              <span v-if="!sd.is_active" class="text-xs text-slate-400">(nonaktif)</span>
+            </label>
+          </div>
+        </div>
+        <p v-if="!grupSumberDaya.length" class="text-xs text-slate-400">
+          Belum ada ruang/alat di cabang ini. Tambahkan di <RouterLink to="/master/ruang-alat" class="underline">Ruang & Alat</RouterLink>.
+        </p>
+        <p v-if="sumberDayaLain.length" class="text-xs text-slate-500">
+          Juga wajib di cabang lain: {{ sumberDayaLain.map((sd) => `${sd.nama} (${sd.cabang?.nama})`).join(', ') }} — tidak diubah dari sini.
+        </p>
       </section>
 
       <!-- BHP standar -->

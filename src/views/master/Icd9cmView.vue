@@ -1,4 +1,5 @@
 <script setup>
+import ImporMasterButton from '@/components/ImporMasterButton.vue'
 import MasterCrud from '@/components/MasterCrud.vue'
 
 const columns = [
@@ -19,5 +20,7 @@ const fields = [
     item-label="kode ICD-9-CM"
     :columns="columns"
     :fields="fields"
-  />
+  >
+    <template #aksi="{ reload }"><ImporMasterButton jenis="icd9cm" @selesai="reload" /></template>
+  </MasterCrud>
 </template>

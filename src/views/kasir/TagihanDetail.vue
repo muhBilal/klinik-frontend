@@ -1,6 +1,12 @@
 <script setup>
+/**
+ * Detail tagihan & pembayaran kasir (PRD BL-01..03, BL-06, TR-06).
+ * Split payment: beberapa baris metode; hanya tunai yang boleh berlebih (kembalian). Diskon di atas batas peran → form persetujuan
+ * atasan di tempat (email + password, izin `kasir.diskon`). Void (belum bayar) & refund (lunas) untuk pemegang `kasir.void`.
+ */
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
+import AppModal from '@/components/AppModal.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
@@ -9,10 +15,12 @@ import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { METODE_BAYAR, PENJAMIN, rupiah, tanggal, waktu } from '@/lib/format'
 import { printElement } from '@/lib/print'
+import { useAuthStore } from '@/stores/auth'
 import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
 
 const route = useRoute()
+const auth = useAuthStore()
 const klinik = useKlinikStore()
 const toast = useToastStore()
 const { data: tagihan, error, load: fetchTagihan } = useDetail(() => `/tagihans/${route.params.id}`)
@@ -24,7 +32,8 @@ const kontak = computed(() => {
 })
 const errors = ref({})
 const processing = ref(false)
-const bayar = reactive({ metode_bayar: 'tunai', dibayar: '', diskon: 0 })
+const bayar = reactive({ diskon: 0, baris: [{ metode: 'tunai', jumlah: '', referensi: '' }] })
+const persetujuan = reactive({ perlu: false, email: '', password: '' })
 const kodePromo = ref('')
 const memasangPromo = ref(false)
 const melepasPaket = ref(null)
@@ -48,15 +57,36 @@ const grandTotal = computed(() => {
   return setelahDiskon + Math.round((setelahDiskon * (t.pajak_persen ?? 0)) / 100)
 })
 const pajak = computed(() => (lunas.value ? tagihan.value.pajak : grandTotal.value - Math.max(0, tagihan.value.total - Number(bayar.diskon || 0) - tagihan.value.diskon_promo)))
-const kembalian = computed(() => Math.max(0, Number(bayar.dibayar || 0) - grandTotal.value))
-const pecahan = computed(() => {
-  const g = grandTotal.value
+const totalDibayar = computed(() => bayar.baris.reduce((n, b) => n + Number(b.jumlah || 0), 0))
+const totalNonTunai = computed(() => bayar.baris.filter((b) => b.metode !== 'tunai').reduce((n, b) => n + Number(b.jumlah || 0), 0))
+const sisa = computed(() => Math.max(0, grandTotal.value - totalDibayar.value))
+const kembalian = computed(() => Math.max(0, totalDibayar.value - grandTotal.value))
+const nonTunaiLebih = computed(() => totalNonTunai.value > grandTotal.value)
+/** Nominal cepat untuk baris tunai: sisa yang belum tertutup baris lain, lalu pembulatan ke atas. */
+function pecahan(b) {
+  const lain = totalDibayar.value - Number(b.jumlah || 0)
+  const g = Math.max(0, grandTotal.value - lain)
   return [...new Set([g, Math.ceil(g / 50000) * 50000, Math.ceil(g / 100000) * 100000, Math.ceil(g / 100000) * 100000 + 100000])].filter((v) => v > 0)
+}
+/** "Ditanggung penjamin" hanya untuk kunjungan BPJS/asuransi. */
+const METODE_SPLIT = computed(() => {
+  const penjamin = tagihan.value?.kunjungan?.penjamin
+  return Object.entries(METODE_BAYAR).filter(([k]) => k !== 'penjamin' || (penjamin && penjamin !== 'umum'))
 })
+
+function tambahBaris() {
+  const dipakai = bayar.baris.map((b) => b.metode)
+  const metode = ['qris', 'debit', 'transfer', 'tunai'].find((m) => !dipakai.includes(m)) ?? 'qris'
+  bayar.baris.push({ metode, jumlah: sisa.value || '', referensi: '' })
+}
+
+function isiPas(b) {
+  b.jumlah = Math.max(0, grandTotal.value - (totalDibayar.value - Number(b.jumlah || 0)))
+}
 
 async function load() {
   const data = await fetchTagihan()
-  if (data) bayar.metode_bayar = (data.kunjungan?.penjamin ?? 'umum') === 'umum' ? 'tunai' : 'penjamin'
+  if (data) bayar.baris = [{ metode: (data.kunjungan?.penjamin ?? 'umum') === 'umum' ? 'tunai' : 'penjamin', jumlah: '', referensi: '' }]
 }
 
 async function pasangPromo() {
@@ -107,21 +137,57 @@ async function prosesBayar() {
   errors.value = {}
   try {
     const { data } = await api.post(`/tagihans/${route.params.id}/bayar`, {
-      metode_bayar: bayar.metode_bayar,
-      dibayar: bayar.metode_bayar === 'tunai' ? Number(bayar.dibayar || 0) : null,
+      // Baris non-tunai tanpa nominal dianggap pas sisa tagihan
+      pembayarans: bayar.baris
+        .map((b) => ({ metode: b.metode, jumlah: Number(b.jumlah || 0), referensi: b.referensi || null }))
+        .filter((b) => b.jumlah > 0),
       diskon: Number(bayar.diskon || 0),
+      persetujuan: persetujuan.perlu && persetujuan.email ? { email: persetujuan.email, password: persetujuan.password } : undefined,
     })
     // Respons sudah berbentuk sama dengan detail (struk) -> tidak perlu GET ulang
     tagihan.value = data
+    Object.assign(persetujuan, { perlu: false, email: '', password: '' })
     const paket = data.paket_pasiens?.length ? ` Paket ${data.paket_pasiens.map((p) => p.no_paket).join(', ')} aktif.` : ''
     toast.success(`Pembayaran berhasil.${data.kembalian ? ` Kembalian ${rupiah(data.kembalian)}.` : ''}${paket}`)
   } catch (e) {
     errors.value = validationErrors(e)
+    if (errors.value.perlu_persetujuan) persetujuan.perlu = true
+    persetujuan.password = ''
     toast.error(errorMessage(e))
   } finally {
     processing.value = false
   }
 }
+
+// Void (belum bayar) & refund (lunas) — BL-06
+const voidOpen = ref(false)
+const alasan = ref('')
+const voiding = ref(false)
+const jenisVoid = computed(() => (lunas.value ? 'refund' : 'batal'))
+
+function bukaVoid() {
+  alasan.value = ''
+  errors.value = {}
+  voidOpen.value = true
+}
+
+async function prosesVoid() {
+  voiding.value = true
+  errors.value = {}
+  try {
+    const kunci = lunas.value ? 'alasan_refund' : 'alasan_batal'
+    tagihan.value = (await api.post(`/tagihans/${route.params.id}/${jenisVoid.value}`, { [kunci]: alasan.value })).data
+    toast.success(jenisVoid.value === 'refund' ? 'Pembayaran direfund. Kunjungan kembali menunggu pembayaran.' : 'Tagihan dibatalkan.')
+    voidOpen.value = false
+  } catch (e) {
+    errors.value = validationErrors(e)
+    toast.error(errorMessage(e))
+  } finally {
+    voiding.value = false
+  }
+}
+
+const dikembalikan = computed(() => (tagihan.value?.pembayarans ?? []).some((p) => p.dikembalikan_at))
 
 onMounted(load)
 </script>
@@ -182,9 +248,12 @@ onMounted(load)
             <div class="flex justify-between border-t border-line pt-1 text-base font-semibold">
               <dt>Grand total</dt><dd class="tabular-nums">{{ rupiah(lunas ? tagihan.grand_total : grandTotal) }}</dd>
             </div>
-            <template v-if="lunas">
-              <div class="flex justify-between"><dt class="text-slate-500">Dibayar ({{ METODE_BAYAR[tagihan.metode_bayar] ?? 'beberapa metode' }})</dt><dd class="tabular-nums">{{ rupiah(tagihan.dibayar) }}</dd></div>
-              <div class="flex justify-between"><dt class="text-slate-500">Kembalian</dt><dd class="tabular-nums">{{ rupiah(tagihan.kembalian) }}</dd></div>
+            <template v-if="lunas || dikembalikan">
+              <div v-for="p in tagihan.pembayarans" :key="p.id" class="flex justify-between" :class="{ 'text-slate-400 line-through': p.dikembalikan_at }">
+                <dt class="text-slate-500">{{ METODE_BAYAR[p.metode] ?? p.metode }}<template v-if="p.referensi"> · {{ p.referensi }}</template></dt>
+                <dd class="tabular-nums">{{ rupiah(p.jumlah) }}</dd>
+              </div>
+              <div v-if="lunas" class="flex justify-between"><dt class="text-slate-500">Kembalian</dt><dd class="tabular-nums">{{ rupiah(tagihan.kembalian) }}</dd></div>
             </template>
           </dl>
           <p v-for="p in tagihan.paket_pasiens ?? []" :key="p.id" class="mt-3 text-xs text-slate-600">
@@ -194,7 +263,7 @@ onMounted(load)
             <template v-else>{{ p.status }}</template>
           </p>
           <p v-if="lunas" class="mt-6 border-t border-dashed border-slate-300 pt-3 text-center text-xs text-slate-500">
-            Lunas {{ waktu(tagihan.dibayar_at) }} · Kasir: {{ tagihan.kasir?.name }}<template v-if="klinik.info?.struk?.catatan_kaki"><br />{{ klinik.info.struk.catatan_kaki }}</template>
+            Lunas {{ waktu(tagihan.dibayar_at) }} · Kasir: {{ tagihan.kasir?.name }}<template v-if="tagihan.penyetuju_diskon"> · Diskon disetujui {{ tagihan.penyetuju_diskon.name }}</template><template v-if="klinik.info?.struk?.catatan_kaki"><br />{{ klinik.info.struk.catatan_kaki }}</template>
           </p>
         </div>
       </div>
@@ -229,42 +298,84 @@ onMounted(load)
 
           <form class="space-y-4" @submit.prevent="prosesBayar">
             <div>
-              <label class="label" for="metode-bayar">Metode bayar</label>
-              <select id="metode-bayar" v-model="bayar.metode_bayar" class="input">
-                <option v-for="(label, key) in METODE_BAYAR" :key="key" :value="key">{{ label }}</option>
-              </select>
-            </div>
-            <div>
               <label class="label" for="diskon">Diskon (Rp)</label>
-              <input id="diskon" v-model.number="bayar.diskon" type="number" min="0" :max="tagihan.total - tagihan.diskon_promo" class="input" :class="{ 'input-error': errors.diskon }" />
+              <input id="diskon" v-model.number="bayar.diskon" type="number" min="0" :max="tagihan.total - tagihan.diskon_promo" class="input" :class="{ 'input-error': errors.diskon }" @input="persetujuan.perlu = false" />
               <p v-if="errors.diskon" class="field-error">{{ errors.diskon }}</p>
             </div>
+
+            <!-- Persetujuan atasan untuk diskon di atas batas peran (BL-02) -->
+            <div v-if="persetujuan.perlu" class="space-y-2 rounded-2xl border border-amber-300/70 bg-amber-50/80 p-3">
+              <p class="text-sm font-medium text-amber-900">Persetujuan atasan</p>
+              <p class="text-xs text-amber-800">Atasan (mis. manajer) memasukkan email & password-nya di perangkat ini. Persetujuan tercatat di audit log.</p>
+              <input v-model="persetujuan.email" type="email" class="input" placeholder="Email atasan" autocomplete="off" aria-label="Email atasan" required />
+              <input v-model="persetujuan.password" type="password" class="input" placeholder="Password atasan" autocomplete="new-password" aria-label="Password atasan" required />
+              <p v-if="errors.persetujuan" class="field-error">{{ errors.persetujuan }}</p>
+            </div>
+
             <div class="rounded-3xl bg-brand-900 p-5 text-center text-white shadow-xl shadow-black/25 inset-shadow-dark">
               <p class="text-xs font-medium text-white/60">Yang harus dibayar</p>
               <p class="mt-1 text-3xl font-semibold tracking-tight">{{ rupiah(grandTotal) }}</p>
             </div>
-            <template v-if="bayar.metode_bayar === 'tunai'">
-              <div>
-                <label class="label" for="dibayar">Uang diterima (Rp)</label>
-                <input id="dibayar" v-model.number="bayar.dibayar" type="number" min="0" class="input text-lg" :class="{ 'input-error': errors.dibayar }" :required="grandTotal > 0" />
-                <p v-if="errors.dibayar" class="field-error">{{ errors.dibayar }}</p>
-                <div class="mt-2 flex flex-wrap gap-1.5">
-                  <button v-for="p in pecahan" :key="p" type="button" class="btn btn-secondary btn-sm" @click="bayar.dibayar = p">{{ rupiah(p) }}</button>
+
+            <!-- Split payment (BL-03) -->
+            <div class="space-y-3">
+              <div v-for="(b, i) in bayar.baris" :key="i" class="space-y-2 rounded-2xl border border-line bg-white/40 p-3">
+                <div class="flex gap-2">
+                  <select v-model="b.metode" class="input" :aria-label="`Metode bayar ${i + 1}`">
+                    <option v-for="[key, label] in METODE_SPLIT" :key="key" :value="key">{{ label }}</option>
+                  </select>
+                  <button v-if="bayar.baris.length > 1" type="button" class="btn btn-ghost btn-icon" :aria-label="`Hapus metode ${i + 1}`" @click="bayar.baris.splice(i, 1)">&times;</button>
                 </div>
+                <div class="flex gap-2">
+                  <input v-model.number="b.jumlah" type="number" min="0" class="input text-lg" :class="{ 'input-error': errors[`pembayarans.${i}.jumlah`] }" :placeholder="b.metode === 'tunai' ? 'Uang diterima' : 'Nominal'" :aria-label="`Nominal ${i + 1}`" />
+                  <button type="button" class="btn btn-secondary btn-sm shrink-0" @click="isiPas(b)">Pas</button>
+                </div>
+                <div v-if="b.metode === 'tunai'" class="flex flex-wrap gap-1.5">
+                  <button v-for="p in pecahan(b)" :key="p" type="button" class="btn btn-secondary btn-sm" @click="b.jumlah = p">{{ rupiah(p) }}</button>
+                </div>
+                <input v-else-if="b.metode !== 'penjamin'" v-model="b.referensi" class="input" maxlength="100" :placeholder="b.metode === 'qris' ? 'No. referensi QRIS' : b.metode === 'debit' ? 'No. approval EDC / 4 digit kartu' : 'No. referensi transfer'" :aria-label="`Referensi ${i + 1}`" />
               </div>
-              <div class="flex justify-between text-sm">
-                <span class="text-slate-500">Kembalian</span>
-                <span class="font-semibold tabular-nums">{{ rupiah(kembalian) }}</span>
-              </div>
-            </template>
-            <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="processing"><AppSpinner v-if="processing" />{{ processing ? 'Memproses...' : grandTotal === 0 ? 'Tandai lunas (Rp 0)' : 'Proses Pembayaran' }}</button>
+              <button v-if="bayar.baris.length < 5" type="button" class="btn btn-ghost btn-sm" @click="tambahBaris">+ Tambah metode bayar</button>
+              <p v-if="errors.pembayarans" class="field-error">{{ errors.pembayarans }}</p>
+            </div>
+
+            <dl class="space-y-1 text-sm">
+              <div class="flex justify-between"><dt class="text-slate-500">Diterima</dt><dd class="tabular-nums">{{ rupiah(totalDibayar) }}</dd></div>
+              <div v-if="sisa" class="flex justify-between text-rose-600"><dt>Kurang</dt><dd class="font-semibold tabular-nums">{{ rupiah(sisa) }}</dd></div>
+              <div v-else class="flex justify-between"><dt class="text-slate-500">Kembalian</dt><dd class="font-semibold tabular-nums">{{ rupiah(kembalian) }}</dd></div>
+              <p v-if="nonTunaiLebih" class="text-xs text-rose-600">Pembayaran non-tunai tidak boleh melebihi tagihan.</p>
+            </dl>
+            <p v-if="errors.shift" class="alert alert-warning">{{ errors.shift }} <RouterLink to="/shift-kas" class="underline">Buka shift</RouterLink></p>
+            <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="processing || sisa > 0 || nonTunaiLebih"><AppSpinner v-if="processing" />{{ processing ? 'Memproses...' : persetujuan.perlu ? 'Setujui & Proses Pembayaran' : 'Proses Pembayaran' }}</button>
           </form>
+          <button v-if="auth.can('kasir.void')" type="button" class="btn btn-ghost btn-sm w-full text-rose-600" @click="bukaVoid">Batalkan tagihan</button>
         </div>
-        <div v-else class="card-body text-sm text-slate-600">
-          Tagihan telah {{ lunas ? 'dibayar' : 'dibatalkan' }}.<template v-if="lunas && tagihan.kunjungan"> Arahkan pasien ke farmasi bila ada resep.</template>
+        <div v-else class="card-body space-y-3 text-sm text-slate-600">
+          <p>Tagihan telah {{ lunas ? 'dibayar' : 'dibatalkan' }}.<template v-if="lunas && tagihan.kunjungan"> Arahkan pasien ke farmasi bila ada resep.</template></p>
+          <p v-if="tagihan.alasan_batal" class="text-xs">Alasan: {{ tagihan.alasan_batal }}</p>
+          <p v-if="dikembalikan" class="text-xs">Pembayaran sudah direfund: {{ tagihan.pembayarans.find((p) => p.dikembalikan_at)?.alasan_refund }}</p>
+          <button v-if="lunas && auth.can('kasir.void')" type="button" class="btn btn-secondary btn-sm text-rose-600" @click="bukaVoid">Refund pembayaran</button>
         </div>
       </div>
     </div>
   </template>
   <PageLoading v-else :error="error" text="Memuat tagihan..." @retry="load" />
+
+  <AppModal v-model="voidOpen" :title="jenisVoid === 'refund' ? 'Refund Pembayaran' : 'Batalkan Tagihan'">
+    <form id="form-void" class="space-y-3" @submit.prevent="prosesVoid">
+      <p class="text-sm text-slate-600">
+        <template v-if="jenisVoid === 'refund'">Semua pembayaran tagihan {{ tagihan?.no_tagihan }} ditandai dikembalikan dan tidak dihitung di rekap shift. Kunjungan kembali menunggu pembayaran; paket yang belum dipakai ikut direfund.</template>
+        <template v-else>Tagihan {{ tagihan?.no_tagihan }} dibatalkan dan tidak bisa dibayar lagi.</template>
+      </p>
+      <div>
+        <label class="label" for="alasan-void">Alasan *</label>
+        <textarea id="alasan-void" v-model="alasan" rows="2" class="input" :class="{ 'input-error': errors.alasan_batal || errors.alasan_refund }" maxlength="255" required />
+        <p v-if="errors.alasan_batal || errors.alasan_refund || errors.status" class="field-error">{{ errors.alasan_batal || errors.alasan_refund || errors.status }}</p>
+      </div>
+    </form>
+    <template #footer>
+      <button class="btn btn-secondary" @click="voidOpen = false">Kembali</button>
+      <button type="submit" form="form-void" class="btn btn-danger" :disabled="voiding"><AppSpinner v-if="voiding" />{{ jenisVoid === 'refund' ? 'Refund' : 'Batalkan tagihan' }}</button>
+    </template>
+  </AppModal>
 </template>

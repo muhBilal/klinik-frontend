@@ -22,6 +22,7 @@ import JualPaketModal from '@/components/paket/JualPaketModal.vue'
 import PaketPasienCard from '@/components/paket/PaketPasienCard.vue'
 import DataKlinisModal from '@/components/klinis/DataKlinisModal.vue'
 import PeringatanKlinis from '@/components/klinis/PeringatanKlinis.vue'
+import RacikanModal from '@/components/rme/RacikanModal.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { BAGIAN_ADDENDUM, IKON, PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
@@ -157,9 +158,15 @@ function isiForm(k) {
     paket_awal: t.paket_pasien_item_id ? { id: t.paket_pasien_item_id, jumlah: t.jumlah } : null,
     catatan: t.catatan,
   }))
-  form.resep = (k.resep?.items ?? []).map((r) => ({
-    obat_id: r.obat_id, jumlah: r.jumlah, aturan_pakai: r.aturan_pakai, nama: r.obat.nama, satuan: r.obat.satuan, harga: r.harga, stok: r.obat.stok,
-  }))
+  form.resep = (k.resep?.items ?? []).map((r) =>
+    r.racikan
+      ? {
+          _key: `r${r.id}`, racikan: true, nama_racikan: r.nama_racikan, bentuk: r.bentuk, jumlah_racikan: r.jumlah_racikan, satuan_racikan: r.satuan_racikan,
+          jumlah: r.jumlah, aturan_pakai: r.aturan_pakai, harga: r.harga,
+          komponen: (r.komponens ?? []).map((c) => ({ obat_id: c.obat_id, nama: c.obat?.nama, satuan: c.obat?.satuan, harga: c.harga, jumlah: c.jumlah })),
+        }
+      : { obat_id: r.obat_id, jumlah: r.jumlah, aturan_pakai: r.aturan_pakai, nama: r.obat.nama, satuan: r.obat.satuan, harga: r.harga, stok: r.obat.stok },
+  )
   form.catatan_resep = k.resep?.catatan ?? ''
   tindakanAwal = petaTindakan()
   tindakanIdsAwal = form.tindakans.map((t) => t.id)
@@ -498,10 +505,18 @@ function consentBerubah(data) {
 }
 
 // ---- Resep ----
+// Peringatan alergi obat (PS-03, FR-02): dari data klinis pasien; backend juga menolak obat alergi baru tanpa konfirmasi.
+const abaikanAlergi = ref(false)
+
 function tambahObat(o) {
   if (form.resep.some((r) => r.obat_id === o.id)) return toast.info('Obat sudah ada di resep.')
   const alergi = alergiObat(o, kunjungan.value?.pasien.alergis)
-  if (alergi) toast.error(`Perhatian: pasien alergi ${alergi.zat}. Pastikan ${o.nama} aman sebelum diresepkan.`)
+  if (alergi) {
+    // Backend menolak obat yang dialergikan tanpa konfirmasi dokter (abaikan_alergi)
+    if (!confirm(`Pasien tercatat alergi ${alergi.zat}.
+Tetap tambahkan ${o.nama} ke resep?`)) return
+    abaikanAlergi.value = true
+  }
   if (o.stok <= 0) toast.info(`Perhatian: stok ${o.nama} kosong.`)
   form.resep.push({ obat_id: o.id, nama: o.nama, satuan: o.satuan, harga: o.harga, stok: o.stok, jumlah: 10, aturan_pakai: ATURAN_PAKAI[0] })
 }
@@ -513,6 +528,27 @@ function petaTindakan() {
     paket_pasien_item_id: paket_pasien_item_id || null,
   }))
 }
+
+// ---- Racikan (FR-01) ----
+const racikanOpen = ref(false)
+const racikanEdit = ref(null)
+let urutRacikan = 0
+function bukaRacikan(r = null) {
+  racikanEdit.value = r
+  racikanOpen.value = true
+}
+function racikanTersimpan(data) {
+  // Komponen yang tercatat sebagai alergi pasien → konfirmasi (backend juga memeriksa)
+  const alergi = data.komponen.map((k) => alergiObat({ id: k.obat_id, nama: k.nama }, kunjungan.value?.pasien.alergis)?.zat).filter(Boolean)
+  if (alergi.length) {
+    if (!confirm(`Komponen racikan mengandung obat yang tercatat ALERGI: ${alergi.join(', ')}.\nTetap gunakan?`)) return
+    abaikanAlergi.value = true
+  }
+  if (racikanEdit.value) Object.assign(racikanEdit.value, data)
+  else form.resep.push({ ...data, _key: `baru${++urutRacikan}` })
+}
+const ringkasKomponen = (r) => r.komponen.map((k) => `${k.nama} ${String(k.jumlah).replace('.', ',')} ${k.satuan ?? ''}`.trim()).join(' + ')
+const labelRacikan = (r) => `Racikan ${r.nama_racikan} (${r.bentuk}${r.jumlah_racikan ? ` ${String(r.jumlah_racikan).replace('.', ',')} ${r.satuan_racikan ?? ''}` : ''})`
 
 function payload() {
   // Tanda vital & SOAP: hanya yang diubah sejak form dimuat (perawat/terapis: tanda vital & anamnesis saja)
@@ -531,8 +567,16 @@ function payload() {
     ...data,
     akses_terbatas: form.akses_terbatas,
     diagnosas: form.diagnosas.map(({ icd10_id, jenis }) => ({ icd10_id, jenis })),
-    resep: form.resep.map(({ obat_id, jumlah, aturan_pakai }) => ({ obat_id, jumlah, aturan_pakai })),
+    resep: form.resep.map((r) =>
+      r.racikan
+        ? {
+            racikan: true, nama_racikan: r.nama_racikan, bentuk: r.bentuk, jumlah_racikan: r.jumlah_racikan, satuan_racikan: r.satuan_racikan,
+            jumlah: r.jumlah, aturan_pakai: r.aturan_pakai, komponen: r.komponen.map(({ obat_id, jumlah }) => ({ obat_id, jumlah })),
+          }
+        : { obat_id: r.obat_id, jumlah: r.jumlah, aturan_pakai: r.aturan_pakai },
+    ),
     catatan_resep: form.catatan_resep || null,
+    abaikan_alergi: abaikanAlergi.value,
   }
 }
 
@@ -556,6 +600,15 @@ async function simpan({ silent = false } = {}) {
     return true
   } catch (e) {
     errors.value = validationErrors(e)
+    // Obat alergi yang belum dikonfirmasi (mis. ditambahkan sebelum profil klinis termuat)
+    if (errors.value.konfirmasi_alergi && !abaikanAlergi.value) {
+      const pesan = Object.entries(errors.value).find(([k]) => k.startsWith('resep.'))?.[1] ?? errors.value.konfirmasi_alergi
+      if (confirm(`${pesan}\nTetap simpan resep?`)) {
+        abaikanAlergi.value = true
+        saving.value = false
+        return simpan({ silent })
+      }
+    }
     toast.error(errorMessage(e))
     return false
   } finally {
@@ -992,24 +1045,36 @@ onMounted(load)
               <StatusBadge v-if="kunjungan.resep" :status="kunjungan.resep.status" />
             </div>
             <div class="card-body space-y-3">
-              <AsyncSelect v-if="editable" endpoint="/obats" :params="{ aktif: 1 }" placeholder="Cari nama obat..." @select="tambahObat">
-                <template #default="{ item }">
-                  <div class="flex justify-between gap-3">
-                    <span>{{ item.nama }}</span>
-                    <span :class="item.stok <= item.stok_minimum ? 'text-rose-600' : 'text-slate-500'" class="text-xs whitespace-nowrap">stok {{ item.stok }} {{ item.satuan }}</span>
-                  </div>
-                </template>
-              </AsyncSelect>
+              <div v-if="editable" class="flex gap-2">
+                <div class="flex-1">
+                  <AsyncSelect endpoint="/obats" :params="{ aktif: 1 }" placeholder="Cari nama obat..." @select="tambahObat">
+                    <template #default="{ item }">
+                      <div class="flex justify-between gap-3">
+                        <span>{{ item.nama }}</span>
+                        <span :class="item.stok <= item.stok_minimum ? 'text-rose-600' : 'text-slate-500'" class="text-xs whitespace-nowrap">stok {{ item.stok }} {{ item.satuan }}</span>
+                      </div>
+                    </template>
+                  </AsyncSelect>
+                </div>
+                <button type="button" class="btn btn-secondary" @click="bukaRacikan()">+ Racikan</button>
+              </div>
               <datalist id="aturan-pakai"><option v-for="a in ATURAN_PAKAI" :key="a" :value="a" /></datalist>
               <div v-if="form.resep.length" class="overflow-x-auto rounded-xl border border-line bg-white/30">
                 <table class="table">
                   <thead><tr><th>Obat</th><th class="w-24">Jumlah</th><th>Aturan pakai</th><th class="w-8" /></tr></thead>
                   <tbody>
-                    <tr v-for="(r, i) in form.resep" :key="r.obat_id">
-                      <td>
+                    <tr v-for="(r, i) in form.resep" :key="r._key ?? r.obat_id">
+                      <td v-if="r.racikan">
+                        <p class="font-medium">{{ labelRacikan(r) }}</p>
+                        <p class="text-xs text-slate-500">{{ ringkasKomponen(r) }}</p>
+                        <button v-if="editable" type="button" class="text-xs underline" @click="bukaRacikan(r)">ubah racikan</button>
+                        <p v-if="errors[`resep.${i}.komponen`] || errors[`resep.${i}.nama_racikan`]" class="field-error">{{ errors[`resep.${i}.komponen`] || errors[`resep.${i}.nama_racikan`] }}</p>
+                      </td>
+                      <td v-else>
                         <p>{{ r.nama }}</p>
                         <p v-if="alergiResep(r)" class="text-xs font-semibold text-rose-600">Pasien alergi {{ alergiResep(r).zat }}</p>
                         <p :class="r.jumlah > r.stok ? 'text-rose-600' : 'text-slate-400'" class="text-xs">stok {{ r.stok }} {{ r.satuan }}</p>
+                        <p v-if="errors[`resep.${i}.obat_id`]" class="field-error">{{ errors[`resep.${i}.obat_id`] }}</p>
                       </td>
                       <td><input v-model.number="r.jumlah" type="number" min="1" class="input py-1" :disabled="!editable" /></td>
                       <td><input v-model="r.aturan_pakai" list="aturan-pakai" class="input py-1" :disabled="!editable" /></td>
@@ -1089,6 +1154,7 @@ onMounted(load)
     </div>
 
     <TemplateSoapModal v-model="templateOpen" :poli-id="kunjungan.poli_id" :tindakan-ids="form.tindakans.map((t) => t.tindakan_id)" @terapkan="terapkanTemplate" />
+    <RacikanModal v-model="racikanOpen" :racikan="racikanEdit" @saved="racikanTersimpan" />
     <CatatanTindakanModal v-model="catatanOpen" :kunjungan-tindakan-id="catatanId" :editable="editable" @saved="catatanTersimpan" />
     <DataKlinisModal
       v-if="bolehUbahKlinis"
