@@ -64,6 +64,23 @@ function terapkan() {
   emit('terapkan', { template: dipilih.value, mode: mode.value })
   open.value = false
 }
+
+async function salinTeks() {
+  if (!dipilih.value) return
+  const t = dipilih.value
+  const teks = [
+    `S: ${t.subjektif || '-'}`,
+    `O: ${t.objektif || '-'}`,
+    `A: ${t.asesmen || '-'}`,
+    `P: ${t.plan || '-'}`,
+  ].join('\n\n')
+  try {
+    await navigator.clipboard.writeText(teks)
+    toast.success('Teks SOAP disalin ke clipboard.')
+  } catch {
+    toast.error('Gagal menyalin teks.')
+  }
+}
 </script>
 
 <template>
@@ -109,6 +126,7 @@ function terapkan() {
       </div>
     </div>
     <template #footer>
+      <button type="button" class="btn btn-secondary mr-auto" :disabled="!dipilih" @click="salinTeks">Salin Teks</button>
       <button class="btn btn-secondary" @click="open = false">Batal</button>
       <button class="btn btn-primary" :disabled="!dipilih" @click="terapkan">Terapkan template</button>
     </template>

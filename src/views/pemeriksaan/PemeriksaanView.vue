@@ -187,6 +187,21 @@ function terapkanTemplate({ template, mode }) {
   toast.success('Template diterapkan. Periksa isinya lalu simpan.')
 }
 
+async function salinSoap() {
+  const teks = [
+    `S: ${form.subjektif || '-'}`,
+    `O: ${form.objektif || '-'}`,
+    `A: ${form.asesmen || '-'}`,
+    `P: ${form.plan || '-'}`,
+  ].join('\n\n')
+  try {
+    await navigator.clipboard.writeText(teks)
+    toast.success('Catatan SOAP disalin ke clipboard.')
+  } catch {
+    toast.error('Gagal menyalin teks.')
+  }
+}
+
 function tambahDiagnosaDiam(icd) {
   if (form.diagnosas.some((d) => d.icd10_id === icd.id)) return
   form.diagnosas.push({ icd10_id: icd.id, kode: icd.kode, nama: icd.nama, sensitif: icd.sensitif, jenis: form.diagnosas.length ? 'sekunder' : 'primer' })
@@ -592,10 +607,13 @@ onMounted(load)
 
         <!-- SOAP -->
         <section class="card">
-          <div class="card-header">
+          <div class="card-header flex-wrap">
             <h2 class="card-title">Catatan SOAP</h2>
-            <span v-if="isPerawat" class="text-xs text-slate-400">Anda mengisi anamnesis (S); O/A/P diisi dokter</span>
-            <button v-else-if="editable" type="button" class="btn btn-ghost btn-sm" @click="templateOpen = true">Pakai template</button>
+            <div class="flex items-center gap-2">
+              <button type="button" class="btn btn-ghost btn-sm" @click="salinSoap">Salin SOAP</button>
+              <span v-if="isPerawat" class="text-xs text-slate-400">Anda mengisi anamnesis (S); O/A/P diisi dokter</span>
+              <button v-else-if="editable" type="button" class="btn btn-ghost btn-sm" @click="templateOpen = true">Pakai template</button>
+            </div>
           </div>
           <div class="card-body grid gap-4 sm:grid-cols-2">
             <div v-for="f in SOAP" :key="f.key">

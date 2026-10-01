@@ -55,6 +55,28 @@ function buka(row = null) {
   formOpen.value = true
 }
 
+function duplikat(row) {
+  buka(row)
+  editing.value = null
+  form.nama = `${row.nama} (Salinan)`
+  toast.info('Template disalin ke form baru. Silakan sesuaikan dan simpan.')
+}
+
+async function salinTeksSoap() {
+  const teks = [
+    `S: ${form.subjektif || '-'}`,
+    `O: ${form.objektif || '-'}`,
+    `A: ${form.asesmen || '-'}`,
+    `P: ${form.plan || '-'}`,
+  ].join('\n\n')
+  try {
+    await navigator.clipboard.writeText(teks)
+    toast.success('Teks SOAP disalin ke clipboard.')
+  } catch {
+    toast.error('Gagal menyalin teks.')
+  }
+}
+
 function tambahDiagnosa(icd) {
   if (form.diagnosas.some((d) => d.id === icd.id)) return toast.info('Diagnosa sudah ada.')
   form.diagnosas.push(icd)
@@ -138,6 +160,7 @@ onMounted(async () => {
             <td><StatusBadge :status="t.is_active ? 'aktif' : 'nonaktif'" /></td>
             <td class="text-right whitespace-nowrap">
               <button class="btn btn-ghost btn-sm" @click="buka(t)">Ubah</button>
+              <button class="btn btn-ghost btn-sm" @click="duplikat(t)">Salin</button>
               <button class="btn btn-ghost btn-sm text-rose-600" :disabled="deleting === t.id" @click="hapus(t)"><AppSpinner v-if="deleting === t.id" size="size-3" />Hapus</button>
             </td>
           </tr>
@@ -197,6 +220,7 @@ onMounted(async () => {
       <label class="flex items-center gap-2 text-sm"><input v-model="form.is_active" type="checkbox" class="accent-brand-600" /> Aktif (tampil di pemeriksaan)</label>
     </form>
     <template #footer>
+      <button type="button" class="btn btn-secondary mr-auto" @click="salinTeksSoap">Salin Teks SOAP</button>
       <button class="btn btn-secondary" @click="formOpen = false">Batal</button>
       <button type="submit" form="form-template-soap" class="btn btn-primary" :disabled="saving"><AppSpinner v-if="saving" />{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
     </template>
