@@ -1,7 +1,7 @@
 # 08 — Fitur Fase 1 (MVP Estetika) di Frontend
 
 Isi: F1-01 Katalog treatment · F1-02/03/04 (backend saja, kecuali editor BHP) · **F1-05 RME estetika** · **F1-06 Foto klinis** ·
-**F1-07 Kedokteran gigi** · **F1-08 Paket & promo**.
+**F1-07 Kedokteran gigi** · **F1-08 Paket & promo** · **F1-09 Komisi**.
 
 Ringkasan UI per fitur Fase 1 PRD. Aturan bisnis & API lengkap per fitur ada di repo backend
 `backend/AI-Context/modul/F1-0x-*.md`; progres keseluruhan di `backend/AI-Context/07-roadmap-progress.md`.
@@ -181,6 +181,32 @@ Perilaku penting:
 - Paket aktif setelah tagihan lunas; kartu menampilkan tombol "Bayar Rp …" ke halaman kasir selama `menunggu_bayar`.
 - Kasir tidak lagi berasumsi `tagihan.kunjungan` ada (sebelumnya daftar kasir error untuk tagihan mandiri).
 - Peran kasir kini memegang `pasien.lihat` (cari pasien untuk jual paket, buka detail pasien tanpa RME).
+
+## F1-09 Komisi & jasa medis (PRD KM-01, KM-03)
+
+Backend & aturan: `backend/AI-Context/modul/F1-09-komisi.md`.
+
+| Bagian | File |
+|--------|------|
+| **Komisi di master treatment** (revisi): bagian "Komisi & jasa medis" di form treatment — Dokter / Terapis / Asisten × Persen/Rupiah + contoh "≈ Rp … dari harga dasar"; kolom Komisi di daftar (`?komisi=1`); hanya untuk komisi.kelola | `views/master/TindakanView.vue` |
+| **Jasa konsultasi = treatment**: Master Poli kolom & pilihan "Jasa konsultasi dokter" (treatment kategori/nama "konsultasi"); estimasi pemeriksaan memakai `kunjungan.konsultasi` ("Tanpa jasa konsultasi" bila dicatat sebagai tindakan) | `views/master/PoliView.vue`, `views/pemeriksaan/PemeriksaanView.vue` |
+| Daftar periode (cabang aktif) & buat periode (default bulan berjalan); tombol "Komisi per treatment" | `views/komisi/KomisiPeriodeView.vue` |
+| Detail rekap: total/status/dasar, per petugas (rincian per peran, slip), rincian (filter petugas), hitung ulang, penyesuaian (+ hapus), setujui & kunci, hapus draf | `views/komisi/KomisiPeriodeDetail.vue` |
+| Komisi Saya: daftar periode disetujui + slip & cetak | `views/komisi/KomisiSayaView.vue` |
+| Slip (kop klinik, baris, subtotal per peran, total, tanda tangan; "DRAF" bila belum disetujui) | `components/komisi/SlipKomisi.vue` |
+| Pemeriksaan: select **Pelaksana** + **Asisten (opsional)** per tindakan · Ringkasan RME: asisten · Pengaturan: Komisi (neto/bruto) · Kasir: "Tandai lunas (Rp 0)" | `views/pemeriksaan/PemeriksaanView.vue`, `components/RekamMedisRingkas.vue`, `views/admin/PengaturanView.vue`, `views/kasir/TagihanDetail.vue` |
+| Menu, route, label audit, konstanta `PERAN_KOMISI`/`SUMBER_KOMISI` | `lib/menu.js`, `router/index.js`, `views/admin/AuditLogView.vue`, `lib/format.js` |
+
+Perilaku penting:
+- Tombol "Setujui & kunci" hanya untuk `komisi.setujui` (bawaan: administrator); manajer (`komisi.kelola`) menghitung & memberi penyesuaian.
+  Setelah disetujui semua tombol ubah hilang (backend juga menolak).
+- Slip di detail rekap memakai baris yang sudah dimuat (filter per petugas); "Komisi Saya" meminta slip per periode.
+- Path sengaja tidak saling berawalan agar penanda menu aktif benar.
+
+Verifikasi F1-09: `npm run build` + E2E Chrome headless (dokter pilih asisten → kasir bayar → manajer periode, hitung, slip,
+penyesuaian → admin setujui → terapis/dokter Komisi Saya; mobile 390 px). Revisi: admin ubah komisi di form treatment, Master Poli ganti
+jasa konsultasi, hapus treatment konsultasi ditolak, estimasi pemeriksaan, item tagihan konsultasi, rekap, `/aturan-komisi` → 404, form
+treatment mobile 390 px. Tanpa error konsol.
 
 Verifikasi F1-08: `npm run build` + E2E Chrome headless (kasir jual → promo → bayar; dokter pakai sesi; manajer riwayat/perpanjang/kebijakan
 refund; promo baru; master; mobile 390 px tanpa scroll horizontal di detail pasien, tagihan, daftar kasir). Tanpa error konsol selain 422

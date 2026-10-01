@@ -1,8 +1,9 @@
 <script setup>
 /**
- * Katalog treatment (PRD TR-01): kategori, durasi + buffer, harga dasar, harga per cabang, BHP standar,
+ * Katalog treatment (PRD TR-01): kategori, durasi + buffer, harga dasar, harga per cabang, BHP standar, komisi per peran (KM-01),
  * serta atribut RME: kode ICD-9-CM default, bentuk catatan tindakan, dan template informed consent wajib (RM-02/03/05).
  * Harga cabang: "dasar" = ikut harga dasar (tidak dikirim), "khusus" = tarif cabang, "tidak" = tidak dilayani di cabang itu.
+ * Komisi hanya tampil & dikirim untuk pemegang izin komisi.kelola; nilai kosong = peran itu tanpa komisi (baris tidak dikirim).
  */
 import { computed, onMounted, reactive, ref } from 'vue'
 import AppModal from '@/components/AppModal.vue'
@@ -17,14 +18,21 @@ import { useList } from '@/composables/useList'
 import { useQueryAction } from '@/composables/useQueryAction'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
-import { JENIS_CATATAN, OPSI_STATUS_AKTIF, angka, rupiah } from '@/lib/format'
+import { JENIS_CATATAN, OPSI_STATUS_AKTIF, PERAN_KOMISI, angka, rupiah } from '@/lib/format'
 import { referensiGigi } from '@/lib/gigi'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
 const auth = useAuthStore()
 const toast = useToastStore()
-const { items, meta, loading, filters, load, reload, search, isFiltered, reset } = useList('/tindakans', { q: '', kategori_id: '', status: '' })
+const bolehKomisi = auth.can('komisi.kelola')
+const { items, meta, loading, filters, load, reload, search, isFiltered, reset } = useList('/tindakans', {
+  q: '',
+  kategori_id: '',
+  status: '',
+  komisi: bolehKomisi ? 1 : '',
+})
+const jumlahKolom = 8 + (auth.cabang ? 1 : 0) + (bolehKomisi ? 1 : 0)
 
 const kategoris = ref([])
 const cabangs = ref([])
@@ -62,6 +70,17 @@ const MODE_HARGA = [
 
 const durasi = (t) => `${t.durasi_menit} mnt${t.buffer_menit ? ` + ${t.buffer_menit}` : ''}`
 
+// Komisi per peran (KM-01): dokter = dokter pemeriksa kunjungan, terapis = pelaksana tindakan, asisten = asisten tindakan.
+const PERAN_TREATMENT = [
+  ['dokter', 'Dokter', 'dokter pemeriksa kunjungan'],
+  ['terapis', 'Terapis', 'pelaksana tindakan'],
+  ['asisten', 'Asisten', 'asisten tindakan'],
+]
+const teksKomisi = (k) => (k.jenis === 'persen' ? `${angka(k.nilai)}%` : rupiah(k.nilai))
+/** "Dokter 15% · Asisten Rp 25.000" untuk kolom daftar. */
+const ringkasKomisi = (komisis) =>
+  (komisis ?? []).map((k) => `${PERAN_TREATMENT.find(([p]) => p === k.peran)?.[1] ?? k.peran} ${teksKomisi(k)}`).join(' · ') || '-'
+
 // Form
 const formOpen = ref(false)
 const editing = ref(null)
@@ -73,6 +92,19 @@ const saving = ref(false)
 /** Baris harga yang dikirim (bukan "harga dasar"); indeksnya dipakai untuk pesan error `hargas.N.*`. */
 const hargaDikirim = computed(() => (form.hargas ?? []).filter((h) => h.mode !== 'dasar'))
 const errorHarga = (h, field) => errors.value[`hargas.${hargaDikirim.value.indexOf(h)}.${field}`]
+/** Baris komisi yang dikirim (nilai diisi); indeksnya dipakai untuk pesan error `komisis.N.*`. */
+const komisiDikirim = computed(() => (form.komisis ?? []).filter((k) => k.nilai !== '' && k.nilai !== null))
+const errorKomisi = (k) => {
+  const i = komisiDikirim.value.indexOf(k)
+  return errors.value[`komisis.${i}.nilai`] ?? errors.value[`komisis.${i}.jenis`] ?? errors.value[`komisis.${i}.peran`]
+}
+/** Contoh komisi, mis. "≈ Rp 525.000 dari harga dasar" (persen) atau "Rp 25.000 per tindakan" (nominal). */
+const contohKomisi = (k) => {
+  if (k.nilai === '' || k.nilai === null) return 'Tanpa komisi'
+  return k.jenis === 'persen'
+    ? `≈ ${rupiah(Math.round(((Number(form.tarif) || 0) * Number(k.nilai)) / 100))} dari harga dasar`
+    : `${rupiah(k.nilai)} per tindakan`
+}
 const totalMenit = computed(() => (Number(form.durasi_menit) || 0) + (Number(form.buffer_menit) || 0))
 
 /** Grid harga = semua cabang yang bisa dipilih + cabang yang sudah punya harga khusus (mis. cabang nonaktif). */
@@ -125,6 +157,10 @@ async function buka(row = null) {
     kondisi_gigi_hasil: detail?.kondisi_gigi_hasil ?? '',
     hargas: gridHarga(detail),
     bhps: (detail?.bhps ?? []).map((b) => ({ obat_id: b.obat_id, kode: b.obat.kode, nama: b.obat.nama, satuan: b.obat.satuan, jumlah: b.jumlah })),
+    komisis: PERAN_TREATMENT.map(([peran]) => {
+      const k = detail?.komisis?.find((x) => x.peran === peran)
+      return { peran, jenis: k?.jenis ?? 'persen', nilai: k?.nilai ?? '' }
+    }),
   })
   formOpen.value = true
 }
@@ -151,6 +187,7 @@ function payload() {
     kondisi_gigi_hasil: form.kondisi_gigi_hasil || null,
     hargas: hargaDikirim.value.map((h) => ({ cabang_id: h.cabang_id, tarif: h.mode === 'khusus' ? h.tarif : form.tarif, tersedia: h.mode === 'khusus' })),
     bhps: form.bhps.map(({ obat_id, jumlah }) => ({ obat_id, jumlah })),
+    ...(bolehKomisi ? { komisis: komisiDikirim.value.map(({ peran, jenis, nilai }) => ({ peran, jenis, nilai })) } : {}),
   }
 }
 
@@ -197,7 +234,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <PageHeader title="Katalog Treatment" subtitle="Treatment & tindakan: kategori, durasi, harga per cabang, dan BHP standar">
+  <PageHeader title="Katalog Treatment" subtitle="Treatment & tindakan (termasuk jasa konsultasi): kategori, durasi, harga per cabang, BHP standar, dan komisi">
     <RouterLink to="/master/kategori-treatment" class="btn btn-secondary">Kategori</RouterLink>
     <button class="btn btn-primary" @click="buka()">+ Treatment Baru</button>
   </PageHeader>
@@ -223,12 +260,13 @@ onMounted(() => {
             <th v-if="auth.cabang" class="text-right">{{ auth.cabang.nama }}</th>
             <th>Harga cabang</th>
             <th class="text-right">BHP</th>
+            <th v-if="bolehKomisi">Komisi</th>
             <th>Status</th>
             <th />
           </tr>
         </thead>
         <tbody>
-          <TableSkeleton v-if="loading && !items.length" :cols="auth.cabang ? 9 : 8" />
+          <TableSkeleton v-if="loading && !items.length" :cols="jumlahKolom" />
           <tr v-for="t in items" :key="t.id">
             <td class="tabular-nums text-xs">{{ t.kode }}</td>
             <td>
@@ -247,6 +285,7 @@ onMounted(() => {
             </td>
             <td class="text-slate-600">{{ t.hargas_count ? `${t.hargas_count} cabang khusus` : '-' }}</td>
             <td class="text-right tabular-nums text-slate-600">{{ t.bhps_count ? `${t.bhps_count} bahan` : '-' }}</td>
+            <td v-if="bolehKomisi" class="text-xs text-slate-600">{{ ringkasKomisi(t.komisis) }}</td>
             <td><StatusBadge :status="t.is_active ? 'aktif' : 'nonaktif'" /></td>
             <td class="text-right whitespace-nowrap">
               <button class="btn btn-ghost btn-sm" :disabled="detailLoading === t.id" @click="buka(t)">
@@ -258,7 +297,7 @@ onMounted(() => {
             </td>
           </tr>
           <tr v-if="!loading && !items.length">
-            <td :colspan="auth.cabang ? 9 : 8" class="py-10 text-center text-slate-400">Belum ada treatment.</td>
+            <td :colspan="jumlahKolom" class="py-10 text-center text-slate-400">Belum ada treatment.</td>
           </tr>
         </tbody>
       </table>
@@ -408,6 +447,50 @@ onMounted(() => {
               <tr v-if="!form.hargas?.length"><td colspan="3" class="py-4 text-center text-slate-400">Belum ada cabang.</td></tr>
             </tbody>
           </table>
+        </div>
+      </section>
+
+      <!-- Komisi & jasa medis per peran (KM-01) -->
+      <section v-if="bolehKomisi" class="space-y-2">
+        <div>
+          <h3 class="text-sm font-semibold text-slate-800">Komisi & jasa medis</h3>
+          <p class="text-xs text-slate-500">
+            Persen dari nilai tindakan (bruto/neto sesuai Pengaturan → Komisi), nominal per tindakan. Kosongkan = peran itu tanpa komisi.
+            Untuk treatment jasa konsultasi poli, yang dipakai komisi dokter.
+          </p>
+        </div>
+        <!-- Grid, bukan tabel: di layar sempit tiap peran jadi dua baris (peran; jenis + nilai; contoh) tanpa kolom terjepit -->
+        <div class="divide-y divide-line rounded-xl border border-line bg-white/30">
+          <div
+            v-for="(k, i) in form.komisis"
+            :key="k.peran"
+            class="grid grid-cols-2 items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_10rem]"
+          >
+            <div class="col-span-2 sm:col-span-1">
+              <p class="text-sm text-slate-800">{{ PERAN_TREATMENT[i][1] }}</p>
+              <p class="text-xs text-slate-400">{{ PERAN_TREATMENT[i][2] }}</p>
+            </div>
+            <select v-model="k.jenis" class="input py-1" :aria-label="`Jenis komisi ${PERAN_KOMISI[k.peran]}`">
+              <option value="persen">Persen</option>
+              <option value="nominal">Rupiah</option>
+            </select>
+            <div>
+              <input
+                :id="`komisi-${k.peran}`"
+                v-model.number="k.nilai"
+                type="number"
+                min="0"
+                :max="k.jenis === 'persen' ? 100 : undefined"
+                step="any"
+                class="input py-1 text-right"
+                :class="{ 'input-error': errorKomisi(k) }"
+                :aria-label="`Nilai komisi ${PERAN_KOMISI[k.peran]}`"
+                :placeholder="k.jenis === 'persen' ? '%' : 'Rp'"
+              />
+              <p v-if="errorKomisi(k)" class="field-error">{{ errorKomisi(k) }}</p>
+            </div>
+            <p class="col-span-2 text-xs tabular-nums text-slate-500 sm:col-span-1 sm:text-right">{{ contohKomisi(k) }}</p>
+          </div>
         </div>
       </section>
 

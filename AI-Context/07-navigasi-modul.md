@@ -4,7 +4,7 @@ Navigasi dua tingkat (sejak 30 Sep 2026). Rail kiri tetap bergaya lama (pil kaca
 tetapi **satu tombol = satu modul**; navbar berisi **halaman milik modul yang dipilih**.
 
 ```
- [K] lefaklinik           Resep  [Obat & Stok]              Cari…  Admin (A) ⏻     ← header: logo · tab halaman modul · alat
+ [K]                       Resep  [Obat & Stok]              Cari…  Admin (A) ⏻     ← header: logo · tab halaman modul · alat
  ╭──╮
  │⌂ │  Beranda
  │♙ │  Pendaftaran            <RouterView />
@@ -29,11 +29,11 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 
 | Modul (`key`) | Halaman |
 |---------------|---------|
-| Beranda (`beranda`) | Dashboard |
+| Beranda (`beranda`) | Dashboard, Komisi Saya (F1-09; tenaga medis) |
 | Pendaftaran (`pendaftaran`) | Data Pasien, Pendaftaran Kunjungan |
 | Pelayanan (`pelayanan`) | Antrian Poli (+ `/pemeriksaan/:id`) |
 | Farmasi (`farmasi`) | Resep, Obat & Stok |
-| Keuangan (`keuangan`) | Kasir, Voucher & Promo (F1-08, `promo.kelola`) |
+| Keuangan (`keuangan`) | Kasir, Voucher & Promo (F1-08, `promo.kelola`), Komisi (F1-09; komisi per treatment diatur di Master Data → Treatment) |
 | Master Data (`master`) | Poli, Treatment, Paket Treatment (F1-08), Kategori Treatment, Cabang |
 | Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Protokol Foto (F1-06), Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
 | Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |

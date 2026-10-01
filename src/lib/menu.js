@@ -19,6 +19,16 @@ export const MENU = [
         keywords: ['beranda', 'ringkasan', 'statistik', 'home', 'grafik', 'ikhtisar', 'dashboard'],
         icon: 'M2.25 12l8.954-8.955a1.126 1.126 0 011.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25',
       },
+      {
+        // Slip komisi milik sendiri (KM-03) — untuk tenaga yang bisa menerima komisi (dokter, perawat/asisten, terapis)
+        label: 'Komisi Saya',
+        to: '/slip-komisi',
+        category: 'Menu Utama',
+        description: 'Slip komisi & jasa medis pribadi dari rekap yang sudah disetujui',
+        keywords: ['komisi', 'jasa medis', 'slip', 'gaji', 'insentif', 'bagi hasil'],
+        izin: ['pemeriksaan.dokter', 'pemeriksaan.vital', 'rme.tindakan'],
+        icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z',
+      },
     ],
   },
   {
@@ -94,7 +104,7 @@ export const MENU = [
   {
     key: 'keuangan',
     title: 'Keuangan',
-    description: 'Tagihan & pembayaran',
+    description: 'Tagihan, promo & komisi',
     icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z',
     items: [
       {
@@ -115,6 +125,15 @@ export const MENU = [
         izin: ['promo.kelola'],
         icon: 'M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z',
       },
+      {
+        label: 'Komisi',
+        to: '/komisi',
+        category: 'Keuangan & Kasir',
+        description: 'Rekap komisi & jasa medis per periode: hitung, penyesuaian, setujui & kunci, slip',
+        keywords: ['komisi', 'jasa medis', 'rekap komisi', 'slip komisi', 'bagi hasil', 'insentif dokter', 'terapis'],
+        izin: ['komisi.kelola', 'komisi.setujui'],
+        icon: 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z',
+      },
     ],
   },
   {
@@ -127,8 +146,8 @@ export const MENU = [
         label: 'Poli',
         to: '/master/poli',
         category: 'Master Data',
-        description: 'Pengaturan unit poliklinik, poli umum/gigi & tarif konsultasi dokter',
-        keywords: ['klinik', 'unit', 'tarif konsultasi', 'master poli', 'daftar poli', 'spesialis'],
+        description: 'Pengaturan unit poliklinik, spesialisasi & jasa konsultasi dokter',
+        keywords: ['klinik', 'unit', 'tarif konsultasi', 'jasa konsultasi', 'master poli', 'daftar poli', 'spesialis'],
         izin: ['master.kelola'],
         icon: 'M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3.75h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z',
       },
@@ -136,8 +155,8 @@ export const MENU = [
         label: 'Treatment',
         to: '/master/tindakan',
         category: 'Master Data',
-        description: 'Katalog treatment & tindakan: durasi, harga per cabang, BHP standar',
-        keywords: ['tarif', 'layanan', 'prosedur', 'tindakan', 'treatment', 'katalog', 'harga cabang', 'bhp', 'durasi', 'biaya tindakan'],
+        description: 'Katalog treatment, tindakan & jasa konsultasi: durasi, harga per cabang, BHP standar, komisi dokter/terapis/asisten',
+        keywords: ['tarif', 'layanan', 'prosedur', 'tindakan', 'treatment', 'katalog', 'harga cabang', 'bhp', 'durasi', 'biaya tindakan', 'komisi treatment', 'aturan komisi', 'jasa medis', 'jasa konsultasi'],
         izin: ['master.kelola'],
         icon: 'M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z',
       },

@@ -18,9 +18,12 @@ Kolom **Izin** = `meta.izin` di router (salah satu; administrator memegang semua
 | `/farmasi/obat` | `farmasi/ObatList` | farmasi.obat | `GET/POST/PUT /obats`, `DELETE` (master.kelola), `GET/POST /obats/{id}/mutasi` |
 | `/kasir` | `kasir/TagihanList` | kasir.tagihan | `GET /tagihans` (tagihan dengan/tanpa kunjungan); "+ Jual paket" (`JualPaketModal`: `/pasiens`, `/pakets?aktif=1`, `POST /pasiens/{id}/pakets`) |
 | `/kasir/:id` | `kasir/TagihanDetail` | kasir.tagihan | `GET /tagihans/{id}`, `POST/DELETE .../promo` (kode voucher), `POST .../bayar`; tagihan mandiri (paket/produk) tanpa kunjungan; pajak & potongan promo di layar; cetak struk (kop klinik/cabang, catatan kaki & lebar kertas dari pengaturan) |
+| `/komisi` | `komisi/KomisiPeriodeView` | komisi.kelola, komisi.setujui | `GET/POST /komisi-periodes` (cabang aktif); tombol "Komisi per treatment" → `/master/tindakan` (komisi.kelola + master.kelola) |
+| `/komisi/:id` | `komisi/KomisiPeriodeDetail` | komisi.kelola, komisi.setujui | `GET /komisi-periodes/{id}`, `POST .../hitung`, `.../setujui` (komisi.setujui), `.../penyesuaian`, `DELETE` (draf), `/petugas`; slip cetak |
+| `/slip-komisi` | `komisi/KomisiSayaView` | — (menu: pemeriksaan.*, rme.tindakan) | `GET /komisi-saya`, `?periode_id=` |
 | `/promo` | `kasir/PromoView` | promo.kelola | `GET/POST/PUT/DELETE /promos`, `/cabangs`, `/pakets?aktif=1`, `AsyncSelect` `/tindakans` |
-| `/master/poli` | `master/PoliView` | master.kelola | `/polis` via `MasterCrud` (+ spesialisasi: `gigi` menampilkan odontogram) |
-| `/master/tindakan` | `master/TindakanView` | master.kelola | Katalog treatment (halaman khusus, bukan MasterCrud): `GET /tindakans` (filter kategori/status), `GET /tindakans/{id}` saat Ubah, `POST/PUT/DELETE /tindakans`, `GET /kategori-tindakans`, `GET /cabangs` (grid harga), `AsyncSelect` `/obats` (BHP). `?baru=1` membuka form |
+| `/master/poli` | `master/PoliView` | master.kelola | `/polis` via `MasterCrud` (+ spesialisasi: `gigi` menampilkan odontogram; jasa konsultasi = pilihan treatment dari `GET /tindakans?q=konsultasi` + kategori "…konsultasi…") |
+| `/master/tindakan` | `master/TindakanView` | master.kelola | Katalog treatment (halaman khusus, bukan MasterCrud): `GET /tindakans` (filter kategori/status), `GET /tindakans/{id}` saat Ubah, `POST/PUT/DELETE /tindakans`, `GET /kategori-tindakans`, `GET /cabangs` (grid harga), `AsyncSelect` `/obats` (BHP). `?baru=1` membuka form. Pemegang komisi.kelola: `?komisi=1` (kolom Komisi) & bagian "Komisi & jasa medis" (`komisis`) |
 | `/master/paket` | `master/PaketView` | master.kelola | `GET/POST/PUT/DELETE /pakets` (isi treatment × sesi, harga, masa berlaku, lintas cabang; hemat % dari `nilai_normal`) |
 | `/master/kategori-treatment` | `master/KategoriTindakanView` | master.kelola | `/kategori-tindakans` via `MasterCrud` |
 | `/master/icd10` | `master/Icd10View` | master.kelola | `/icd10s` via `MasterCrud` (+ penanda sensitif) |

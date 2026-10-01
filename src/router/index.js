@@ -33,6 +33,9 @@ const routes = [
 
       { path: 'kasir', name: 'kasir', component: () => import('@/views/kasir/TagihanList.vue'), meta: { izin: ['kasir.tagihan'] } },
       { path: 'kasir/:id', name: 'kasir.detail', component: () => import('@/views/kasir/TagihanDetail.vue'), meta: { izin: ['kasir.tagihan'] } },
+      { path: 'komisi', name: 'komisi', component: () => import('@/views/komisi/KomisiPeriodeView.vue'), meta: { izin: ['komisi.kelola', 'komisi.setujui'] } },
+      { path: 'komisi/:id', name: 'komisi.detail', component: () => import('@/views/komisi/KomisiPeriodeDetail.vue'), meta: { izin: ['komisi.kelola', 'komisi.setujui'] } },
+      { path: 'slip-komisi', name: 'komisi.saya', component: () => import('@/views/komisi/KomisiSayaView.vue') },
       { path: 'promo', name: 'promo', component: () => import('@/views/kasir/PromoView.vue'), meta: { izin: ['promo.kelola'] } },
 
       { path: 'master/poli', name: 'master.poli', component: () => import('@/views/master/PoliView.vue'), meta: { izin: ['master.kelola'] } },

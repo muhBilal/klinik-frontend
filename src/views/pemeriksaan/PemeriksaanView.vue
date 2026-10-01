@@ -78,10 +78,15 @@ const imt = computed(() => {
   const tb = Number(form.tinggi_badan) / 100
   return bb && tb ? (bb / (tb * tb)).toFixed(1) : null
 })
+// Jasa konsultasi poli (treatment) ditagih otomatis, kecuali dokter mencatatnya sebagai tindakan (tidak dobel).
+const konsultasi = computed(() => {
+  const k = kunjungan.value?.konsultasi
+  return k && !form.tindakans.some((t) => t.tindakan_id === k.id) ? k : null
+})
 // Tindakan yang memakai sesi paket ditagih Rp 0 (TR-02).
 const totalEstimasi = computed(
   () =>
-    (kunjungan.value?.poli.tarif_konsultasi ?? 0) +
+    (konsultasi.value?.tarif_cabang ?? 0) +
     form.tindakans.reduce((s, t) => s + (t.paket_pasien_item_id ? 0 : t.tarif * t.jumlah), 0) +
     form.resep.reduce((s, r) => s + r.harga * r.jumlah, 0),
 )
@@ -102,6 +107,8 @@ function isiForm(k) {
     tarif: t.tarif,
     petugas_id: t.petugas_id ?? '',
     petugas_nama: t.petugas?.name,
+    asisten_id: t.asisten_id ?? '',
+    asisten_nama: t.asisten?.name,
     icd9cm_id: t.icd9cm_id,
     icd9cm: t.icd9cm,
     template_consent_id: t.tindakan.template_consent_id,
@@ -217,6 +224,7 @@ function tambahTindakan(t, tambahan = {}) {
     permukaan: tambahan.permukaan ?? target?.permukaan ?? '',
     rencana_item_id: tambahan.rencana_item_id ?? null,
     rencana_judul: tambahan.rencana_judul,
+    asisten_id: '',
     paket_pasien_item_id: null,
     catatan: null,
   })
@@ -397,8 +405,8 @@ function payload() {
     ...data,
     akses_terbatas: form.akses_terbatas,
     diagnosas: form.diagnosas.map(({ icd10_id, jenis }) => ({ icd10_id, jenis })),
-    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, icd9cm_id, gigi, permukaan, rencana_item_id, paket_pasien_item_id }) => ({
-      id: id ?? null, tindakan_id, jumlah, petugas_id: petugas_id || null, icd9cm_id: icd9cm_id ?? null,
+    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, asisten_id, icd9cm_id, gigi, permukaan, rencana_item_id, paket_pasien_item_id }) => ({
+      id: id ?? null, tindakan_id, jumlah, petugas_id: petugas_id || null, asisten_id: asisten_id || null, icd9cm_id: icd9cm_id ?? null,
       gigi: gigi || null, permukaan: gigi && permukaan ? permukaan : null, rencana_item_id: rencana_item_id ?? null,
       paket_pasien_item_id: paket_pasien_item_id || null,
     })),
@@ -752,14 +760,22 @@ onMounted(load)
                       Catatan: {{ [t.catatan.area, t.catatan.titiks?.length && `${t.catatan.titiks.length} titik`, t.catatan.parameter && 'parameter alat terisi'].filter(Boolean).join(' · ') || 'terisi' }}
                     </p>
                   </div>
-                  <div class="w-44">
-                    <label class="sr-only" :for="`petugas-${i}`">Petugas {{ t.nama }}</label>
-                    <select :id="`petugas-${i}`" v-model="t.petugas_id" class="input py-1 text-sm" :class="{ 'input-error': errors[`tindakans.${i}.petugas_id`] }" :disabled="!editable || !isDokter">
-                      <option value="">— Petugas —</option>
+                  <!-- Pelaksana (terapis) & asisten: dasar komisi per peran (KM-01); dokter = dokter kunjungan -->
+                  <div class="w-44 space-y-1">
+                    <label class="sr-only" :for="`petugas-${i}`">Pelaksana {{ t.nama }}</label>
+                    <select :id="`petugas-${i}`" v-model="t.petugas_id" class="input py-1 text-sm" :class="{ 'input-error': errors[`tindakans.${i}.petugas_id`] }" :disabled="!editable || !isDokter" title="Pelaksana tindakan">
+                      <option value="">— Pelaksana —</option>
                       <option v-for="p in petugas" :key="p.id" :value="p.id">{{ p.name }}</option>
                       <option v-if="t.petugas_id && !petugas.some((p) => p.id === t.petugas_id)" :value="t.petugas_id">{{ t.petugas_nama ?? `#${t.petugas_id}` }}</option>
                     </select>
                     <p v-if="errors[`tindakans.${i}.petugas_id`]" class="field-error">{{ errors[`tindakans.${i}.petugas_id`] }}</p>
+                    <label class="sr-only" :for="`asisten-${i}`">Asisten {{ t.nama }}</label>
+                    <select :id="`asisten-${i}`" v-model="t.asisten_id" class="input py-1 text-xs" :class="{ 'input-error': errors[`tindakans.${i}.asisten_id`] }" :disabled="!editable || !isDokter" title="Asisten tindakan (opsional)">
+                      <option value="">— Asisten (opsional) —</option>
+                      <option v-for="p in petugas" :key="p.id" :value="p.id">{{ p.name }}</option>
+                      <option v-if="t.asisten_id && !petugas.some((p) => p.id === t.asisten_id)" :value="t.asisten_id">{{ t.asisten_nama ?? `#${t.asisten_id}` }}</option>
+                    </select>
+                    <p v-if="errors[`tindakans.${i}.asisten_id`]" class="field-error">{{ errors[`tindakans.${i}.asisten_id`] }}</p>
                   </div>
                   <div class="w-20">
                     <label class="sr-only" :for="`jumlah-${i}`">Jumlah {{ t.nama }}</label>
@@ -843,7 +859,9 @@ onMounted(load)
         <div v-if="!isPerawat" class="card card-body">
           <p class="text-xs font-medium text-slate-500">Estimasi biaya</p>
           <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{{ rupiah(totalEstimasi) }}</p>
-          <p class="mt-1 text-xs text-slate-400">Konsultasi {{ rupiah(kunjungan.poli.tarif_konsultasi) }} + tindakan + obat</p>
+          <p class="mt-1 text-xs text-slate-400">
+            {{ konsultasi ? `${konsultasi.nama} ${rupiah(konsultasi.tarif_cabang)}` : 'Tanpa jasa konsultasi' }} + tindakan + obat
+          </p>
         </div>
 
         <!-- Tanda tangan & addendum (RM-07) -->

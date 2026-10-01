@@ -152,6 +152,23 @@ onMounted(load)
       </div>
     </div>
 
+    <!-- Dasar perhitungan komisi (KM-01) -->
+    <div class="card lg:col-span-2">
+      <div class="card-header"><h2 class="card-title">Komisi</h2></div>
+      <div class="card-body space-y-2 text-sm">
+        <p class="label">Dasar komisi persen</p>
+        <label class="flex items-start gap-2">
+          <input v-model="form.komisi.dasar" type="radio" value="neto" class="mt-0.5 accent-brand-600" />
+          <span>Neto — harga tindakan setelah diskon & potongan promo tagihan (proporsional)</span>
+        </label>
+        <label class="flex items-start gap-2">
+          <input v-model="form.komisi.dasar" type="radio" value="bruto" class="mt-0.5 accent-brand-600" />
+          <span>Bruto — harga tindakan sebelum diskon</span>
+        </label>
+        <p class="text-xs text-slate-400">Sesi paket selalu memakai nilai per sesi paket. Berlaku untuk rekap yang dihitung (ulang) setelah disimpan; rekap yang sudah disetujui tidak berubah.</p>
+      </div>
+    </div>
+
     <!-- Kebijakan paket multi-sesi (TR-02): pertanyaan terbuka PRD, diatur tiap klinik -->
     <div class="card lg:col-span-2">
       <div class="card-header"><h2 class="card-title">Paket Treatment</h2></div>

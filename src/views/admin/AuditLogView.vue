@@ -32,6 +32,10 @@ const AKSI = {
   '2fa_nonaktif': '2FA dinonaktifkan',
   '2fa_kode_baru': 'Kode pemulihan baru',
   '2fa_kode_pemulihan': 'Pakai kode pemulihan',
+  perpanjang_paket: 'Perpanjang paket',
+  hitung_komisi: 'Hitung komisi',
+  penyesuaian_komisi: 'Penyesuaian komisi',
+  hapus_penyesuaian_komisi: 'Hapus penyesuaian komisi',
 }
 const TIPE = {
   pasien: 'Pasien',
@@ -74,6 +78,10 @@ const TIPE = {
   paket_pasien_item: 'Sesi paket pasien',
   promo: 'Voucher & promo',
   promo_pemakaian: 'Pemakaian promo',
+  tindakan_komisi: 'Komisi treatment',
+  // Log lama sebelum komisi dipindah ke master treatment
+  aturan_komisi: 'Aturan komisi',
+  komisi_periode: 'Rekap komisi',
 }
 // Warna badge per kelompok aksi (merah = kegagalan / penghapusan, biru = akses data pasien)
 const warna = (aksi) =>

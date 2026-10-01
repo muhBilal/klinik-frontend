@@ -37,7 +37,8 @@ Error 422 `tantangan` = sesi login kedaluwarsa (ulangi dari email/password); 422
   id, no_registrasi, tanggal, no_antrian, penjamin, no_penjamin, keluhan, status, dipanggil_at, selesai_at, pasien_id, poli_id,
   dokter_id, cabang_id, akses_terbatas, rme_disembunyikan /* true = kunjungan berakses terbatas yang bukan hak user */,
   pasien: { id, no_rm, nama, jenis_kelamin, tanggal_lahir, umur, alergi, golongan_darah, no_bpjs, ... },
-  poli: { id, kode, nama, tarif_konsultasi },
+  poli: { id, kode, nama, spesialisasi, tindakan_konsultasi_id },
+  konsultasi: { id, kode, nama, tarif, tarif_cabang, tersedia } | null /* jasa konsultasi poli di cabang kunjungan (estimasi) */,
   dokter: { id, name, sip } | null,
   pemeriksaan: { tekanan_darah, nadi, suhu, respirasi, berat_badan, tinggi_badan, subjektif, objektif, asesmen, plan,
                  dokter_id, perawat_id, ditandatangani_at, ditandatangani_oleh, penandatangan: { id, name, sip } | null,
@@ -129,6 +130,18 @@ Resep detail juga memuat `cabang` (kop etiket).
   `POST /persetujuan-fotos/{uuid}/cabut { alasan }`.
 - `GET /pengaturan` + `foto: { wajib_consent, naskah_consent }`. Enum: tahap `sebelum`/`sesudah`/`kontrol`, tingkat
   `klinis`/`edukasi`/`marketing`, status persetujuan `berlaku`/`diganti`/`dicabut`. Audit baru: `protokol_foto`, `persetujuan_foto`.
+
+## Komisi (F1-09)
+- Komisi treatment: `GET /tindakans/{id}` & `?komisi=1` → `komisis: [{ id, peran: dokter|terapis|asisten, jenis: persen|nominal, nilai (number) }]`
+  (hanya pemegang komisi.kelola). Simpan lewat `PUT /tindakans/{id}` `komisis[]` (replace-all; 403 tanpa komisi.kelola; 422 `komisis.{i}.nilai|peran`).
+- Poli: `tindakan_konsultasi_id` + `tindakan_konsultasi: {id, kode, nama, tarif, is_active}` (menggantikan `tarif_konsultasi`). Hapus treatment
+  jasa konsultasi → 422 `message`.
+- Periode: `{ id, cabang_id, cabang, nama, mulai, selesai, status: draf|disetujui, dasar, total, dihitung_at, penghitung, disetujui_at, penyetuju,
+  barises_count }`; detail + `ringkasan: [{ user: {id, name, role}, total, jumlah_baris, per_peran: {peran: total} }]`, `barises: [{ id, user_id,
+  user, peran, sumber, tanggal, deskripsi, dasar, jenis, nilai, komisi, kunjungan }]`. 422 `status` (terkunci / belum dihitung), `mulai` (tumpang tindih).
+- `/komisi-saya` → `[{ id, nama, mulai, selesai, cabang, total_saya }]`; `?periode_id=` → periode + `user`, `barises`, `total`.
+- Pemeriksaan `tindakans[].asisten_id` (+ `asisten: {id, name}` di respons). Pengaturan + `komisi: { dasar }`. Audit: tipe `tindakan_komisi`
+  (log lama: `aturan_komisi`), `komisi_periode`; aksi `hitung_komisi`, `penyesuaian_komisi`, `hapus_penyesuaian_komisi`.
 
 ## Paket & voucher/promo (F1-08)
 - `GET /pakets?aktif=1` → `[{ id, kode, nama, harga, masa_berlaku_hari, lintas_cabang, items: [{ tindakan_id, jumlah_sesi, tindakan: {nama, tarif} }], nilai_normal, terjual_count }]`.

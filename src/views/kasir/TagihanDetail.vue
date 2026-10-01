@@ -215,7 +215,7 @@ onMounted(load)
             <template v-if="bayar.metode_bayar === 'tunai'">
               <div>
                 <label class="label" for="dibayar">Uang diterima (Rp)</label>
-                <input id="dibayar" v-model.number="bayar.dibayar" type="number" min="0" class="input text-lg" :class="{ 'input-error': errors.dibayar }" required />
+                <input id="dibayar" v-model.number="bayar.dibayar" type="number" min="0" class="input text-lg" :class="{ 'input-error': errors.dibayar }" :required="grandTotal > 0" />
                 <p v-if="errors.dibayar" class="field-error">{{ errors.dibayar }}</p>
                 <div class="mt-2 flex flex-wrap gap-1.5">
                   <button v-for="p in pecahan" :key="p" type="button" class="btn btn-secondary btn-sm" @click="bayar.dibayar = p">{{ rupiah(p) }}</button>
@@ -226,7 +226,7 @@ onMounted(load)
                 <span class="font-semibold tabular-nums">{{ rupiah(kembalian) }}</span>
               </div>
             </template>
-            <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="processing"><AppSpinner v-if="processing" />{{ processing ? 'Memproses...' : 'Proses Pembayaran' }}</button>
+            <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="processing"><AppSpinner v-if="processing" />{{ processing ? 'Memproses...' : grandTotal === 0 ? 'Tandai lunas (Rp 0)' : 'Proses Pembayaran' }}</button>
           </form>
         </div>
         <div v-else class="card-body text-sm text-slate-600">

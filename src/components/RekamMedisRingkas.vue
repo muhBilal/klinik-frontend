@@ -104,6 +104,7 @@ function lihatConsent(uuid) {
           {{ t.tindakan.nama }}<template v-if="t.gigi"> · {{ formatGigi(t.gigi, t.permukaan) }}</template> × {{ t.jumlah }}
           <span v-if="t.icd9cm" class="text-xs text-slate-500">· ICD-9-CM {{ t.icd9cm.kode }}</span>
           <span v-if="t.petugas" class="text-xs text-slate-500">· {{ t.petugas.name }}</span>
+          <span v-if="t.asisten" class="text-xs text-slate-500">· asisten {{ t.asisten.name }}</span>
         </p>
         <p v-if="t.catatan" class="text-xs text-slate-500">
           <template v-if="t.catatan.area">{{ t.catatan.area }}. </template>

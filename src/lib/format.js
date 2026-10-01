@@ -102,6 +102,12 @@ export const TINGKAT_FOTO = { klinis: 'Klinis saja', edukasi: 'Klinis & edukasi'
 /** Spesialisasi poli (enum Spesialisasi) — `gigi` menampilkan odontogram & rencana perawatan di pemeriksaan. */
 export const SPESIALISASI = { umum: 'Umum', gigi: 'Kedokteran gigi', kulit: 'Dermatologi & venereologi', estetika: 'Estetika medis', lainnya: 'Lainnya' }
 
+/** Peran dalam tindakan untuk komisi (enum PeranKomisi): dokter = dokter kunjungan, terapis = pelaksana, asisten. */
+export const PERAN_KOMISI = { dokter: 'Dokter', terapis: 'Terapis / pelaksana', asisten: 'Asisten', penyesuaian: 'Penyesuaian' }
+
+/** Asal komisi (enum SumberKomisi). */
+export const SUMBER_KOMISI = { tindakan: 'Tindakan', konsultasi: 'Konsultasi', penyesuaian: 'Penyesuaian' }
+
 /** Bagian rekam medis yang dikoreksi lewat addendum (enum BagianAddendum). */
 export const BAGIAN_ADDENDUM = {
   subjektif: 'Subjektif',
