@@ -1,6 +1,7 @@
 # 08 — Fitur Fase 1 (MVP Estetika) di Frontend
 
-Isi: F1-01 Katalog treatment · F1-02/03/04 (backend saja, kecuali editor BHP) · **F1-05 RME estetika**.
+Isi: F1-01 Katalog treatment · F1-02/03/04 (backend saja, kecuali editor BHP) · **F1-05 RME estetika** · **F1-06 Foto klinis** ·
+**F1-07 Kedokteran gigi**.
 
 Ringkasan UI per fitur Fase 1 PRD. Aturan bisnis & API lengkap per fitur ada di repo backend
 `backend/AI-Context/modul/F1-0x-*.md`; progres keseluruhan di `backend/AI-Context/07-roadmap-progress.md`.
@@ -92,6 +93,69 @@ transform `AppModal`; border di pembungkus agar koordinat tidak bergeser. Ukuran
 Verifikasi F1-05: `npm run build` lulus + E2E Chrome headless (playwright-core, stack dev terisolasi port 8010 + Vite): template →
 botox → face chart 4 titik → consent + tanda tangan → selesai & tanda tangani → cek keutuhan → addendum → cetak consent; kunjungan
 IMS dibuka dokter lain (🔒); halaman master & pengaturan. Tanpa error konsol.
+
+## F1-06 Foto klinis before-after (PRD FT-01..04, RM-04)
+
+Backend & aturan: `backend/AI-Context/modul/F1-06-foto-klinis.md`.
+
+| Bagian | File |
+|--------|------|
+| Proses gambar di browser (maks. 2048 px, thumbnail 360 px, EXIF terbuang), unggah foto, tautan massal, label posisi | `lib/foto.js` |
+| Kartu gabungan: persetujuan foto + tombol Ambil foto + galeri; `ambil(tindakan)` di-expose | `components/foto/FotoKlinisCard.vue` |
+| Status/tanda tangan/ganti/cabut/riwayat/cetak persetujuan foto bertingkat | `components/foto/PersetujuanFotoPanel.vue` |
+| Kamera terpandu: protokol, tindakan terkait, tahap, langkah posisi (✓ per tahap), bingkai panduan, pratinjau → Simpan & lanjut; fallback unggah berkas | `components/foto/KameraFoto.vue` |
+| Galeri: per kunjungan, lingkup kunjungan ini/semua, filter protokol/posisi/tahap, pilih 2, "⇆ awal", viewer + hapus | `components/foto/GaleriFoto.vue` |
+| Bandingkan: slider (clip-path + range) & berdampingan | `components/foto/BandingFoto.vue` |
+| Pemeriksaan: kartu Foto Klinis + tombol **Foto** per tindakan (protokol dari treatment); lampiran lain tanpa foto | `views/pemeriksaan/PemeriksaanView.vue`, `components/LampiranBerkas.vue` (`tanpa-foto`) |
+| Detail kunjungan (baca) & detail pasien (semua kunjungan; tanpa `rme.lihat` hanya panel persetujuan) | `views/KunjunganDetail.vue`, `views/pasien/PasienDetail.vue` |
+| Master Protokol Foto (posisi berurutan, kode otomatis) — modul Rekam Medis | `views/master/ProtokolFotoView.vue`, `lib/menu.js`, `router/index.js` |
+| Treatment: pilihan protokol foto · Pengaturan: Foto Klinis (wajib persetujuan, naskah) | `views/master/TindakanView.vue`, `views/admin/PengaturanView.vue` |
+
+Perilaku penting:
+- Kamera memakai `getUserMedia` (butuh HTTPS atau localhost). `<video>` selalu terpasang (`v-show`) agar stream tidak lepas saat pratinjau.
+  Kamera dimatikan saat modal ditutup.
+- `simpan()` mengunci konteks (pratinjau, posisi, tahap, langkah) **sebelum** upload; selama upload pilihan protokol/tindakan/tahap/posisi
+  dinonaktifkan. Tanpa ini hasil upload yang terlambat bisa menandai posisi lain dan menghapus pratinjau baru (ditemukan di E2E).
+- Galeri meminta tautan pratinjau hanya untuk foto yang sedang tampil (`POST /berkas/tautan`, setiap tautan tercatat audit); foto penuh
+  diminta saat dibuka / dibandingkan. Jumlah kolom memakai container query (`@container`, `@sm:`, `@2xl:`) sehingga pas di kolom samping
+  pemeriksaan maupun halaman lebar.
+- Tombol "Ambil foto" tetap aktif walau belum ada persetujuan (kewajiban bisa dimatikan di pengaturan); backend menolak dengan
+  `consent_foto` dan kamera menampilkan pesannya.
+
+Verifikasi F1-06: `npm run build` + E2E Chrome headless dengan kamera palsu (lihat modul backend F1-06). Tanpa error konsol.
+
+## F1-07 Kedokteran gigi: odontogram, rencana perawatan, tindakan per gigi (PRD DG-01, DG-02, DG-07)
+
+Backend & aturan: `backend/AI-Context/modul/F1-07-odontogram.md`.
+
+| Bagian | File |
+|--------|------|
+| Notasi FDI, label permukaan, format gigi, saran fase, `referensiGigi()` (cache) | `lib/gigi.js` |
+| Gambar odontogram SVG: 4 baris (tetap atas, sulung atas, sulung bawah, tetap bawah), 5 permukaan per gigi, warna kondisi, bingkai kondisi seluruh gigi, silang gigi hilang, kode di bawah/atas nomor | `components/gigi/OdontogramChart.vue` |
+| Kartu Odontogram: pilih gigi/permukaan → kondisi berlaku (hapus koreksi / akhiri), form catat (kondisi per permukaan / seluruh gigi, permukaan, keterangan), "+ Tindakan untuk gigi ini", perubahan kunjungan (pulihkan), ringkasan & legenda, pilihan status pada kunjungan sebelumnya (detail pasien), toggle gigi sulung | `components/gigi/OdontogramCard.vue` |
+| Input nomor gigi + permukaan | `components/gigi/PilihGigi.vue` |
+| Rencana perawatan: per fase, estimasi, status item (selesai / ada di tindakan / sedang dikerjakan / Kerjakan), Pasien setuju, Revisi, Batalkan, Cetak estimasi (kop klinik + tanda tangan pasien & dokter) | `components/gigi/RencanaPerawatanCard.vue` |
+| Form susun/ubah rencana (treatment per cabang, fase 1–9, gigi, jumlah, subtotal per fase) | `components/gigi/RencanaPerawatanModal.vue` |
+| Pemeriksaan: kartu Odontogram + Rencana (poli gigi), input gigi per tindakan, chip "Untuk gigi N", Kerjakan item rencana | `views/pemeriksaan/PemeriksaanView.vue` |
+| Detail kunjungan (odontogram pada kunjungan itu) · detail pasien (odontogram terkini + riwayat, rencana) | `views/KunjunganDetail.vue`, `views/pasien/PasienDetail.vue` |
+| Ringkasan RME: gigi per tindakan, kondisi dicatat/diakhiri | `components/RekamMedisRingkas.vue` |
+| Master Poli: kolom & pilihan spesialisasi · Treatment: "Tindakan per gigi", "Kondisi gigi setelah tindakan", keterangan "per gigi → cof" di daftar | `views/master/PoliView.vue`, `views/master/TindakanView.vue` |
+| Badge `draf`/`dibatalkan`/`rencana`, label audit, konstanta `SPESIALISASI` | `components/StatusBadge.vue`, `views/admin/AuditLogView.vue`, `lib/format.js` |
+
+Perilaku penting:
+- Kartu gigi tampil bila `kunjungan.poli.spesialisasi === 'gigi'`, ada tindakan per gigi, atau kunjungan mencatat kondisi gigi; di detail
+  pasien bila `data_gigi` atau pernah ke poli gigi. Butuh `rme.lihat`.
+- Odontogram bisa diisi hanya saat backend mengirim `bisa_diubah` (pasien `diperiksa`) dan user punya `pemeriksaan.dokter` / `rme.tindakan`.
+  Klik permukaan memilih permukaan itu & menyarankan "car"; klik nomor gigi = seluruh gigi.
+- Kondisi hasil tindakan dibuat backend saat pemeriksaan disimpan → setelah `simpan()` sukses, PemeriksaanView memanggil
+  `odontogramCard.muatUlang()` & `rencanaCard.muatUlang()`. Kondisi turunan tidak punya tombol Hapus/Akhiri (ubah tindakannya).
+- "+ Tindakan untuk gigi ini" menyimpan `gigiTarget` (chip di kartu Tindakan) dan menggulir ke pencarian tindakan; tindakan per gigi
+  berikutnya memakai gigi & permukaan itu. "Kerjakan" dari rencana menambah baris dengan `rencana_item_id`, gigi, permukaan & jumlah item.
+- `PilihGigi` menyembunyikan permukaan bila kondisi hasil tindakan berlaku untuk seluruh gigi (mis. cabut → hilang), memakai referensi.
+- Cetak estimasi lewat `printElement('#cetak-rencana')`; elemen dirender di dalam pembungkus `hidden` (yang disalin hanya `article`-nya).
+
+Verifikasi F1-07: `npm run build` + E2E Chrome headless (alur lengkap drg., lihat modul backend F1-07), mobile 390 px tanpa scroll
+horizontal. Tanpa error konsol.
 
 ## Verifikasi
 

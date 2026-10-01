@@ -115,6 +115,37 @@ Resep detail juga memuat `cabang` (kop etiket).
   `GET /kunjungans/{id}/verifikasi` → `{ ditandatangani, valid, ditandatangani_at, penandatangan }`.
 - `GET /pengaturan` + `rme: { wajib_informed_consent }`.
 
+## Foto klinis (F1-06)
+- `GET /berkas?pasien_id=&kategori=foto_klinis` item + `protokol_foto_id`, `posisi`, `tahap`, `kunjungan_tindakan_id`, `diambil_at`,
+  `lebar`, `tinggi`, `ada_thumbnail`, `protokol: { id, nama, posisi: [{kode, label, petunjuk}] }`,
+  `kunjungan: { id, tanggal, no_registrasi, poli: { nama } }`. **`id` berkas tersembunyi** — pakai `uuid`.
+- `POST /berkas/tautan { uuids, pratinjau }` → `[{ uuid, url, kedaluwarsa }]` (berkas yang tidak boleh dibuka tidak dikembalikan).
+- `POST /berkas` (FormData) + `thumbnail`, `protokol_foto_id`, `posisi`, `tahap`, `kunjungan_tindakan_id`, `lebar`, `tinggi`;
+  422 `errors.consent_foto`.
+- `GET /protokol-fotos?aktif=1` → `[{ id, nama, deskripsi, posisi: [{kode, label, petunjuk}], is_active }]`.
+- Persetujuan foto: `GET /pasiens/{id}/persetujuan-foto` → `{ aktif: {uuid, tingkat, status, penandatangan_nama, ditandatangani_at, ...} | null,
+  riwayat: [...], tingkat: [{ value, label, keterangan }] }`; `GET .../pratinjau?tingkat=` → `{ isi }`; `POST` body
+  `{ tingkat, penandatangan_nama, hubungan, ttd, kunjungan_id? }`; `GET /persetujuan-fotos/{uuid}` + `isi`, `ttd`, `checksum_valid`;
+  `POST /persetujuan-fotos/{uuid}/cabut { alasan }`.
+- `GET /pengaturan` + `foto: { wajib_consent, naskah_consent }`. Enum: tahap `sebelum`/`sesudah`/`kontrol`, tingkat
+  `klinis`/`edukasi`/`marketing`, status persetujuan `berlaku`/`diganti`/`dicabut`. Audit baru: `protokol_foto`, `persetujuan_foto`.
+
+## Kedokteran gigi (F1-07)
+- `GET /odontogram/referensi` → `{ kondisi: [{ kode, label, cakupan: 'permukaan'|'gigi', kelompok, warna }], permukaan: ['M','O','D','B','L'] }`.
+- `GET /pasiens/{id}/odontogram[?kunjungan_id=]` → `{ kondisis: [Kondisi], perubahan: { dicatat: [Kondisi], diakhiri: [Kondisi] } | null,
+  kunjungan_id, bisa_diubah, kunjungans: [{ id, tanggal, no_registrasi, status, poli, dokter, cabang }] }`.
+  Kondisi = `{ id, gigi, permukaan|null, kondisi, keterangan, kunjungan_id, kunjungan_tindakan_id, berakhir_kunjungan_id, berakhir_karena_id,
+  kunjungan: {id, tanggal, no_registrasi}, pencatat: {id, name}, kunjungan_tindakan: { tindakan: {nama} } | null }`.
+  Respons POST/DELETE/akhiri/pulihkan `/kunjungans/{id}/odontogram*` berbentuk sama (state kunjungan itu).
+- Rencana: `{ id, judul, catatan, status: draf|disetujui|selesai|dibatalkan, cabang_id, dokter, cabang, penyetuju_nama, disetujui_at,
+  alasan_batal, created_at, estimasi_total, estimasi_selesai, estimasi_per_fase: [{fase, total, jumlah_item}], items: [{ id, fase, gigi,
+  permukaan, tindakan_id, jumlah, tarif, keterangan, status: rencana|selesai|batal, selesai_at, tindakan: {nama, per_gigi, ...},
+  pelaksanaan: { kunjungan: {id, no_registrasi, status} } | null }] }`.
+- Detail kunjungan: `poli.spesialisasi`, `tindakans[].gigi/permukaan/rencana_item_id`, `tindakans[].tindakan.per_gigi/kondisi_gigi_hasil`,
+  `odontogram_dicatat[]`, `odontogram_diakhiri[]`. Detail pasien: `data_gigi`, `kunjungans[].poli.spesialisasi`.
+- Enum: spesialisasi `umum`/`gigi`/`kulit`/`estetika`/`lainnya` (`SPESIALISASI` di `lib/format.js`). Audit baru: `odontogram`,
+  `odontogram_kondisi`, `rencana_perawatan`, `rencana_perawatan_item`.
+
 ## Obat & inventori (F1-04)
 - Obat: `{ id, kode, nama, satuan, fraksional, jam_pakai_setelah_buka, harga, stok /* float, total lintas cabang */,
   stok_minimum, is_active }`. `fraksional=true` → input jumlah boleh desimal (≤3 angka); selain itu wajib bulat.

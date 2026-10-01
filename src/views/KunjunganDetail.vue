@@ -1,7 +1,9 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSpinner from '@/components/AppSpinner.vue'
+import FotoKlinisCard from '@/components/foto/FotoKlinisCard.vue'
+import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
 import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
@@ -21,6 +23,8 @@ const toast = useToastStore()
 const { data: k, error, load } = useDetail(() => `/kunjungans/${route.params.id}`)
 
 const verifikasi = ref(null)
+/** Odontogram tampil untuk kunjungan poli gigi atau yang mencatat kondisi gigi (DG-01). */
+const tampilGigi = computed(() => k.value?.poli?.spesialisasi === 'gigi' || !!k.value?.odontogram_dicatat?.length || !!k.value?.odontogram_diakhiri?.length)
 const memverifikasi = ref(false)
 const addendumOpen = ref(false)
 
@@ -89,7 +93,11 @@ onMounted(load)
           </div>
           <div class="card-body"><RekamMedisRingkas :kunjungan="k" /></div>
         </div>
-        <LampiranBerkas v-if="!k.rme_disembunyikan" :pasien-id="k.pasien_id" :kunjungan-id="k.id" readonly />
+        <template v-if="!k.rme_disembunyikan">
+          <OdontogramCard v-if="tampilGigi" :pasien="k.pasien" :kunjungan-id="k.id" />
+          <FotoKlinisCard :pasien="k.pasien" :kunjungan-id="k.id" />
+          <LampiranBerkas :pasien-id="k.pasien_id" :kunjungan-id="k.id" readonly tanpa-foto />
+        </template>
       </div>
       <div v-else class="card self-start lg:col-span-2">
         <div class="card-body text-sm text-slate-500">Isi rekam medis hanya dapat dilihat tenaga medis (izin <code>rme.lihat</code>).</div>

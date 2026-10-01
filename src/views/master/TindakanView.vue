@@ -18,6 +18,7 @@ import { useQueryAction } from '@/composables/useQueryAction'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { JENIS_CATATAN, OPSI_STATUS_AKTIF, angka, rupiah } from '@/lib/format'
+import { referensiGigi } from '@/lib/gigi'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
@@ -28,16 +29,23 @@ const { items, meta, loading, filters, load, reload, search, isFiltered, reset }
 const kategoris = ref([])
 const cabangs = ref([])
 const templateConsents = ref([])
+const protokolFotos = ref([])
+const kondisiGigi = ref([])
 const opsiKategori = computed(() => kategoris.value.map((k) => ({ value: k.id, label: `${k.nama}${k.is_active ? '' : ' (nonaktif)'}` })))
 
 // Kategori & cabang dibutuhkan form; form bisa dibuka sebelum mount selesai (?baru=1), jadi ditunggu di buka().
 let referensi = null
 function muatReferensi() {
-  referensi ??= Promise.all([cachedGet('/kategori-tindakans'), cachedGet('/cabangs'), cachedGet('/template-consents', { aktif: 1 })])
-    .then(([k, c, t]) => {
+  referensi ??= Promise.all([
+    cachedGet('/kategori-tindakans'), cachedGet('/cabangs'), cachedGet('/template-consents', { aktif: 1 }), cachedGet('/protokol-fotos', { aktif: 1 }),
+    referensiGigi(),
+  ])
+    .then(([k, c, t, p, g]) => {
       kategoris.value = k
       cabangs.value = c
       templateConsents.value = t
+      protokolFotos.value = p
+      kondisiGigi.value = g.daftar
     })
     .catch((e) => {
       referensi = null
@@ -111,6 +119,10 @@ async function buka(row = null) {
     jenis_catatan: detail?.jenis_catatan ?? 'umum',
     template_consent_id: detail?.template_consent_id ?? '',
     template_consent: detail?.template_consent ?? null,
+    protokol_foto_id: detail?.protokol_foto_id ?? '',
+    protokol_foto: detail?.protokol_foto ?? null,
+    per_gigi: detail?.per_gigi ?? false,
+    kondisi_gigi_hasil: detail?.kondisi_gigi_hasil ?? '',
     hargas: gridHarga(detail),
     bhps: (detail?.bhps ?? []).map((b) => ({ obat_id: b.obat_id, kode: b.obat.kode, nama: b.obat.nama, satuan: b.obat.satuan, jumlah: b.jumlah })),
   })
@@ -134,6 +146,9 @@ function payload() {
     icd9cm_id: form.icd9cm?.id ?? null,
     jenis_catatan: form.jenis_catatan,
     template_consent_id: form.template_consent_id || null,
+    protokol_foto_id: form.protokol_foto_id || null,
+    per_gigi: form.per_gigi || !!form.kondisi_gigi_hasil,
+    kondisi_gigi_hasil: form.kondisi_gigi_hasil || null,
     hargas: hargaDikirim.value.map((h) => ({ cabang_id: h.cabang_id, tarif: h.mode === 'khusus' ? h.tarif : form.tarif, tersedia: h.mode === 'khusus' })),
     bhps: form.bhps.map(({ obat_id, jumlah }) => ({ obat_id, jumlah })),
   }
@@ -221,6 +236,7 @@ onMounted(() => {
               <p class="text-xs text-slate-500">
                 {{ t.kategori?.nama ?? 'Tanpa kategori' }}<template v-if="t.icd9cm"> · ICD-9-CM {{ t.icd9cm.kode }}</template>
                 <span v-if="t.template_consent_id" class="text-amber-700"> · wajib consent</span>
+                <template v-if="t.per_gigi"> · per gigi<template v-if="t.kondisi_gigi_hasil"> → {{ t.kondisi_gigi_hasil }}</template></template>
               </p>
             </td>
             <td class="whitespace-nowrap tabular-nums text-slate-600" title="Durasi tindakan + buffer sterilisasi/persiapan">{{ durasi(t) }}</td>
@@ -328,6 +344,30 @@ onMounted(() => {
             </select>
             <p v-if="errors.template_consent_id" class="field-error">{{ errors.template_consent_id }}</p>
             <p v-else class="mt-1 text-xs text-slate-400">Wajib = pemeriksaan tidak bisa ditutup sebelum pasien menandatangani consent.</p>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="label" for="t-protokol">Protokol foto klinis</label>
+            <select id="t-protokol" v-model="form.protokol_foto_id" class="input" :class="{ 'input-error': errors.protokol_foto_id }">
+              <option value="">— Tanpa protokol (pilih saat memotret) —</option>
+              <option v-for="p in protokolFotos" :key="p.id" :value="p.id">{{ p.nama }} ({{ p.posisi.length }} posisi)</option>
+              <option v-if="form.protokol_foto && !protokolFotos.some((p) => p.id === form.protokol_foto.id)" :value="form.protokol_foto.id">{{ form.protokol_foto.nama }} (nonaktif)</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-400">Dipakai otomatis saat mengambil foto before-after treatment ini.</p>
+          </div>
+          <!-- Kedokteran gigi (DG-01/07) -->
+          <div class="flex items-start pt-6">
+            <label class="flex items-center gap-2 text-sm">
+              <input v-model="form.per_gigi" type="checkbox" class="accent-brand-600" :disabled="!!form.kondisi_gigi_hasil" />
+              Tindakan per gigi (wajib nomor gigi, ditagih per gigi)
+            </label>
+          </div>
+          <div>
+            <label class="label" for="t-kondisi-gigi">Kondisi gigi setelah tindakan</label>
+            <select id="t-kondisi-gigi" v-model="form.kondisi_gigi_hasil" class="input" :class="{ 'input-error': errors.kondisi_gigi_hasil }">
+              <option value="">— Tidak mengubah odontogram —</option>
+              <option v-for="k in kondisiGigi" :key="k.kode" :value="k.kode">{{ k.kode }} · {{ k.label }}{{ k.cakupan === 'permukaan' ? ' (per permukaan)' : '' }}</option>
+            </select>
+            <p class="mt-1 text-xs text-slate-400">Mis. tambal komposit → <b>cof</b>, cabut → <b>mis</b>. Odontogram diperbarui otomatis saat tindakan dicatat.</p>
           </div>
         </div>
       </section>

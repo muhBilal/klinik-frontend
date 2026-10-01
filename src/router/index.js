@@ -40,6 +40,7 @@ const routes = [
       { path: 'master/icd10', name: 'master.icd10', component: () => import('@/views/master/Icd10View.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/icd9cm', name: 'master.icd9cm', component: () => import('@/views/master/Icd9cmView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/template-soap', name: 'master.template-soap', component: () => import('@/views/master/TemplateSoapView.vue'), meta: { izin: ['master.kelola'] } },
+      { path: 'master/protokol-foto', name: 'master.protokol-foto', component: () => import('@/views/master/ProtokolFotoView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/template-consent', name: 'master.template-consent', component: () => import('@/views/master/TemplateConsentView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/cabang', name: 'master.cabang', component: () => import('@/views/master/CabangView.vue'), meta: { izin: ['cabang.kelola'] } },
       { path: 'master/user', name: 'master.user', component: () => import('@/views/master/UserView.vue'), meta: { izin: ['pengguna.kelola'] } },

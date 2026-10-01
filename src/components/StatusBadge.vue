@@ -25,6 +25,13 @@ const MAP = {
   disetujui: ['Disetujui', GREEN],
   ditolak: ['Ditolak', RED],
   dicabut: ['Dicabut', GRAY],
+  // Persetujuan foto
+  berlaku: ['Berlaku', GREEN],
+  diganti: ['Diganti', GRAY],
+  // Rencana perawatan gigi
+  draf: ['Draf', ORANGE],
+  dibatalkan: ['Dibatalkan', GRAY],
+  rencana: ['Rencana', INDIGO],
   nonaktif: ['Nonaktif', GRAY],
 }
 

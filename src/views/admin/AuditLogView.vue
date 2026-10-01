@@ -62,6 +62,12 @@ const TIPE = {
   catatan_tindakan: 'Catatan tindakan',
   catatan_tindakan_titik: 'Titik face chart',
   pemeriksaan_addendum: 'Addendum rekam medis',
+  protokol_foto: 'Protokol foto',
+  persetujuan_foto: 'Persetujuan foto',
+  odontogram: 'Odontogram',
+  odontogram_kondisi: 'Kondisi odontogram',
+  rencana_perawatan: 'Rencana perawatan gigi',
+  rencana_perawatan_item: 'Item rencana perawatan',
 }
 // Warna badge per kelompok aksi (merah = kegagalan / penghapusan, biru = akses data pasien)
 const warna = (aksi) =>

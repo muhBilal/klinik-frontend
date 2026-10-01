@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppSpinner from '@/components/AppSpinner.vue'
 import AsyncSelect from '@/components/AsyncSelect.vue'
@@ -13,9 +13,14 @@ import CatatanTindakanModal from '@/components/rme/CatatanTindakanModal.vue'
 import ConsentFormModal from '@/components/rme/ConsentFormModal.vue'
 import ConsentLihatModal from '@/components/rme/ConsentLihatModal.vue'
 import TemplateSoapModal from '@/components/rme/TemplateSoapModal.vue'
+import FotoKlinisCard from '@/components/foto/FotoKlinisCard.vue'
+import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
+import PilihGigi from '@/components/gigi/PilihGigi.vue'
+import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { BAGIAN_ADDENDUM, PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
+import { formatGigi, normalPermukaan, referensiGigi } from '@/lib/gigi'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
@@ -87,6 +92,7 @@ function isiForm(k) {
   form.akses_terbatas = !!k.akses_terbatas
   form.diagnosas = (p.diagnosas ?? []).map((d) => ({ icd10_id: d.icd10_id, jenis: d.jenis, kode: d.icd10.kode, nama: d.icd10.nama, sensitif: d.icd10.sensitif }))
   form.tindakans = (k.tindakans ?? []).map((t) => ({
+    _key: `t${t.id}`,
     id: t.id,
     tindakan_id: t.tindakan_id,
     jumlah: t.jumlah,
@@ -98,6 +104,12 @@ function isiForm(k) {
     icd9cm: t.icd9cm,
     template_consent_id: t.tindakan.template_consent_id,
     jenis_catatan: t.tindakan.jenis_catatan,
+    protokol_foto_id: t.tindakan.protokol_foto_id,
+    per_gigi: t.tindakan.per_gigi,
+    kondisi_gigi_hasil: t.tindakan.kondisi_gigi_hasil,
+    gigi: t.gigi,
+    permukaan: t.permukaan ?? '',
+    rencana_item_id: t.rencana_item_id,
     catatan: t.catatan,
   }))
   form.resep = (k.resep?.items ?? []).map((r) => ({
@@ -172,22 +184,75 @@ function tambahDiagnosaDiam(icd) {
 const petugas = ref([])
 const icd9Edit = ref(null)
 
+let urutBaru = 0
+
 // Tarif estimasi = harga cabang kunjungan (tarif_cabang); nilai final di-snapshot backend saat disimpan.
-function tambahTindakan(t) {
-  const ada = form.tindakans.find((x) => x.tindakan_id === t.id)
+// Tindakan per gigi selalu baris baru (satu baris = satu gigi, ditagih per gigi — DG-07).
+function tambahTindakan(t, tambahan = {}) {
+  const target = t.per_gigi && !tambahan.rencana_item_id ? gigiTarget.value : null
+  const gigi = tambahan.gigi ?? target?.gigi ?? null
+  const ada = !t.per_gigi && !gigi && !tambahan.rencana_item_id && form.tindakans.find((x) => x.tindakan_id === t.id && !x.gigi && !x.rencana_item_id)
   if (ada) return ada.jumlah++
   form.tindakans.push({
+    _key: `baru-${++urutBaru}`,
     tindakan_id: t.id,
     nama: t.nama,
     tarif: t.tarif_cabang,
-    jumlah: 1,
+    jumlah: tambahan.jumlah ?? 1,
     petugas_id: auth.user?.tercatat_dokter ? auth.user.id : kunjungan.value.dokter_id ?? '',
     icd9cm_id: t.icd9cm_id,
     icd9cm: t.icd9cm,
     template_consent_id: t.template_consent_id,
     jenis_catatan: t.jenis_catatan,
+    protokol_foto_id: t.protokol_foto_id,
+    per_gigi: t.per_gigi,
+    kondisi_gigi_hasil: t.kondisi_gigi_hasil,
+    gigi,
+    permukaan: tambahan.permukaan ?? target?.permukaan ?? '',
+    rencana_item_id: tambahan.rencana_item_id ?? null,
+    rencana_judul: tambahan.rencana_judul,
     catatan: null,
   })
+  if (target) gigiTarget.value = null
+}
+
+// ---- Kedokteran gigi: odontogram, rencana perawatan, tindakan per gigi (DG-01/02/07) ----
+const odontogramCard = ref(null)
+const rencanaCard = ref(null)
+const tindakanCard = ref(null)
+const petaGigi = ref({})
+/** Gigi tujuan tindakan per gigi berikutnya (dari tombol "+ Tindakan untuk gigi ini" di odontogram). */
+const gigiTarget = ref(null)
+
+const isGigi = computed(
+  () =>
+    kunjungan.value?.poli?.spesialisasi === 'gigi' ||
+    form.tindakans.some((t) => t.per_gigi || t.gigi) ||
+    !!kunjungan.value?.odontogram_dicatat?.length,
+)
+const itemRencanaDipakai = computed(() => form.tindakans.map((t) => t.rencana_item_id).filter(Boolean))
+/** Kondisi hasil seluruh gigi (mis. cabut → hilang) tidak butuh permukaan. */
+const tanpaPermukaan = (t) => petaGigi.value[t.kondisi_gigi_hasil]?.cakupan === 'gigi'
+
+watch(isGigi, (v) => v && referensiGigi().then((r) => (petaGigi.value = r.peta)).catch(() => {}), { immediate: true })
+
+function tindakanUntukGigi(target) {
+  gigiTarget.value = target
+  tindakanCard.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  toast.info(`Pilih tindakan untuk ${formatGigi(target.gigi, target.permukaan)}.`)
+}
+
+function kerjakanRencana(item) {
+  if (form.tindakans.some((t) => t.rencana_item_id === item.id)) return toast.info('Item rencana ini sudah ada di daftar tindakan.')
+  const t = item.tindakan
+  tambahTindakan(
+    {
+      id: item.tindakan_id, nama: t.nama, tarif_cabang: item.tarif, icd9cm_id: t.icd9cm_id, icd9cm: t.icd9cm, template_consent_id: t.template_consent_id,
+      jenis_catatan: t.jenis_catatan, protokol_foto_id: t.protokol_foto_id, per_gigi: t.per_gigi, kondisi_gigi_hasil: t.kondisi_gigi_hasil,
+    },
+    { gigi: item.gigi, permukaan: item.permukaan ?? '', jumlah: item.jumlah, rencana_item_id: item.id, rencana_judul: item.rencana_judul },
+  )
+  toast.success(`${t.nama}${item.gigi ? ` ${formatGigi(item.gigi, item.permukaan)}` : ''} ditambahkan ke tindakan. Simpan untuk mencatat.`)
 }
 
 function pilihIcd9(t, icd) {
@@ -215,7 +280,11 @@ const consentUuid = ref('')
 async function pastikanTersimpan(t) {
   if (t.id) return t
   if (!isDokter.value || !(await simpan({ silent: true }))) return null
-  return form.tindakans.find((x) => x.tindakan_id === t.tindakan_id && x.id) ?? null
+  const sama = (x) =>
+    t.rencana_item_id
+      ? x.rencana_item_id === t.rencana_item_id
+      : x.tindakan_id === t.tindakan_id && (x.gigi ?? null) === (t.gigi ?? null) && (x.permukaan || '') === normalPermukaan(t.permukaan)
+  return form.tindakans.find((x) => x.id && sama(x)) ?? null
 }
 
 async function bukaCatatan(t) {
@@ -249,6 +318,15 @@ function lihatConsent(c) {
   consentLihatOpen.value = true
 }
 
+// ---- Foto klinis per tindakan (FT-01) ----
+const fotoCard = ref(null)
+const tindakanFoto = computed(() => form.tindakans.filter((t) => t.id).map((t) => ({ id: t.id, nama: t.nama, protokol_foto_id: t.protokol_foto_id })))
+
+async function fotoTindakan(t) {
+  const baris = await pastikanTersimpan(t)
+  if (baris) fotoCard.value?.ambil(baris)
+}
+
 function consentBerubah(data) {
   kunjungan.value.informed_consents = kunjungan.value.informed_consents.map((c) => (c.uuid === data.uuid ? { ...c, ...data } : c))
 }
@@ -268,8 +346,9 @@ function payload() {
     ...data,
     akses_terbatas: form.akses_terbatas,
     diagnosas: form.diagnosas.map(({ icd10_id, jenis }) => ({ icd10_id, jenis })),
-    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, icd9cm_id }) => ({
+    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, icd9cm_id, gigi, permukaan, rencana_item_id }) => ({
       id: id ?? null, tindakan_id, jumlah, petugas_id: petugas_id || null, icd9cm_id: icd9cm_id ?? null,
+      gigi: gigi || null, permukaan: gigi && permukaan ? permukaan : null, rencana_item_id: rencana_item_id ?? null,
     })),
     resep: form.resep.map(({ obat_id, jumlah, aturan_pakai }) => ({ obat_id, jumlah, aturan_pakai })),
     catatan_resep: form.catatan_resep || null,
@@ -282,6 +361,11 @@ async function simpan({ silent = false } = {}) {
   try {
     const { data } = await api.put(`/kunjungans/${route.params.id}/pemeriksaan`, payload())
     isiForm(data)
+    // Tindakan per gigi memperbarui odontogram & status item rencana di backend.
+    if (isGigi.value) {
+      odontogramCard.value?.muatUlang()
+      rencanaCard.value?.muatUlang()
+    }
     if (!silent) toast.success('Data pemeriksaan tersimpan.')
     return true
   } catch (e) {
@@ -461,6 +545,27 @@ onMounted(load)
           </div>
         </section>
 
+        <!-- Kedokteran gigi: odontogram & rencana perawatan (poli gigi / ada tindakan per gigi) -->
+        <template v-if="isGigi && auth.can('rme.lihat')">
+          <OdontogramCard
+            ref="odontogramCard"
+            :pasien="kunjungan.pasien"
+            :kunjungan-id="kunjungan.id"
+            :editable="editable"
+            :bisa-tambah-tindakan="editable && isDokter"
+            @tambah-tindakan="tindakanUntukGigi"
+          />
+          <RencanaPerawatanCard
+            ref="rencanaCard"
+            :pasien="kunjungan.pasien"
+            :kunjungan="kunjungan"
+            :bisa-kerjakan="editable && isDokter"
+            :item-dipakai="itemRencanaDipakai"
+            :gigi-awal="gigiTarget"
+            @kerjakan="kerjakanRencana"
+          />
+        </template>
+
         <template v-if="!isPerawat">
           <!-- Diagnosa -->
           <section class="card">
@@ -518,23 +623,32 @@ onMounted(load)
         </template>
 
         <!-- Tindakan: dokter mengelola daftar; tenaga dengan izin rme.tindakan mengisi catatan & consent -->
-        <section v-if="isDokter || (bolehTindakan && form.tindakans.length)" class="card">
+        <section v-if="isDokter || (bolehTindakan && form.tindakans.length)" ref="tindakanCard" class="card scroll-mt-24">
           <div class="card-header">
             <h2 class="card-title">Tindakan</h2>
             <span v-if="consentBelum.length && editable" class="text-xs font-semibold text-amber-700">{{ consentBelum.length }} tindakan menunggu informed consent</span>
           </div>
           <div class="card-body space-y-3">
+            <p v-if="gigiTarget && editable && isDokter" class="flex items-center gap-2 text-xs">
+              <span class="chip">Untuk {{ formatGigi(gigiTarget.gigi, gigiTarget.permukaan) }}</span>
+              <button type="button" class="text-slate-400 hover:text-slate-700" aria-label="Batal pilih gigi" @click="gigiTarget = null">&times;</button>
+            </p>
             <AsyncSelect v-if="editable && isDokter" endpoint="/tindakans" :params="{ aktif: 1, cabang_id: kunjungan.cabang_id }" placeholder="Cari tindakan / treatment..." @select="tambahTindakan">
               <template #default="{ item }">
                 {{ item.nama }}
-                <span class="text-xs text-slate-500">· {{ rupiah(item.tarif_cabang) }} · {{ item.durasi_menit }} mnt<template v-if="item.kategori"> · {{ item.kategori.nama }}</template></span>
+                <span class="text-xs text-slate-500">· {{ rupiah(item.tarif_cabang) }} · {{ item.durasi_menit }} mnt<template v-if="item.kategori"> · {{ item.kategori.nama }}</template><template v-if="item.per_gigi"> · per gigi</template></span>
               </template>
             </AsyncSelect>
             <div v-if="form.tindakans.length" class="space-y-2">
-              <div v-for="(t, i) in form.tindakans" :key="t.id ?? `baru-${t.tindakan_id}`" class="rounded-2xl border border-line bg-white/30 p-3">
+              <div v-for="(t, i) in form.tindakans" :key="t._key" class="rounded-2xl border border-line bg-white/30 p-3">
                 <div class="flex flex-wrap items-start gap-3">
                   <div class="min-w-48 flex-1">
-                    <p class="font-medium">{{ t.nama }} <span v-if="!t.id" class="text-xs font-normal text-amber-700">· belum disimpan</span></p>
+                    <p class="font-medium">
+                      {{ t.nama }}<span v-if="t.gigi" class="tabular-nums"> · {{ formatGigi(t.gigi, t.permukaan) }}</span>
+                      <span v-if="!t.id" class="text-xs font-normal text-amber-700">· belum disimpan</span>
+                    </p>
+                    <p v-if="t.rencana_item_id" class="text-xs text-slate-500">Dari rencana perawatan<template v-if="t.rencana_judul">: {{ t.rencana_judul }}</template></p>
+                    <p v-if="errors[`tindakans.${i}.rencana_item_id`]" class="field-error">{{ errors[`tindakans.${i}.rencana_item_id`] }}</p>
                     <div class="mt-0.5 text-xs text-slate-500">
                       <template v-if="icd9Edit === i">
                         <AsyncSelect endpoint="/icd9cms" placeholder="Cari kode / nama tindakan ICD-9-CM..." @select="(icd) => pilihIcd9(t, icd)">
@@ -544,6 +658,20 @@ onMounted(load)
                       <button v-else type="button" class="hover:text-slate-800" :disabled="!editable || !isDokter" @click="icd9Edit = i">
                         ICD-9-CM: <b class="tabular-nums">{{ t.icd9cm?.kode ?? '—' }}</b> {{ t.icd9cm?.nama ?? '' }}<span v-if="editable && isDokter" class="underline"> ubah</span>
                       </button>
+                    </div>
+                    <!-- Nomor gigi & permukaan (tindakan per gigi, DG-07) -->
+                    <div v-if="t.per_gigi || t.gigi || isGigi" class="mt-1.5">
+                      <PilihGigi
+                        v-model:gigi="t.gigi"
+                        v-model:permukaan="t.permukaan"
+                        :id-input="`gigi-${i}`"
+                        :tanpa-permukaan="tanpaPermukaan(t)"
+                        :disabled="!editable || !isDokter"
+                        :invalid="!!errors[`tindakans.${i}.gigi`] || !!errors[`tindakans.${i}.permukaan`]"
+                      />
+                      <p v-if="errors[`tindakans.${i}.gigi`] || errors[`tindakans.${i}.permukaan`]" class="field-error">
+                        {{ errors[`tindakans.${i}.gigi`] ?? errors[`tindakans.${i}.permukaan`] }}
+                      </p>
                     </div>
                     <p v-if="t.catatan" class="mt-1 text-xs text-slate-500">
                       Catatan: {{ [t.catatan.area, t.catatan.titiks?.length && `${t.catatan.titiks.length} titik`, t.catatan.parameter && 'parameter alat terisi'].filter(Boolean).join(' · ') || 'terisi' }}
@@ -569,6 +697,7 @@ onMounted(load)
                   <button type="button" class="btn btn-secondary btn-sm" @click="bukaCatatan(t)">
                     {{ t.jenis_catatan === 'injeksi' ? 'Face chart' : t.jenis_catatan === 'energi' ? 'Parameter alat' : 'Catatan tindakan' }}
                   </button>
+                  <button v-if="editable && auth.can('berkas.kelola')" type="button" class="btn btn-secondary btn-sm" @click="fotoTindakan(t)">Foto</button>
                   <template v-if="consentTindakan(t)">
                     <button type="button" class="flex items-center gap-1.5 text-xs" @click="lihatConsent(consentTindakan(t))">
                       <StatusBadge :status="consentTindakan(t).status" /> <span class="underline">informed consent</span>
@@ -660,7 +789,8 @@ onMounted(load)
           </div>
         </div>
 
-        <LampiranBerkas :pasien-id="kunjungan.pasien_id" :kunjungan-id="kunjungan.id" :readonly="kunjungan.status === 'batal'" />
+        <FotoKlinisCard ref="fotoCard" :pasien="kunjungan.pasien" :kunjungan-id="kunjungan.id" :tindakans="tindakanFoto" :bisa-ambil="editable" />
+        <LampiranBerkas :pasien-id="kunjungan.pasien_id" :kunjungan-id="kunjungan.id" :readonly="kunjungan.status === 'batal'" tanpa-foto />
 
         <div class="card">
           <div class="card-header">

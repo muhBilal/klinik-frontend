@@ -1,1 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#0d9488"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 680" role="img" aria-label="e-klinik">
+  <!-- Logo e-klinik: huruf K bersudut (batang tegak + dua lengan), latar transparan. Sumber tunggal logo aplikasi. -->
+  <g stroke-linejoin="round">
+    <!-- Batang tegak -->
+    <polygon points="71,31 133,89 133,589 71,649" fill="#0D99DB" stroke="#0D99DB" stroke-width="2" />
+    <polygon points="196,31 196,649 133,589 133,89" fill="#0567B5" stroke="#0567B5" stroke-width="2" />
+    <polygon points="71,31 196,31 133,89" fill="#5AABE0" stroke="#5AABE0" stroke-width="2" />
+    <polygon points="71,649 133,589 196,649" fill="#2582C8" stroke="#2582C8" stroke-width="2" />
+    <!-- Lengan atas -->
+    <polygon points="229,259 445,31 476,77 275,292" fill="#55A8DF" stroke="#55A8DF" stroke-width="2" />
+    <polygon points="445,31 608,31 476,77" fill="#7AB8E3" stroke="#7AB8E3" stroke-width="2" />
+    <polygon points="275,292 476,77 608,31 229,432" fill="#1B7ABF" stroke="#1B7ABF" stroke-width="2" />
+    <polygon points="229,259 275,292 229,432" fill="#2B8DD7" stroke="#2B8DD7" stroke-width="2" />
+    <!-- Lengan bawah -->
+    <polygon points="283,432 363,344 358,430" fill="#3A9DDF" stroke="#3A9DDF" stroke-width="2" />
+    <polygon points="283,432 358,430 489,594 451,649" fill="#1590D7" stroke="#1590D7" stroke-width="2" />
+    <polygon points="363,344 608,649 489,594 358,430" fill="#0B7AC4" stroke="#0B7AC4" stroke-width="2" />
+    <polygon points="451,649 489,594 608,649" fill="#1F7EC4" stroke="#1F7EC4" stroke-width="2" />
+  </g>
+</svg>

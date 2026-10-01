@@ -2,6 +2,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import FilterSelect from '@/components/FilterSelect.vue'
+import FotoKlinisCard from '@/components/foto/FotoKlinisCard.vue'
+import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
+import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
+import PersetujuanFotoPanel from '@/components/foto/PersetujuanFotoPanel.vue'
 import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
@@ -30,6 +34,8 @@ const riwayat = computed(() =>
       (!riwayatFilter.penjamin || k.penjamin === riwayatFilter.penjamin),
   ),
 )
+/** Odontogram & rencana perawatan: pasien punya data gigi atau pernah berkunjung ke poli gigi (DG-01/02). */
+const tampilGigi = computed(() => !!pasien.value?.data_gigi || (pasien.value?.kunjungans ?? []).some((k) => k.poli?.spesialisasi === 'gigi'))
 const riwayatDifilter = computed(() => Object.values(riwayatFilter).some(Boolean))
 const resetRiwayat = () => Object.assign(riwayatFilter, { poli: '', status: '', penjamin: '' })
 
@@ -100,8 +106,21 @@ onMounted(load)
           </table>
         </div>
       </div>
+      <!-- Kedokteran gigi: odontogram terkini (+ status pada kunjungan sebelumnya) & rencana perawatan -->
+      <template v-if="auth.can('rme.lihat') && tampilGigi">
+        <div class="lg:col-span-3"><OdontogramCard :pasien="pasien" /></div>
+        <div class="lg:col-span-3"><RencanaPerawatanCard :pasien="pasien" /></div>
+      </template>
+      <!-- Foto klinis semua kunjungan + perbandingan before-after (FT-02); tanpa rme.lihat hanya status persetujuan foto -->
       <div v-if="auth.can('rme.lihat')" class="lg:col-span-3">
-        <LampiranBerkas :pasien-id="pasien.id" />
+        <FotoKlinisCard :pasien="pasien" />
+      </div>
+      <div v-else class="card lg:col-span-3">
+        <div class="card-header"><h2 class="card-title">Persetujuan Foto Klinis</h2></div>
+        <div class="card-body"><PersetujuanFotoPanel :pasien="pasien" /></div>
+      </div>
+      <div v-if="auth.can('rme.lihat')" class="lg:col-span-3">
+        <LampiranBerkas :pasien-id="pasien.id" tanpa-foto />
       </div>
     </div>
 

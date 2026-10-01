@@ -93,6 +93,15 @@ export const HUBUNGAN_PENANDATANGAN = {
   wali: 'Wali',
 }
 
+/** Tahap foto klinis relatif terhadap tindakan (enum TahapFoto). */
+export const TAHAP_FOTO = { sebelum: 'Sebelum', sesudah: 'Sesudah', kontrol: 'Kontrol' }
+
+/** Tingkat persetujuan foto (enum TingkatPersetujuanFoto) — bertingkat: yang lebih tinggi mencakup yang di bawahnya. */
+export const TINGKAT_FOTO = { klinis: 'Klinis saja', edukasi: 'Klinis & edukasi', marketing: 'Klinis, edukasi & marketing' }
+
+/** Spesialisasi poli (enum Spesialisasi) — `gigi` menampilkan odontogram & rencana perawatan di pemeriksaan. */
+export const SPESIALISASI = { umum: 'Umum', gigi: 'Kedokteran gigi', kulit: 'Dermatologi & venereologi', estetika: 'Estetika medis', lainnya: 'Lainnya' }
+
 /** Bagian rekam medis yang dikoreksi lewat addendum (enum BagianAddendum). */
 export const BAGIAN_ADDENDUM = {
   subjektif: 'Subjektif',

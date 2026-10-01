@@ -2,6 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
+import AppLogo from '@/components/AppLogo.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
 import { errorMessage, validationErrors } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
@@ -91,8 +92,9 @@ function isiDemo(role) {
         <div class="pointer-events-none absolute right-12 bottom-28 size-24 rotate-12 rounded-3xl border border-white/25 bg-white/10 shadow-xl backdrop-blur-md" />
 
         <div class="relative flex items-center gap-3">
-          <div class="grid size-11 place-items-center rounded-xl border border-white/30 bg-white/15 shadow-lg backdrop-blur">
-            <svg class="size-6" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
+          <!-- Logo biru di atas latar biru: diberi alas putih agar kontras -->
+          <div class="grid size-12 place-items-center rounded-2xl bg-white shadow-lg shadow-blue-900/30">
+            <AppLogo class="size-8" />
           </div>
           <div>
             <p class="text-lg leading-tight font-bold">{{ klinik.nama }}</p>
@@ -121,9 +123,7 @@ function isiDemo(role) {
       <!-- Form -->
       <div class="p-8 sm:p-12">
         <div class="mb-8 flex items-center gap-3 lg:hidden">
-          <div class="grid size-10 place-items-center rounded-2xl bg-brand-900 text-white shadow-lg shadow-black/25">
-            <svg class="size-5" viewBox="0 0 24 24" fill="currentColor"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
-          </div>
+          <AppLogo class="size-10" />
           <p class="text-lg font-bold text-slate-800">{{ klinik.nama }}</p>
         </div>
 

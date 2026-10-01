@@ -3,12 +3,23 @@
  * Ringkasan satu kunjungan: tanda vital, SOAP, diagnosa, tindakan (+ ICD-9-CM, petugas, catatan tindakan), informed consent,
  * resep, tanda tangan dokter & addendum. Kunjungan berakses terbatas yang bukan hak user (`rme_disembunyikan`) tidak berisi RME.
  */
-import { ref } from 'vue'
+import { computed, ref, watchEffect } from 'vue'
 import ConsentLihatModal from '@/components/rme/ConsentLihatModal.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { BAGIAN_ADDENDUM, PARAMETER_ALAT, REAKSI_KULIT, angka, waktu } from '@/lib/format'
+import { formatGigi, labelPermukaan, referensiGigi } from '@/lib/gigi'
 
-defineProps({ kunjungan: { type: Object, required: true } })
+const props = defineProps({ kunjungan: { type: Object, required: true } })
+
+// ---- Odontogram (DG-01): kondisi yang dicatat & diakhiri di kunjungan ini ----
+const petaGigi = ref({})
+const odontogramDicatat = computed(() => props.kunjungan.odontogram_dicatat ?? [])
+// Kondisi yang dicatat lalu tergeser di kunjungan yang sama tidak diulang di daftar "diakhiri".
+const odontogramDiakhiri = computed(() => (props.kunjungan.odontogram_diakhiri ?? []).filter((k) => k.kunjungan_id !== props.kunjungan.id))
+watchEffect(() => {
+  if (odontogramDicatat.value.length || odontogramDiakhiri.value.length) referensiGigi().then((r) => (petaGigi.value = r.peta)).catch(() => {})
+})
+const kondisiTeks = (k) => `${k.gigi} ${petaGigi.value[k.kondisi]?.label ?? k.kondisi}${k.permukaan ? ` (${labelPermukaan(k.gigi, k.permukaan).toLowerCase()})` : ''}`
 
 const vital = [
   ['tekanan_darah', 'TD', 'mmHg'],
@@ -90,7 +101,7 @@ function lihatConsent(uuid) {
       <p class="text-xs font-semibold text-slate-500">Tindakan</p>
       <div v-for="t in kunjungan.tindakans" :key="t.id" class="py-0.5">
         <p>
-          {{ t.tindakan.nama }} × {{ t.jumlah }}
+          {{ t.tindakan.nama }}<template v-if="t.gigi"> · {{ formatGigi(t.gigi, t.permukaan) }}</template> × {{ t.jumlah }}
           <span v-if="t.icd9cm" class="text-xs text-slate-500">· ICD-9-CM {{ t.icd9cm.kode }}</span>
           <span v-if="t.petugas" class="text-xs text-slate-500">· {{ t.petugas.name }}</span>
         </p>
@@ -100,6 +111,12 @@ function lihatConsent(uuid) {
           <span v-if="t.catatan.catatan" class="block whitespace-pre-line text-slate-600">{{ t.catatan.catatan }}</span>
         </p>
       </div>
+    </div>
+
+    <div v-if="odontogramDicatat.length || odontogramDiakhiri.length">
+      <p class="text-xs font-semibold text-slate-500">Odontogram</p>
+      <p v-if="odontogramDicatat.length">Dicatat: {{ odontogramDicatat.map(kondisiTeks).join(' · ') }}</p>
+      <p v-if="odontogramDiakhiri.length" class="text-slate-500">Diakhiri / diganti: {{ odontogramDiakhiri.map(kondisiTeks).join(' · ') }}</p>
     </div>
 
     <div v-if="kunjungan.informed_consents?.length">

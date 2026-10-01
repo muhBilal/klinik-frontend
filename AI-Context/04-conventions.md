@@ -46,6 +46,12 @@
 | `rme/FaceChart` | `v-model` (titik), `v-model:terpilih`, `readonly`, `@tambah({x,y,area})` | Diagram wajah; titik relatif 0..1. |
 | `rme/CatatanTindakanModal` | `v-model`, `kunjunganTindakanId`, `editable`, `@saved` | Catatan, face chart, parameter alat, BHP. |
 | `rme/ConsentFormModal` / `rme/ConsentLihatModal` | `kunjungan`, `tindakan` / `uuid`, `bisaCabut` | Ambil consent (naskah backend + tanda tangan) / lihat, cetak, cabut. |
+| `foto/FotoKlinisCard` | `pasien`, `kunjunganId?`, `tindakans`, `bisaAmbil`; expose `ambil(tindakan?)` | Persetujuan foto + kamera + galeri (F1-06). |
+| `foto/GaleriFoto`, `foto/BandingFoto`, `foto/KameraFoto`, `foto/PersetujuanFotoPanel` | lihat `08-fitur-fase-1.md` | Galeri & before-after, kamera terpandu, consent foto. |
+| `gigi/OdontogramCard` | `pasien`, `kunjunganId?`, `editable`, `bisaTambahTindakan`, `@tambah-tindakan({gigi, permukaan})`; expose `muatUlang()` | Odontogram + panel gigi terpilih + perubahan kunjungan / riwayat (F1-07). |
+| `gigi/OdontogramChart` | `kondisis`, `peta`, `terpilih`, `tampilSulung`, `@pilih({gigi, permukaan})` | Gambar SVG FDI; `g[data-gigi]`, `polygon[data-permukaan]`. |
+| `gigi/PilihGigi` | `v-model:gigi`, `v-model:permukaan`, `tanpaPermukaan`, `disabled`, `invalid`, `idInput` | Select nomor gigi (grup kuadran) + tombol M/O/D/B/L. |
+| `gigi/RencanaPerawatanCard` / `gigi/RencanaPerawatanModal` | `pasien`, `kunjungan?`, `bisaKerjakan`, `itemDipakai`, `gigiAwal`, `@kerjakan(item)` | Rencana perawatan gigi + persetujuan, revisi, batal, cetak estimasi / form susun rencana. |
 | `rme/AddendumModal`, `rme/TemplateSoapModal` | `kunjunganId` / `poliId`, `tindakanIds`, `@terapkan({template, mode})` | Addendum RME; pilih template SOAP. |
 | `ToastHost`, `AppIcon` | — / `path`, `size` | Ikon = path SVG heroicons outline. |
 | `AppSpinner` | `size` (`size-4`) | Spinner warna `currentColor`; di tombol taruh sebelum teks. |
@@ -60,6 +66,18 @@
 - Jangan membandingkan `auth.user.role` — peran kustom bisa dibuat admin.
 - Label peran dari API (`user.role_label`, `GET /perans`), bukan konstanta di frontend.
 - Konten rekam medis (SOAP, diagnosa, lampiran) hanya untuk `can('rme.lihat')`; backend tidak mengirimnya ke peran lain.
+
+## Logo produk
+
+- **Sumber tunggal: `public/favicon.svg`** — huruf K bersudut biru (12 faset), latar transparan, digambar ulang sebagai vektor dari
+  gambar logo yang diberikan user (1 Okt 2026). Ganti file ini untuk mengganti logo di mana pun.
+- Pakai komponen **`<AppLogo class="size-11" />`** (`components/AppLogo.vue`, `<img>` ke favicon.svg) — jangan menyalin SVG ke template.
+  Dipakai di header `AppLayout`, drawer mobile, dan `LoginView` (di panel biru diberi alas putih `bg-white rounded-2xl` agar kontras).
+- Ikon turunan dibuat dari favicon.svg dengan **`npm run ikon`** (`scripts/buat-ikon.mjs`, Chrome headless lewat `playwright-core`;
+  set `CHROME_PATH` bila Chrome tidak di lokasi default Windows): `favicon.ico` (16/32/48, juga disalin ke `backend/public/`),
+  `icon-192.png`, `icon-512.png` (manifest), `apple-touch-icon.png` (180 px, latar putih). Jalankan ulang setiap logo berubah.
+- `index.html` memuat favicon SVG + ICO, apple-touch-icon, `site.webmanifest` (nama "e-klinik", `theme_color` #0567B5).
+- Logo = identitas **produk**. Kop dokumen cetak (struk, tiket, etiket, consent) tetap memakai identitas **klinik** dari pengaturan.
 
 ## Identitas klinik & cetak
 
@@ -96,4 +114,9 @@
 | Token di `localStorage` | Trade-off kesederhanaan vs risiko XSS. Jangan pernah render HTML dari data user (`v-html`). |
 | `<option :value="null">` | Vue tidak menulis atribut `value`, jadi `select.value` DOM = teks opsinya. Cek pilihan lewat `v-model`/`selectedIndex`, bukan `select.value` (penting untuk skrip E2E). |
 | Naskah consent / tanda tangan | Jangan merakit naskah di frontend — tampilkan `isi` dari `pratinjau` (backend me-render ulang & menyimpan snapshot). Detail consent (`/informed-consents/{uuid}`) tercatat audit tiap dibuka: minta saat modal dibuka, jangan prefetch. |
+| Foto klinis dari `<input type=file>` | Selalu lewat `siapkanFoto()` (`lib/foto.js`) agar EXIF/GPS terbuang & thumbnail terbentuk; jangan unggah berkas mentah ke kategori `foto_klinis`. |
+| Tautan foto & audit | Setiap tautan (termasuk thumbnail) tercatat audit — minta untuk foto yang tampil saja, jangan prefetch seluruh riwayat. |
 | Pemeriksaan yang sudah ditandatangani | Jangan tampilkan form edit; koreksi lewat `AddendumModal`. Backend menolak semua perubahan. |
+| Konten lebar di dalam kolom grid (mis. SVG odontogram `min-w-[640px]`) | Item grid punya `min-width: auto` → seluruh halaman mobile ikut melebar. Bungkus dengan `overflow-x-auto [contain:inline-size]` (lihat `OdontogramCard`) agar hanya pembungkusnya yang bisa digeser. Cek `document.documentElement.scrollWidth` = lebar viewport di E2E. |
+| Baris tindakan pemeriksaan | `:key="t._key"` (bukan `tindakan_id`): tindakan yang sama boleh beberapa baris (beda gigi). Tindakan per gigi selalu baris baru; yang lain tetap digabung (`jumlah++`). |
+| Kode / warna kondisi gigi | Jangan disalin ke frontend — `referensiGigi()` (`lib/gigi.js`). Gambar odontogram hanya menerima `peta` dari situ. |

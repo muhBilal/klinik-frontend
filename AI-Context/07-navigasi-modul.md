@@ -4,7 +4,7 @@ Navigasi dua tingkat (sejak 30 Sep 2026). Rail kiri tetap bergaya lama (pil kaca
 tetapi **satu tombol = satu modul**; navbar berisi **halaman milik modul yang dipilih**.
 
 ```
- [+] e-klinik              Resep  [Obat & Stok]              Cari…  Admin (A) ⏻     ← header: logo · tab halaman modul · alat
+ [K] e-klinik              Resep  [Obat & Stok]              Cari…  Admin (A) ⏻     ← header: logo · tab halaman modul · alat
  ╭──╮
  │⌂ │  Beranda
  │♙ │  Pendaftaran            <RouterView />
@@ -35,7 +35,7 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 | Farmasi (`farmasi`) | Resep, Obat & Stok |
 | Keuangan (`keuangan`) | Kasir |
 | Master Data (`master`) | Poli, Treatment, Kategori Treatment, Cabang |
-| Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
+| Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Protokol Foto (F1-06), Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
 | Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |
 
 ## Perilaku (`layouts/AppLayout.vue`)

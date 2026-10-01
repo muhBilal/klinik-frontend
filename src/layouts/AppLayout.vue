@@ -3,6 +3,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onKeyStroke, useIdle } from '@vueuse/core'
 import AppIcon from '@/components/AppIcon.vue'
+import AppLogo from '@/components/AppLogo.vue'
 import CommandPalette from '@/components/CommandPalette.vue'
 import { MOD_KEY } from '@/lib/keyboard'
 import { visibleMenu } from '@/lib/menu'
@@ -142,9 +143,7 @@ watch(idle, async (value) => {
     <!-- ===== Header: logo, halaman modul terpilih (tab), alat ===== -->
     <header class="flex items-center gap-4 px-4 pt-4 sm:px-6 lg:gap-6 lg:pt-5 lg:pr-8 lg:pl-5 print:hidden">
       <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" :aria-label="`${klinik.nama}, ke dashboard`" :title="klinik.nama">
-        <span class="grid size-11 place-items-center rounded-2xl bg-brand-900 text-white shadow-lg shadow-sky-600/30 inset-shadow-dark">
-          <svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.5 3h5v6.5H21v5h-6.5V21h-5v-6.5H3v-5h6.5z" /></svg>
-        </span>
+        <AppLogo class="size-11 drop-shadow-[0_6px_10px_rgba(5,103,181,0.25)]" />
         <span class="text-[22px] leading-none tracking-tight text-slate-900"><b class="font-bold">e</b><span class="font-light">-klinik</span></span>
       </RouterLink>
 
@@ -258,7 +257,9 @@ watch(idle, async (value) => {
     <Transition enter-from-class="-translate-x-[110%]" enter-active-class="transition duration-300" leave-to-class="-translate-x-[110%]" leave-active-class="transition duration-200">
       <aside v-if="drawerOpen" class="glass-strong fixed inset-y-3 left-3 z-50 flex w-72 flex-col rounded-3xl lg:hidden" aria-label="Menu">
         <div class="flex items-center justify-between px-5 pt-5 pb-2">
-          <span class="text-[22px] leading-none tracking-tight text-slate-900"><b class="font-bold">e</b><span class="font-light">-klinik</span></span>
+          <span class="flex items-center gap-2 text-[22px] leading-none tracking-tight text-slate-900">
+            <AppLogo class="size-8" /><span><b class="font-bold">e</b><span class="font-light">-klinik</span></span>
+          </span>
           <button class="btn-icon size-9" aria-label="Tutup menu" @click="drawerOpen = false"><AppIcon :path="ICON.close" size="size-4" /></button>
         </div>
         <nav class="flex-1 space-y-4 overflow-y-auto px-3 py-3">

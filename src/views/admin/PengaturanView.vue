@@ -134,6 +134,25 @@ onMounted(load)
     </div>
 
     <div class="card lg:col-span-2">
+      <div class="card-header"><h2 class="card-title">Foto Klinis</h2></div>
+      <div class="card-body space-y-4">
+        <label class="flex items-start gap-2 text-sm">
+          <input v-model="form.foto.wajib_consent" type="checkbox" class="mt-0.5 accent-brand-600" />
+          <span>
+            Wajib persetujuan foto pasien sebelum foto klinis diambil
+            <span class="block text-xs text-slate-400">UU PDP: foto wajah termasuk data pribadi spesifik. Matikan hanya bila persetujuan masih diambil di kertas.</span>
+          </span>
+        </label>
+        <div>
+          <label class="label" for="p-naskah-foto">Naskah persetujuan foto</label>
+          <textarea id="p-naskah-foto" v-model="form.foto.naskah_consent" rows="10" class="input" :class="{ 'input-error': err('foto.naskah_consent') }" maxlength="10000" />
+          <p v-if="err('foto.naskah_consent')" class="field-error">{{ err('foto.naskah_consent') }}</p>
+          <p v-else class="mt-1 text-xs text-slate-400">Placeholder: {nama_pasien} {no_rm} {klinik} {tanggal} {tingkat} {pilihan} (daftar tingkat dengan tanda [x]). Persetujuan yang sudah ditandatangani tidak ikut berubah.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card lg:col-span-2">
       <div class="card-header"><h2 class="card-title">Keamanan</h2></div>
       <div class="card-body grid gap-5 sm:grid-cols-[16rem_1fr]">
         <div>
