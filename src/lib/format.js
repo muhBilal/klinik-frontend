@@ -108,6 +108,23 @@ export const PERAN_KOMISI = { dokter: 'Dokter', terapis: 'Terapis / pelaksana', 
 /** Asal komisi (enum SumberKomisi). */
 export const SUMBER_KOMISI = { tindakan: 'Tindakan', konsultasi: 'Konsultasi', penyesuaian: 'Penyesuaian' }
 
+/** Data klinis pasien (PS-03): kategori & keparahan alergi, tipe kulit Fitzpatrick, status hamil/menyusui. */
+export const KATEGORI_ALERGI = { obat: 'Obat', makanan: 'Makanan', lingkungan: 'Lingkungan', lainnya: 'Lainnya' }
+export const KEPARAHAN_ALERGI = { ringan: 'Ringan', sedang: 'Sedang', berat: 'Berat' }
+export const FITZPATRICK = {
+  I: 'Selalu terbakar, tidak pernah menggelap',
+  II: 'Mudah terbakar, sedikit menggelap',
+  III: 'Kadang terbakar, menggelap bertahap',
+  IV: 'Jarang terbakar, mudah menggelap',
+  V: 'Sangat jarang terbakar, sangat mudah menggelap',
+  VI: 'Tidak pernah terbakar, kulit sangat gelap',
+}
+export const STATUS_KEHAMILAN = { tidak: 'Tidak hamil / menyusui', hamil: 'Hamil', menyusui: 'Menyusui' }
+
+/** Persetujuan data pribadi UU PDP (PS-04): jenis & saluran opt-in marketing. */
+export const JENIS_PERSETUJUAN_DATA = { pemrosesan: 'Pemrosesan data pribadi & kesehatan', marketing: 'Informasi promosi (opt-in marketing)' }
+export const KANAL_MARKETING = { whatsapp: 'WhatsApp', sms: 'SMS', email: 'Email', telepon: 'Telepon' }
+
 /** Bagian rekam medis yang dikoreksi lewat addendum (enum BagianAddendum). */
 export const BAGIAN_ADDENDUM = {
   subjektif: 'Subjektif',

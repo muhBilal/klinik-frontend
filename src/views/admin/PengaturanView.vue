@@ -152,6 +152,33 @@ onMounted(load)
       </div>
     </div>
 
+    <!-- Persetujuan data pribadi (PS-04, UU No. 27/2022 PDP) -->
+    <div class="card lg:col-span-2">
+      <div class="card-header"><h2 class="card-title">Data Pribadi (UU PDP)</h2></div>
+      <div class="card-body space-y-4">
+        <label class="flex items-start gap-2 text-sm">
+          <input v-model="form.pdp.wajib_persetujuan" type="checkbox" class="mt-0.5 accent-brand-600" />
+          <span>
+            Wajib persetujuan pemrosesan data sebelum kunjungan didaftarkan / check-in booking
+            <span class="block text-xs text-slate-400">Tanpa centang, pasien yang belum menyetujui tetap bisa didaftarkan tetapi ditandai di daftar pasien & pendaftaran.</span>
+          </span>
+        </label>
+        <div>
+          <label class="label" for="p-naskah-pdp">Naskah persetujuan pemrosesan data</label>
+          <textarea id="p-naskah-pdp" v-model="form.pdp.naskah_pemrosesan" rows="10" class="input" :class="{ 'input-error': err('pdp.naskah_pemrosesan') }" maxlength="10000" />
+          <p v-if="err('pdp.naskah_pemrosesan')" class="field-error">{{ err('pdp.naskah_pemrosesan') }}</p>
+        </div>
+        <div>
+          <label class="label" for="p-naskah-marketing">Naskah opt-in promosi</label>
+          <textarea id="p-naskah-marketing" v-model="form.pdp.naskah_marketing" rows="5" class="input" :class="{ 'input-error': err('pdp.naskah_marketing') }" maxlength="10000" />
+          <p v-if="err('pdp.naskah_marketing')" class="field-error">{{ err('pdp.naskah_marketing') }}</p>
+          <p v-else class="mt-1 text-xs text-slate-400">
+            Placeholder: {nama_pasien} {no_rm} {klinik} {tanggal}; opt-in juga {kanal}. Tinjau bersama penasihat hukum klinik. Persetujuan yang sudah ditandatangani tidak ikut berubah.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Dasar perhitungan komisi (KM-01) -->
     <div class="card lg:col-span-2">
       <div class="card-header"><h2 class="card-title">Komisi</h2></div>

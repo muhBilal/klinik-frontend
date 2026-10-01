@@ -36,7 +36,9 @@ Error 422 `tantangan` = sesi login kedaluwarsa (ulangi dari email/password); 422
 {
   id, no_registrasi, tanggal, no_antrian, penjamin, no_penjamin, keluhan, status, dipanggil_at, selesai_at, pasien_id, poli_id,
   dokter_id, cabang_id, akses_terbatas, rme_disembunyikan /* true = kunjungan berakses terbatas yang bukan hak user */,
-  pasien: { id, no_rm, nama, jenis_kelamin, tanggal_lahir, umur, alergi, golongan_darah, no_bpjs, ... },
+  pasien: { id, no_rm, nama, jenis_kelamin, tanggal_lahir, umur, golongan_darah, no_bpjs, ...,
+            klinis: { fitzpatrick, status_kehamilan, status_kehamilan_at, riwayat_obat, riwayat_penyakit, updated_at } | null,  // ber-RME
+            alergis: [{ id, kategori, zat, obat_id, obat: { id, kode, nama } | null, reaksi, keparahan }] },                    // ber-RME
   poli: { id, kode, nama, spesialisasi, tindakan_konsultasi_id },
   konsultasi: { id, kode, nama, tarif, tarif_cabang, tersedia } | null /* jasa konsultasi poli di cabang kunjungan (estimasi) */,
   dokter: { id, name, sip } | null,
@@ -130,6 +132,18 @@ Resep detail juga memuat `cabang` (kop etiket).
   `POST /persetujuan-fotos/{uuid}/cabut { alasan }`.
 - `GET /pengaturan` + `foto: { wajib_consent, naskah_consent }`. Enum: tahap `sebelum`/`sesudah`/`kontrol`, tingkat
   `klinis`/`edukasi`/`marketing`, status persetujuan `berlaku`/`diganti`/`dicabut`. Audit baru: `protokol_foto`, `persetujuan_foto`.
+
+## Data klinis & persetujuan UU PDP (F1-10)
+- `GET/PUT /pasiens/{id}/klinis` → `{ klinis: {..., pembaru: {id, name}} | null, alergis: [...] }`. PUT `{ fitzpatrick, status_kehamilan,
+  konfirmasi_kehamilan, riwayat_obat, riwayat_penyakit, alergis: [{ id?, kategori, zat, obat_id, reaksi, keparahan }] }`; 422
+  `status_kehamilan`, `alergis.{i}.zat|id|kategori`. Enum: kategori `obat|makanan|lingkungan|lainnya`, keparahan `ringan|sedang|berat`,
+  fitzpatrick `I`–`VI`, status kehamilan `tidak|hamil|menyusui`.
+- `GET /pasiens/{id}/persetujuan-data` → `{ pemrosesan, marketing, riwayat: [{ uuid, jenis, kanal, status, penandatangan_nama, hubungan,
+  ditandatangani_at, berakhir_at, alasan_cabut, pembuat, pencabut }], kanal: [{value, label}] }`; `/pratinjau?kanal[]=` → `{ pemrosesan, marketing }`;
+  POST → array persetujuan baru; `/persetujuan-datas/{uuid}` + `isi`, `ttd`, `pasien`, `cabang`, `checksum_valid`. 422 `setuju_pemrosesan`,
+  `kanal`, `ttd`, `persetujuan_data` (pendaftaran). Daftar/detail pasien + `pdp_pemrosesan`, `pdp_marketing`.
+- Resep detail: `kunjungan.pasien.alergis[]`, `kunjungan.pasien.klinis { status_kehamilan, status_kehamilan_at }`. Pengaturan + `pdp: {
+  wajib_persetujuan, naskah_pemrosesan, naskah_marketing }`. Audit: tipe `pasien_klinis`, `pasien_alergi`, `persetujuan_data`.
 
 ## Komisi (F1-09)
 - Komisi treatment: `GET /tindakans/{id}` & `?komisi=1` → `komisis: [{ id, peran: dokter|terapis|asisten, jenis: persen|nominal, nilai (number) }]`

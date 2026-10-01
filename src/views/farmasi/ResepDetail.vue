@@ -7,7 +7,8 @@ import PageLoading from '@/components/PageLoading.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import { useDetail } from '@/composables/useDetail'
 import api, { errorMessage } from '@/lib/api'
-import { jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
+import { KEPARAHAN_ALERGI, STATUS_KEHAMILAN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
+import { alergiObat } from '@/lib/klinis'
 import { printElement } from '@/lib/print'
 import { useKlinikStore } from '@/stores/klinik'
 import { useToastStore } from '@/stores/toast'
@@ -21,6 +22,13 @@ const processing = ref(false)
 const lunas = computed(() => resep.value?.kunjungan.tagihan?.status === 'lunas')
 const stokKurang = computed(() => resep.value?.items.some((i) => i.jumlah > i.obat.stok))
 const total = computed(() => resep.value?.items.reduce((s, i) => s + i.harga * i.jumlah, 0) ?? 0)
+// Keamanan obat (PS-03): alergi pasien & status hamil/menyusui
+const alergis = computed(() => resep.value?.kunjungan.pasien.alergis ?? [])
+const kehamilan = computed(() => {
+  const k = resep.value?.kunjungan.pasien.klinis
+  return ['hamil', 'menyusui'].includes(k?.status_kehamilan) ? k : null
+})
+const alergiItem = (i) => alergiObat(i.obat, alergis.value)
 
 async function serahkan() {
   if (!confirm('Serahkan obat ke pasien? Stok akan dikurangi.')) return
@@ -63,7 +71,17 @@ onMounted(load)
           <dt class="text-slate-500">Nama</dt><dd class="font-medium">{{ resep.kunjungan.pasien.nama }}</dd>
           <dt class="text-slate-500">No. RM</dt><dd class="tabular-nums">{{ resep.kunjungan.pasien.no_rm }}</dd>
           <dt class="text-slate-500">JK / Umur</dt><dd>{{ jenisKelamin(resep.kunjungan.pasien.jenis_kelamin) }} · {{ resep.kunjungan.pasien.umur }}</dd>
-          <dt class="text-slate-500">Alergi</dt><dd :class="resep.kunjungan.pasien.alergi ? 'font-medium text-rose-600' : ''">{{ resep.kunjungan.pasien.alergi ?? 'Tidak ada' }}</dd>
+          <dt class="text-slate-500">Alergi</dt>
+          <dd>
+            <p v-for="a in alergis" :key="a.id" class="font-medium text-rose-600">
+              {{ a.zat }}<span v-if="a.keparahan" class="font-normal"> · {{ KEPARAHAN_ALERGI[a.keparahan] }}</span><span v-if="a.reaksi" class="font-normal"> · {{ a.reaksi }}</span>
+            </p>
+            <span v-if="!alergis.length" class="text-slate-500">Belum ada catatan</span>
+          </dd>
+          <template v-if="kehamilan">
+            <dt class="text-slate-500">Kehamilan</dt>
+            <dd class="font-semibold text-rose-600">⚠ {{ STATUS_KEHAMILAN[kehamilan.status_kehamilan] }} <span class="text-xs font-normal text-slate-500">· {{ tanggal(kehamilan.status_kehamilan_at) }}</span></dd>
+          </template>
           <dt class="text-slate-500">Dokter</dt><dd>{{ resep.dokter?.name ?? '-' }}</dd>
           <dt class="text-slate-500">Tagihan</dt><dd><StatusBadge :status="resep.kunjungan.tagihan?.status ?? 'belum_bayar'" /></dd>
           <template v-if="resep.status === 'diserahkan'">
@@ -79,7 +97,10 @@ onMounted(load)
             <thead><tr><th>Obat</th><th class="text-right">Jumlah</th><th>Aturan pakai</th><th class="text-right">Stok</th><th class="text-right">Subtotal</th></tr></thead>
             <tbody>
               <tr v-for="i in resep.items" :key="i.id">
-                <td>{{ i.obat.nama }}</td>
+                <td>
+                  {{ i.obat.nama }}
+                  <p v-if="alergiItem(i)" class="text-xs font-semibold text-rose-600">⚠ Pasien alergi {{ alergiItem(i).zat }} — konfirmasi ke dokter</p>
+                </td>
                 <td class="text-right tabular-nums">{{ i.jumlah }} {{ i.obat.satuan }}</td>
                 <td class="italic">{{ i.aturan_pakai }}</td>
                 <td :class="i.jumlah > i.obat.stok && resep.status === 'menunggu' ? 'font-semibold text-rose-600' : 'text-slate-500'" class="text-right tabular-nums">{{ i.obat.stok }}</td>

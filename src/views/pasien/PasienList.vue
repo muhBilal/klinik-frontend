@@ -12,12 +12,14 @@ import { GOLONGAN_DARAH, jenisKelamin, toOptions } from '@/lib/format'
 import { useAuthStore } from '@/stores/auth'
 
 const auth = useAuthStore()
-const { items, meta, loading, filters, load, search, isFiltered, reset } = useList('/pasiens', { q: '', jenis_kelamin: '', golongan_darah: '', bpjs: '' })
+const { items, meta, loading, filters, load, search, isFiltered, reset } = useList('/pasiens', { q: '', jenis_kelamin: '', golongan_darah: '', bpjs: '', persetujuan: '' })
 
 const OPSI = {
   jk: toOptions({ L: 'Laki-laki', P: 'Perempuan' }),
   goldar: GOLONGAN_DARAH.map((g) => ({ value: g, label: `Gol. darah ${g}` })),
   bpjs: toOptions({ ya: 'Punya BPJS', tidak: 'Tanpa BPJS' }),
+  // UU PDP (PS-04): siapa yang belum menyetujui pemrosesan data / yang opt-in promosi
+  persetujuan: toOptions({ belum: 'Belum persetujuan data', ada: 'Sudah persetujuan data', marketing: 'Opt-in promosi' }),
 }
 
 const formOpen = ref(false)
@@ -57,6 +59,7 @@ onMounted(() => load())
         <FilterSelect v-model="filters.jenis_kelamin" placeholder="Semua jenis kelamin" :options="OPSI.jk" @change="load()" />
         <FilterSelect v-model="filters.golongan_darah" placeholder="Semua gol. darah" :options="OPSI.goldar" @change="load()" />
         <FilterSelect v-model="filters.bpjs" placeholder="BPJS & non-BPJS" :options="OPSI.bpjs" @change="load()" />
+        <FilterSelect v-model="filters.persetujuan" placeholder="Semua persetujuan" :options="OPSI.persetujuan" @change="load()" />
         <button v-if="isFiltered" class="btn btn-ghost btn-sm" @click="reset()">Reset filter</button>
       </div>
       <AppSpinner v-if="loading" class="text-slate-400" />
@@ -80,7 +83,10 @@ onMounted(() => load())
             <td class="tabular-nums text-xs font-semibold text-brand-700">{{ p.no_rm }}</td>
             <td>
               <RouterLink :to="`/pasien/${p.id}`" class="font-medium hover:text-brand-700 hover:underline">{{ p.nama }}</RouterLink>
-              <p v-if="p.alergi" class="text-xs text-rose-600">Alergi: {{ p.alergi }}</p>
+              <p class="mt-0.5 flex flex-wrap gap-1 text-[11px]">
+                <span v-if="!p.pdp_pemrosesan" class="rounded-full bg-amber-500/15 px-2 py-0.5 font-medium text-amber-800">Belum persetujuan data</span>
+                <span v-if="p.pdp_marketing" class="rounded-full bg-brand-500/10 px-2 py-0.5 font-medium text-brand-800">Opt-in promosi</span>
+              </p>
             </td>
             <td class="whitespace-nowrap">{{ jenisKelamin(p.jenis_kelamin) }} · {{ p.umur }}</td>
             <td class="whitespace-nowrap">{{ p.tanggal_lahir }}</td>

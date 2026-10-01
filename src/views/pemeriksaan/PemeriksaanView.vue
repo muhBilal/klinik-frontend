@@ -18,10 +18,13 @@ import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
 import PilihGigi from '@/components/gigi/PilihGigi.vue'
 import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
 import PaketPasienCard from '@/components/paket/PaketPasienCard.vue'
+import DataKlinisModal from '@/components/klinis/DataKlinisModal.vue'
+import PeringatanKlinis from '@/components/klinis/PeringatanKlinis.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { BAGIAN_ADDENDUM, PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
 import { formatGigi, normalPermukaan, referensiGigi } from '@/lib/gigi'
+import { alergiObat } from '@/lib/klinis'
 import { useAuthStore } from '@/stores/auth'
 import { useToastStore } from '@/stores/toast'
 
@@ -70,6 +73,14 @@ const isDokter = computed(() => auth.can('pemeriksaan.dokter'))
 const isPerawat = computed(() => !isDokter.value)
 const bolehTindakan = computed(() => auth.can('rme.tindakan'))
 const editable = computed(() => ['menunggu', 'diperiksa'].includes(kunjungan.value?.status))
+// Data klinis pasien (PS-03): diubah oleh tenaga yang melakukan anamnesis; tidak terkunci bersama RME kunjungan
+const bolehUbahKlinis = computed(() => auth.can('pemeriksaan.vital', 'pemeriksaan.dokter', 'rme.tindakan'))
+const klinisOpen = ref(false)
+function klinisTersimpan({ klinis, alergis }) {
+  kunjungan.value.pasien.klinis = klinis
+  kunjungan.value.pasien.alergis = alergis
+}
+const alergiResep = (r) => alergiObat({ id: r.obat_id, nama: r.nama }, kunjungan.value?.pasien.alergis)
 const ditandatangani = computed(() => !!kunjungan.value?.pemeriksaan?.ditandatangani_at)
 /** Dokter yang tercatat (bukan admin) tanpa SIP aktif tidak bisa menutup pemeriksaan — backend menolak dengan 422 `sip`. */
 const sipBermasalah = computed(() => isDokter.value && !auth.user?.sip_aktif)
@@ -408,6 +419,8 @@ function consentBerubah(data) {
 // ---- Resep ----
 function tambahObat(o) {
   if (form.resep.some((r) => r.obat_id === o.id)) return toast.info('Obat sudah ada di resep.')
+  const alergi = alergiObat(o, kunjungan.value?.pasien.alergis)
+  if (alergi) toast.error(`Perhatian: pasien alergi ${alergi.zat}. Pastikan ${o.nama} aman sebelum diresepkan.`)
   if (o.stok <= 0) toast.info(`Perhatian: stok ${o.nama} kosong.`)
   form.resep.push({ obat_id: o.id, nama: o.nama, satuan: o.satuan, harga: o.harga, stok: o.stok, jumlah: 10, aturan_pakai: ATURAN_PAKAI[0] })
 }
@@ -552,7 +565,6 @@ onMounted(load)
       <div><p class="text-xs text-slate-500">Penjamin</p><p class="font-medium">{{ PENJAMIN[kunjungan.penjamin] }} {{ kunjungan.no_penjamin ?? '' }}</p></div>
       <div><p class="text-xs text-slate-500">Gol. darah</p><p class="font-medium">{{ kunjungan.pasien.golongan_darah ?? '-' }}</p></div>
       <div><p class="text-xs text-slate-500">Status</p><StatusBadge :status="kunjungan.status" /></div>
-      <div v-if="kunjungan.pasien.alergi" class="rounded-xl bg-rose-500/10 px-3 py-2 font-semibold text-rose-700 ring-1 ring-rose-400/30">⚠ Alergi: {{ kunjungan.pasien.alergi }}</div>
       <label
         v-if="isDokter && editable"
         class="ml-auto flex items-center gap-2 rounded-xl px-3 py-2"
@@ -564,6 +576,18 @@ onMounted(load)
         <span v-if="adaDiagnosaSensitif" class="text-xs">(diagnosa sensitif)</span>
       </label>
       <span v-else-if="kunjungan.akses_terbatas" class="ml-auto rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">🔒 Akses terbatas</span>
+    </div>
+
+    <!-- Peringatan klinis pasien (PS-03): alergi, hamil/menyusui, Fitzpatrick, riwayat obat & penyakit -->
+    <div class="card mb-5 px-5 py-3">
+      <PeringatanKlinis
+        :klinis="kunjungan.pasien.klinis"
+        :alergis="kunjungan.pasien.alergis ?? []"
+        :jenis-kelamin="kunjungan.pasien.jenis_kelamin"
+        :tanggal-lahir="kunjungan.pasien.tanggal_lahir"
+      >
+        <button v-if="bolehUbahKlinis" type="button" class="btn btn-ghost btn-sm ml-auto" @click="klinisOpen = true">Data klinis</button>
+      </PeringatanKlinis>
     </div>
 
     <div v-if="!editable" class="alert alert-warning mb-5">
@@ -857,6 +881,7 @@ onMounted(load)
                     <tr v-for="(r, i) in form.resep" :key="r.obat_id">
                       <td>
                         <p>{{ r.nama }}</p>
+                        <p v-if="alergiResep(r)" class="text-xs font-semibold text-rose-600">⚠ Pasien alergi {{ alergiResep(r).zat }}</p>
                         <p :class="r.jumlah > r.stok ? 'text-rose-600' : 'text-slate-400'" class="text-xs">stok {{ r.stok }} {{ r.satuan }}</p>
                       </td>
                       <td><input v-model.number="r.jumlah" type="number" min="1" class="input py-1" :disabled="!editable" /></td>
@@ -938,6 +963,14 @@ onMounted(load)
 
     <TemplateSoapModal v-model="templateOpen" :poli-id="kunjungan.poli_id" :tindakan-ids="form.tindakans.map((t) => t.tindakan_id)" @terapkan="terapkanTemplate" />
     <CatatanTindakanModal v-model="catatanOpen" :kunjungan-tindakan-id="catatanId" :editable="editable" @saved="catatanTersimpan" />
+    <DataKlinisModal
+      v-if="bolehUbahKlinis"
+      v-model="klinisOpen"
+      :pasien="kunjungan.pasien"
+      :klinis="kunjungan.pasien.klinis"
+      :alergis="kunjungan.pasien.alergis ?? []"
+      @saved="klinisTersimpan"
+    />
     <ConsentFormModal v-model="consentFormOpen" :kunjungan="kunjungan" :tindakan="consentTindakanAktif" @saved="consentTersimpan" />
     <ConsentLihatModal v-model="consentLihatOpen" :uuid="consentUuid" :bisa-cabut="editable && bolehTindakan" @changed="consentBerubah" />
     <AddendumModal v-model="addendumOpen" :kunjungan-id="kunjungan.id" @saved="addendumTersimpan" />

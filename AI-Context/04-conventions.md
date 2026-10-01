@@ -48,6 +48,9 @@
 | `rme/ConsentFormModal` / `rme/ConsentLihatModal` | `kunjungan`, `tindakan` / `uuid`, `bisaCabut` | Ambil consent (naskah backend + tanda tangan) / lihat, cetak, cabut. |
 | `foto/FotoKlinisCard` | `pasien`, `kunjunganId?`, `tindakans`, `bisaAmbil`; expose `ambil(tindakan?)` | Persetujuan foto + kamera + galeri (F1-06). |
 | `foto/GaleriFoto`, `foto/BandingFoto`, `foto/KameraFoto`, `foto/PersetujuanFotoPanel` | lihat `08-fitur-fase-1.md` | Galeri & before-after, kamera terpandu, consent foto. |
+| `klinis/PeringatanKlinis` | `klinis`, `alergis`, `jenisKelamin`, `tanggalLahir`, slot aksi | Chip alergi (merah), hamil/menyusui + tanggal, Fitzpatrick, riwayat obat & penyakit (F1-10). `[data-peringatan-klinis]`. |
+| `klinis/DataKlinisModal` / `klinis/DataKlinisCard` | `v-model`, `pasien`, `klinis`, `alergis`, `@saved({klinis, alergis})` / `pasien` | Ubah data klinis (alergi per baris grid + tautan obat) / kartu di detail pasien. |
+| `pdp/PersetujuanDataPanel` | `pasien`, `ringkas`, `@changed({pemrosesan, marketing})` | Persetujuan UU PDP: status, formulir (pemrosesan + opt-in terpisah, tanda tangan), cabut per jenis, riwayat, lihat/cetak. `[data-persetujuan-data]`. |
 | `komisi/SlipKomisi` | `periode`, `petugas`, `barises` | Slip komisi (kop klinik, baris, subtotal per peran, tanda tangan); `#slip-komisi` untuk `printElement`. |
 | `paket/PaketPasienCard` | `pasien`, `ringkas`; expose `muatUlang()`, `@changed` | Paket pasien: sisa per treatment (bar), riwayat pemakaian, jual, perpanjang/alihkan/refund sisa. `ringkas` = hanya paket aktif, tanpa aksi, tersembunyi bila kosong. |
 | `paket/JualPaketModal` | `v-model`, `pasien?` (null = pilih pasien) | Pilih paket katalog → tagihan → `/kasir/{tagihan_id}`. |
@@ -127,6 +130,7 @@
 | Grid halaman (`grid lg:grid-cols-3`) melebar di mobile karena tabel | Tanpa `grid-cols-*` di mobile kolomnya `auto` → min-content tabel (riwayat, struk) melebarkan halaman. Tulis `grid grid-cols-1 gap-5 lg:grid-cols-…` (minmax(0,1fr)) + bungkus tabel `overflow-x-auto`. Ukur `scrollWidth` **setelah** transisi halaman selesai (±1,5 dtk). |
 | Path route & penanda menu aktif | Item menu aktif bila path **diawali** `to` → `/komisi` juga menandai `/komisi-saya`. Beri path yang tidak saling berawalan (`/komisi`, `/slip-komisi`). |
 | Tabel berisi input/select di modal | Di 390 px kolom menciut sampai select/input tak terbaca (lihat harga per cabang). Untuk baris berisi kontrol, pakai grid yang turun baris di layar sempit (contoh: komisi di `TindakanView`). |
+| Data klinis pasien | Jangan tampilkan alergi/hamil dari objek pasien identitas (kolom `alergi` sudah tidak ada). Pakai `pasien.klinis`/`pasien.alergis` dari detail kunjungan ber-RME, `/pasiens/{id}/klinis`, atau `kunjungan.pasien` di resep; peringatan obat lewat `alergiObat()` (`lib/klinis.js`). |
 | Prettier | Repo **tidak** punya konfigurasi Prettier; `npx prettier --write` memakai default (titik koma, kutip ganda, 80 kolom) dan merusak gaya. Jangan dijalankan. |
 | Konten lebar di dalam kolom grid (mis. SVG odontogram `min-w-[640px]`) | Item grid punya `min-width: auto` → seluruh halaman mobile ikut melebar. Bungkus dengan `overflow-x-auto [contain:inline-size]` (lihat `OdontogramCard`) agar hanya pembungkusnya yang bisa digeser. Cek `document.documentElement.scrollWidth` = lebar viewport di E2E. |
 | Baris tindakan pemeriksaan | `:key="t._key"` (bukan `tindakan_id`): tindakan yang sama boleh beberapa baris (beda gigi). Tindakan per gigi selalu baris baru; yang lain tetap digabung (`jumlah++`). |

@@ -13,7 +13,7 @@ const emit = defineEmits(['saved'])
 const toast = useToastStore()
 const kosong = {
   nama: '', nik: '', no_bpjs: '', jenis_kelamin: 'L', tempat_lahir: '', tanggal_lahir: '',
-  golongan_darah: '', no_hp: '', pekerjaan: '', alamat: '', alergi: '',
+  golongan_darah: '', no_hp: '', pekerjaan: '', alamat: '',
 }
 const form = reactive({ ...kosong })
 const errors = ref({})
@@ -95,10 +95,6 @@ async function submit() {
       <div class="sm:col-span-2">
         <label class="label">Alamat</label>
         <textarea v-model="form.alamat" rows="2" class="input" />
-      </div>
-      <div class="sm:col-span-2">
-        <label class="label">Riwayat alergi</label>
-        <input v-model="form.alergi" class="input" placeholder="Contoh: Amoxicillin, seafood" />
       </div>
     </form>
     <template #footer>

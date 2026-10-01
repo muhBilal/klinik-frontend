@@ -7,6 +7,7 @@ import AsyncSelect from '@/components/AsyncSelect.vue'
 import FilterSelect from '@/components/FilterSelect.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PasienFormModal from '@/components/PasienFormModal.vue'
+import PersetujuanDataPanel from '@/components/pdp/PersetujuanDataPanel.vue'
 import StatusBadge from '@/components/StatusBadge.vue'
 import TableSkeleton from '@/components/TableSkeleton.vue'
 import { useList } from '@/composables/useList'
@@ -128,7 +129,7 @@ onMounted(() => {
 <template>
   <PageHeader title="Pendaftaran Kunjungan" subtitle="Daftarkan pasien ke poli dan terbitkan nomor antrian" />
 
-  <div class="grid gap-5 xl:grid-cols-5">
+  <div class="grid grid-cols-1 gap-5 xl:grid-cols-5">
     <form class="card self-start xl:col-span-2" @submit.prevent="daftar">
       <div class="card-header"><h2 class="card-title">Form Pendaftaran</h2></div>
       <div class="card-body space-y-4">
@@ -137,13 +138,17 @@ onMounted(() => {
           <div v-if="pasienLoading" class="flex items-center gap-2 rounded-xl border border-white/70 bg-white/40 p-3 text-sm text-slate-500">
             <AppSpinner class="text-brand-600" /> Memuat data pasien...
           </div>
-          <div v-else-if="pasien" class="flex items-start justify-between gap-3 rounded-xl border border-brand-300/50 bg-brand-500/10 p-3">
-            <div class="text-sm">
-              <p class="font-semibold">{{ pasien.nama }}</p>
-              <p class="text-slate-600">RM {{ pasien.no_rm }} · {{ jenisKelamin(pasien.jenis_kelamin) }} · {{ pasien.umur }}</p>
-              <p v-if="pasien.alergi" class="mt-1 text-xs font-medium text-rose-600">Alergi: {{ pasien.alergi }}</p>
+          <div v-else-if="pasien" class="space-y-2 rounded-xl border border-brand-300/50 bg-brand-500/10 p-3">
+            <div class="flex items-start justify-between gap-3">
+              <div class="text-sm">
+                <p class="font-semibold">{{ pasien.nama }}</p>
+                <p class="text-slate-600">RM {{ pasien.no_rm }} · {{ jenisKelamin(pasien.jenis_kelamin) }} · {{ pasien.umur }}</p>
+              </div>
+              <button type="button" class="btn btn-ghost btn-sm" @click="pasien = null">Ganti</button>
             </div>
-            <button type="button" class="btn btn-ghost btn-sm" @click="pasien = null">Ganti</button>
+            <!-- Persetujuan data UU PDP (PS-04): bisa ditandatangani langsung di sini sebelum didaftarkan -->
+            <PersetujuanDataPanel :pasien="pasien" ringkas @changed="delete errors.persetujuan_data" />
+            <p v-if="errors.persetujuan_data" class="field-error">{{ errors.persetujuan_data }}</p>
           </div>
           <div v-else class="flex gap-2">
             <div class="flex-1">

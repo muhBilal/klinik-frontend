@@ -7,6 +7,8 @@ import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
 import PaketPasienCard from '@/components/paket/PaketPasienCard.vue'
 import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
 import PersetujuanFotoPanel from '@/components/foto/PersetujuanFotoPanel.vue'
+import DataKlinisCard from '@/components/klinis/DataKlinisCard.vue'
+import PersetujuanDataPanel from '@/components/pdp/PersetujuanDataPanel.vue'
 import LampiranBerkas from '@/components/LampiranBerkas.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageLoading from '@/components/PageLoading.vue'
@@ -64,7 +66,6 @@ onMounted(load)
           <dt class="text-slate-500">No. HP</dt><dd>{{ pasien.no_hp ?? '-' }}</dd>
           <dt class="text-slate-500">Pekerjaan</dt><dd>{{ pasien.pekerjaan ?? '-' }}</dd>
           <dt class="text-slate-500">Alamat</dt><dd>{{ pasien.alamat ?? '-' }}</dd>
-          <dt class="text-slate-500">Alergi</dt><dd :class="pasien.alergi ? 'font-medium text-rose-600' : ''">{{ pasien.alergi ?? 'Tidak ada' }}</dd>
         </dl>
       </div>
 
@@ -105,6 +106,15 @@ onMounted(load)
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+      <!-- Data klinis (PS-03, hanya rme.lihat) & persetujuan data pribadi UU PDP (PS-04) -->
+      <div v-if="auth.can('rme.lihat')" class="lg:col-span-2"><DataKlinisCard :pasien="pasien" /></div>
+      <div class="card" :class="{ 'lg:col-span-3': !auth.can('rme.lihat') }">
+        <div class="card-header"><h2 class="card-title">Persetujuan Data Pribadi</h2></div>
+        <div class="card-body space-y-2">
+          <p class="text-xs text-slate-500">UU PDP: pemrosesan data untuk pelayanan & opt-in promosi dicatat terpisah, masing-masing bisa dicabut.</p>
+          <PersetujuanDataPanel :pasien="pasien" />
         </div>
       </div>
       <!-- Paket multi-sesi: sisa sesi, jual paket (kasir), perpanjang/alihkan/refund (manajer) -->

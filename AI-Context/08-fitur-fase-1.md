@@ -1,7 +1,7 @@
 # 08 — Fitur Fase 1 (MVP Estetika) di Frontend
 
 Isi: F1-01 Katalog treatment · F1-02/03/04 (backend saja, kecuali editor BHP) · **F1-05 RME estetika** · **F1-06 Foto klinis** ·
-**F1-07 Kedokteran gigi** · **F1-08 Paket & promo** · **F1-09 Komisi**.
+**F1-07 Kedokteran gigi** · **F1-08 Paket & promo** · **F1-09 Komisi** · **F1-10 Data klinis & UU PDP**.
 
 Ringkasan UI per fitur Fase 1 PRD. Aturan bisnis & API lengkap per fitur ada di repo backend
 `backend/AI-Context/modul/F1-0x-*.md`; progres keseluruhan di `backend/AI-Context/07-roadmap-progress.md`.
@@ -202,6 +202,31 @@ Perilaku penting:
   Setelah disetujui semua tombol ubah hilang (backend juga menolak).
 - Slip di detail rekap memakai baris yang sudah dimuat (filter per petugas); "Komisi Saya" meminta slip per periode.
 - Path sengaja tidak saling berawalan agar penanda menu aktif benar.
+
+## F1-10 Data klinis pasien & persetujuan UU PDP (PRD PS-03, PS-04)
+
+Backend & aturan: `backend/AI-Context/modul/F1-10-data-klinis-pdp.md`.
+
+| Bagian | File |
+|--------|------|
+| Chip peringatan klinis (alergi + keparahan/reaksi, hamil/menyusui + tanggal, "belum ditanyakan" hanya perempuan 12–55 th, Fitzpatrick, riwayat obat & penyakit) | `components/klinis/PeringatanKlinis.vue` |
+| Modal ubah data klinis: alergi per baris (kategori, zat, keparahan, reaksi, tautkan obat lewat `AsyncSelect /obats`), Fitzpatrick, hamil/menyusui (+ konfirmasi ulang), riwayat obat & penyakit | `components/klinis/DataKlinisModal.vue` |
+| Kartu Data Klinis di detail pasien (rme.lihat) | `components/klinis/DataKlinisCard.vue`, `views/pasien/PasienDetail.vue` |
+| Panel persetujuan UU PDP: status, formulir (naskah pemrosesan + centang wajib; opt-in promosi bawaan "Tidak bersedia", kanal, naskah ikut kanal; penanda tangan; `SignaturePad`), cabut opt-in / cabut persetujuan (ikut mencabut opt-in), riwayat, lihat & cetak | `components/pdp/PersetujuanDataPanel.vue` |
+| Pemeriksaan: kartu peringatan klinis di bawah identitas + tombol "Data klinis"; toast & baris resep "⚠ Pasien alergi …" | `views/pemeriksaan/PemeriksaanView.vue`, `lib/klinis.js` |
+| Farmasi: alergi (+ keparahan/reaksi), status hamil/menyusui, peringatan per item resep | `views/farmasi/ResepDetail.vue` |
+| Pendaftaran: panel persetujuan ringkas di kartu pasien + pesan 422 `persetujuan_data`; grid `grid-cols-1` (sebelumnya melebar di mobile) | `views/pendaftaran/PendaftaranView.vue` |
+| Daftar pasien: filter persetujuan, chip status; alergi dihapus dari daftar & form pasien | `views/pasien/PasienList.vue`, `components/PasienFormModal.vue` |
+| Pengaturan → Data Pribadi (UU PDP); label audit; konstanta `KATEGORI_ALERGI`, `KEPARAHAN_ALERGI`, `FITZPATRICK`, `STATUS_KEHAMILAN`, `JENIS_PERSETUJUAN_DATA`, `KANAL_MARKETING` | `views/admin/PengaturanView.vue`, `views/admin/AuditLogView.vue`, `lib/format.js` |
+
+Perilaku penting:
+- Data klinis hanya untuk rme.lihat; kasir/marketing/pendaftaran melihat status persetujuan saja. Tombol ubah data klinis untuk
+  pemeriksaan.vital / pemeriksaan.dokter / rme.tindakan; tanda tangan & cabut persetujuan untuk pasien.kelola.
+- Peringatan alergi tidak memblokir resep (keputusan dokter). Simpan data klinis di pemeriksaan memperbarui `kunjungan.pasien` di tempat.
+
+Verifikasi F1-10: `npm run build` + E2E Chrome headless (pendaftaran tanda tangan persetujuan + opt-in → daftar; wajib aktif → ditolak;
+daftar pasien; kasir tanpa data klinis; dokter peringatan → ubah data klinis → peringatan resep; dokumen persetujuan; farmasi; mobile 390 px).
+Tanpa error konsol selain 422 yang diuji.
 
 Verifikasi F1-09: `npm run build` + E2E Chrome headless (dokter pilih asisten → kasir bayar → manajer periode, hitung, slip,
 penyesuaian → admin setujui → terapis/dokter Komisi Saya; mobile 390 px). Revisi: admin ubah komisi di form treatment, Master Poli ganti
