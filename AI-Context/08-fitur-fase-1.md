@@ -1,7 +1,7 @@
 # 08 — Fitur Fase 1 (MVP Estetika) di Frontend
 
 Isi: F1-01 Katalog treatment · F1-02/03/04 (backend saja, kecuali editor BHP) · **F1-05 RME estetika** · **F1-06 Foto klinis** ·
-**F1-07 Kedokteran gigi**.
+**F1-07 Kedokteran gigi** · **F1-08 Paket & promo**.
 
 Ringkasan UI per fitur Fase 1 PRD. Aturan bisnis & API lengkap per fitur ada di repo backend
 `backend/AI-Context/modul/F1-0x-*.md`; progres keseluruhan di `backend/AI-Context/07-roadmap-progress.md`.
@@ -41,7 +41,7 @@ Yang perlu dibuat nanti, beserta hal yang mudah salah:
 | Modul | Halaman yang dibutuhkan | Catatan penting |
 |-------|------------------------|-----------------|
 | F1-02 Booking | Kalender booking, form booking (pilih treatment → slot), halaman jadwal praktik & cuti, master ruang/alat | Jangan hitung durasi/`selesai_at` di UI — ambil dari `GET /appointments-slot`. Bentrok & luar jam praktik datang sebagai 422 di field `mulai_at` |
-| F1-03 Kasir | Form bayar multi-metode, layar buka/tutup shift + rekap, tombol void & refund, form penjualan produk | `tagihan.kunjungan` bisa **null**; `metode_bayar` null saat split payment. Tombol void/refund hanya untuk `auth.can('kasir.void')` |
+| F1-03 Kasir | Form bayar multi-metode, layar buka/tutup shift + rekap (+ `refund_paket`), tombol void & refund, form penjualan produk | Tagihan tanpa kunjungan, kode promo & pajak di layar bayar **sudah** ada (F1-08). `metode_bayar` null saat split payment. Tombol void/refund hanya untuk `auth.can('kasir.void')` |
 | F1-04 Inventori | Daftar batch per obat, form penerimaan, stok opname, panel batch akan kedaluwarsa. **Editor pemakaian BHP sudah ada** (tab "Pemakaian BHP" di `CatatanTindakanModal`, F1-05) | Input jumlah desimal hanya bila `obat.fraksional`; editor BHP terkunci bila `stok_dipotong=true` |
 
 Menu & izin yang perlu ditambahkan di `lib/menu.js` + `router/index.js`: `booking.lihat`, `booking.kelola`,
@@ -156,6 +156,35 @@ Perilaku penting:
 
 Verifikasi F1-07: `npm run build` + E2E Chrome headless (alur lengkap drg., lihat modul backend F1-07), mobile 390 px tanpa scroll
 horizontal. Tanpa error konsol.
+
+## F1-08 Paket multi-sesi, voucher & promo (PRD TR-02, TR-06, BL-01)
+
+Backend & aturan: `backend/AI-Context/modul/F1-08-paket-promo.md`.
+
+| Bagian | File |
+|--------|------|
+| Master Paket Treatment: isi treatment × sesi, harga (hemat % vs harga normal), masa berlaku, lintas cabang, jumlah terjual | `views/master/PaketView.vue` |
+| Voucher & Promo: daftar (potongan, cakupan, periode, dipakai/kuota, status berlaku/belum mulai/berakhir/kuota habis) & form | `views/kasir/PromoView.vue` |
+| Kartu paket pasien: sisa per treatment, status efektif, bayar (menunggu bayar), riwayat pemakaian, perpanjang/alihkan/refund sisa (simulasi nominal) | `components/paket/PaketPasienCard.vue` |
+| Jual paket (pilih pasien bila belum ada → paket → tagihan) | `components/paket/JualPaketModal.vue` |
+| Pemeriksaan: "Pakai paket … tersedia N sesi" per tindakan (otomatis), Rp 0 di estimasi, kartu paket ringkas | `views/pemeriksaan/PemeriksaanView.vue` |
+| Kasir: "+ Jual paket", tagihan tanpa kunjungan di daftar & detail, kode voucher (pakai/lepas), pajak & promo di total, info paket aktif | `views/kasir/TagihanList.vue`, `views/kasir/TagihanDetail.vue` |
+| Detail pasien: kartu Paket Treatment · Pengaturan: Paket Treatment (transfer, refund sisa, potongan) + prefix nomor paket | `views/pasien/PasienDetail.vue`, `views/admin/PengaturanView.vue` |
+| Menu (Paket Treatment di Master Data, Voucher & Promo di Keuangan), route, badge status paket/promo, label audit | `lib/menu.js`, `router/index.js`, `components/StatusBadge.vue`, `views/admin/AuditLogView.vue` |
+
+Perilaku penting:
+- **Sisa "tersedia" di pemeriksaan** = sisa dari backend + sesi yang sudah dipesan baris tersimpan itu sendiri − baris lain di form yang
+  belum tersimpan (`opsiPaket`). Setelah simpan, daftar paket dimuat ulang **sebelum** form diisi ulang (`await muatPaket()` lalu `isiForm`)
+  — urutan terbalik membuat angka sempat salah (ditemukan di E2E).
+- Tindakan yang ditambahkan otomatis memakai paket bila ada sisa (toast); dokter bisa memilih "Bayar normal". Pilihan baru tidak bisa
+  melebihi sisa (opsi dinonaktifkan); backend tetap menolak 422.
+- Paket aktif setelah tagihan lunas; kartu menampilkan tombol "Bayar Rp …" ke halaman kasir selama `menunggu_bayar`.
+- Kasir tidak lagi berasumsi `tagihan.kunjungan` ada (sebelumnya daftar kasir error untuk tagihan mandiri).
+- Peran kasir kini memegang `pasien.lihat` (cari pasien untuk jual paket, buka detail pasien tanpa RME).
+
+Verifikasi F1-08: `npm run build` + E2E Chrome headless (kasir jual → promo → bayar; dokter pakai sesi; manajer riwayat/perpanjang/kebijakan
+refund; promo baru; master; mobile 390 px tanpa scroll horizontal di detail pasien, tagihan, daftar kasir). Tanpa error konsol selain 422
+kode promo salah yang disengaja.
 
 ## Verifikasi
 

@@ -103,7 +103,7 @@ onMounted(load)
       <div class="card">
         <div class="card-header"><h2 class="card-title">Penomoran Dokumen</h2></div>
         <div class="card-body grid gap-4 sm:grid-cols-3">
-          <div v-for="[key, label] in [['prefix_registrasi', 'Registrasi'], ['prefix_resep', 'Resep'], ['prefix_tagihan', 'Tagihan']]" :key="key">
+          <div v-for="[key, label] in [['prefix_registrasi', 'Registrasi'], ['prefix_resep', 'Resep'], ['prefix_tagihan', 'Tagihan'], ['prefix_paket', 'Paket']]" :key="key">
             <label class="label" :for="`p-${key}`">Prefix {{ label }}</label>
             <input
               :id="`p-${key}`"
@@ -148,6 +148,35 @@ onMounted(load)
           <textarea id="p-naskah-foto" v-model="form.foto.naskah_consent" rows="10" class="input" :class="{ 'input-error': err('foto.naskah_consent') }" maxlength="10000" />
           <p v-if="err('foto.naskah_consent')" class="field-error">{{ err('foto.naskah_consent') }}</p>
           <p v-else class="mt-1 text-xs text-slate-400">Placeholder: {nama_pasien} {no_rm} {klinik} {tanggal} {tingkat} {pilihan} (daftar tingkat dengan tanda [x]). Persetujuan yang sudah ditandatangani tidak ikut berubah.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kebijakan paket multi-sesi (TR-02): pertanyaan terbuka PRD, diatur tiap klinik -->
+    <div class="card lg:col-span-2">
+      <div class="card-header"><h2 class="card-title">Paket Treatment</h2></div>
+      <div class="card-body grid gap-4 sm:grid-cols-[1fr_16rem]">
+        <div class="space-y-3">
+          <label class="flex items-start gap-2 text-sm">
+            <input v-model="form.paket.boleh_transfer" type="checkbox" class="mt-0.5 accent-brand-600" />
+            <span>
+              Sisa paket boleh dialihkan ke pasien lain
+              <span class="block text-xs text-slate-400">Diproses pemegang izin void/refund (manajer). Masa berlaku tetap mengikuti paket asal.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-2 text-sm">
+            <input v-model="form.paket.refund_sisa" type="checkbox" class="mt-0.5 accent-brand-600" />
+            <span>
+              Sisa paket yang sudah dipakai boleh diuangkan (refund prorata)
+              <span class="block text-xs text-slate-400">Nominal = nilai sesi tersisa dikurangi potongan. Paket yang belum dipakai selalu bisa direfund penuh lewat refund tagihan.</span>
+            </span>
+          </label>
+        </div>
+        <div>
+          <label class="label" for="p-potongan-refund">Potongan refund sisa (%)</label>
+          <input id="p-potongan-refund" v-model.number="form.paket.potongan_refund_persen" type="number" min="0" max="100" class="input" :class="{ 'input-error': err('paket.potongan_refund_persen') }" :disabled="!form.paket.refund_sisa" />
+          <p v-if="err('paket.potongan_refund_persen')" class="field-error">{{ err('paket.potongan_refund_persen') }}</p>
+          <p v-else class="mt-1 text-xs text-slate-400">Mis. biaya administrasi.</p>
         </div>
       </div>
     </div>

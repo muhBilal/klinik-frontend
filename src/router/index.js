@@ -33,9 +33,11 @@ const routes = [
 
       { path: 'kasir', name: 'kasir', component: () => import('@/views/kasir/TagihanList.vue'), meta: { izin: ['kasir.tagihan'] } },
       { path: 'kasir/:id', name: 'kasir.detail', component: () => import('@/views/kasir/TagihanDetail.vue'), meta: { izin: ['kasir.tagihan'] } },
+      { path: 'promo', name: 'promo', component: () => import('@/views/kasir/PromoView.vue'), meta: { izin: ['promo.kelola'] } },
 
       { path: 'master/poli', name: 'master.poli', component: () => import('@/views/master/PoliView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/tindakan', name: 'master.tindakan', component: () => import('@/views/master/TindakanView.vue'), meta: { izin: ['master.kelola'] } },
+      { path: 'master/paket', name: 'master.paket', component: () => import('@/views/master/PaketView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/kategori-treatment', name: 'master.kategori-treatment', component: () => import('@/views/master/KategoriTindakanView.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/icd10', name: 'master.icd10', component: () => import('@/views/master/Icd10View.vue'), meta: { izin: ['master.kelola'] } },
       { path: 'master/icd9cm', name: 'master.icd9cm', component: () => import('@/views/master/Icd9cmView.vue'), meta: { izin: ['master.kelola'] } },

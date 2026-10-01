@@ -61,7 +61,7 @@ onMounted(load)
       </button>
     </PageHeader>
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
       <div class="card self-start">
         <div class="card-header"><h2 class="card-title">Pasien</h2><StatusBadge :status="k.status" /></div>
         <dl class="card-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">

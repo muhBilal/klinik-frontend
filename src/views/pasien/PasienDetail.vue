@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import FilterSelect from '@/components/FilterSelect.vue'
 import FotoKlinisCard from '@/components/foto/FotoKlinisCard.vue'
 import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
+import PaketPasienCard from '@/components/paket/PaketPasienCard.vue'
 import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
 import PersetujuanFotoPanel from '@/components/foto/PersetujuanFotoPanel.vue'
 import LampiranBerkas from '@/components/LampiranBerkas.vue'
@@ -51,7 +52,7 @@ onMounted(load)
       <RouterLink v-if="auth.can('kunjungan.daftar')" :to="{ path: '/pendaftaran', query: { pasien_id: pasien.id } }" class="btn btn-primary">Daftarkan Kunjungan</RouterLink>
     </PageHeader>
 
-    <div class="grid gap-5 lg:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
       <div class="card">
         <div class="card-header"><h2 class="card-title">Identitas Pasien</h2></div>
         <dl class="card-body grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
@@ -106,6 +107,8 @@ onMounted(load)
           </table>
         </div>
       </div>
+      <!-- Paket multi-sesi: sisa sesi, jual paket (kasir), perpanjang/alihkan/refund (manajer) -->
+      <div class="lg:col-span-3"><PaketPasienCard :pasien="pasien" /></div>
       <!-- Kedokteran gigi: odontogram terkini (+ status pada kunjungan sebelumnya) & rencana perawatan -->
       <template v-if="auth.can('rme.lihat') && tampilGigi">
         <div class="lg:col-span-3"><OdontogramCard :pasien="pasien" /></div>

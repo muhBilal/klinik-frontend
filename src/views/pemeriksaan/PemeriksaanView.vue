@@ -17,6 +17,7 @@ import FotoKlinisCard from '@/components/foto/FotoKlinisCard.vue'
 import OdontogramCard from '@/components/gigi/OdontogramCard.vue'
 import PilihGigi from '@/components/gigi/PilihGigi.vue'
 import RencanaPerawatanCard from '@/components/gigi/RencanaPerawatanCard.vue'
+import PaketPasienCard from '@/components/paket/PaketPasienCard.vue'
 import api, { errorMessage, validationErrors } from '@/lib/api'
 import { cachedGet } from '@/lib/cache'
 import { BAGIAN_ADDENDUM, PENJAMIN, jenisKelamin, rupiah, tanggal, waktu } from '@/lib/format'
@@ -77,10 +78,11 @@ const imt = computed(() => {
   const tb = Number(form.tinggi_badan) / 100
   return bb && tb ? (bb / (tb * tb)).toFixed(1) : null
 })
+// Tindakan yang memakai sesi paket ditagih Rp 0 (TR-02).
 const totalEstimasi = computed(
   () =>
     (kunjungan.value?.poli.tarif_konsultasi ?? 0) +
-    form.tindakans.reduce((s, t) => s + t.tarif * t.jumlah, 0) +
+    form.tindakans.reduce((s, t) => s + (t.paket_pasien_item_id ? 0 : t.tarif * t.jumlah), 0) +
     form.resep.reduce((s, r) => s + r.harga * r.jumlah, 0),
 )
 
@@ -110,6 +112,10 @@ function isiForm(k) {
     gigi: t.gigi,
     permukaan: t.permukaan ?? '',
     rencana_item_id: t.rencana_item_id,
+    paket_pasien_item_id: t.paket_pasien_item_id ?? null,
+    paket_no: t.paket_item?.paket_pasien?.no_paket,
+    // Sesi yang sudah dipesan baris tersimpan ini (backend menghitungnya "sedang dipakai") — dikembalikan saat menghitung tersedia.
+    paket_awal: t.paket_pasien_item_id ? { id: t.paket_pasien_item_id, jumlah: t.jumlah } : null,
     catatan: t.catatan,
   }))
   form.resep = (k.resep?.items ?? []).map((r) => ({
@@ -211,9 +217,54 @@ function tambahTindakan(t, tambahan = {}) {
     permukaan: tambahan.permukaan ?? target?.permukaan ?? '',
     rencana_item_id: tambahan.rencana_item_id ?? null,
     rencana_judul: tambahan.rencana_judul,
+    paket_pasien_item_id: null,
     catatan: null,
   })
   if (target) gigiTarget.value = null
+  pakaiPaketOtomatis(form.tindakans.at(-1))
+}
+
+// ---- Paket multi-sesi pasien (TR-02): pakai sesi paket → tindakan ditagih Rp 0 ----
+const paketAktif = ref([])
+const paketCard = ref(null)
+
+async function muatPaket() {
+  if (!auth.can('pasien.lihat', 'kasir.tagihan', 'rme.tindakan', 'pemeriksaan.dokter')) return
+  try {
+    paketAktif.value = (await api.get(`/pasiens/${kunjungan.value.pasien_id}/pakets`, { params: { aktif: 1 }, silent: true })).data
+  } catch {
+    paketAktif.value = []
+  }
+}
+
+/**
+ * Pilihan paket untuk satu baris tindakan: item paket aktif untuk treatment yang sama. `sisa` = sesi yang tersedia untuk
+ * baris ini: sisa backend + sesi yang sudah dipesan baris ini sendiri − baris lain di form yang belum tersimpan.
+ */
+function opsiPaket(t) {
+  const opsi = paketAktif.value.flatMap((p) =>
+    p.items
+      .filter((i) => i.tindakan_id === t.tindakan_id)
+      .map((i) => {
+        const dipakaiForm = form.tindakans.filter((x) => x !== t && !x.id && x.paket_pasien_item_id === i.id).reduce((s, x) => s + x.jumlah, 0)
+        const milikSendiri = t.paket_awal?.id === i.id ? t.paket_awal.jumlah : 0
+        return { id: i.id, no: p.no_paket, sisa: i.sisa + milikSendiri - dipakaiForm }
+      }),
+  )
+  // Baris tersimpan yang memakai sesi terakhir: paketnya sudah "habis" tetapi pilihannya tetap ditampilkan.
+  if (t.paket_pasien_item_id && !opsi.some((o) => o.id === t.paket_pasien_item_id)) {
+    opsi.push({ id: t.paket_pasien_item_id, no: t.paket_no ?? 'paket', sisa: t.paket_awal?.id === t.paket_pasien_item_id ? t.paket_awal.jumlah : 0 })
+  }
+  return opsi
+}
+
+function pakaiPaketOtomatis(t) {
+  if (!t || t.paket_pasien_item_id) return
+  const pilihan = opsiPaket(t).find((o) => o.sisa >= t.jumlah)
+  if (!pilihan) return
+  t.paket_pasien_item_id = pilihan.id
+  t.paket_no = pilihan.no
+  toast.info(`${t.nama} memakai sesi paket ${pilihan.no} (tersedia ${pilihan.sisa} sesi).`)
 }
 
 // ---- Kedokteran gigi: odontogram, rencana perawatan, tindakan per gigi (DG-01/02/07) ----
@@ -346,9 +397,10 @@ function payload() {
     ...data,
     akses_terbatas: form.akses_terbatas,
     diagnosas: form.diagnosas.map(({ icd10_id, jenis }) => ({ icd10_id, jenis })),
-    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, icd9cm_id, gigi, permukaan, rencana_item_id }) => ({
+    tindakans: form.tindakans.map(({ id, tindakan_id, jumlah, petugas_id, icd9cm_id, gigi, permukaan, rencana_item_id, paket_pasien_item_id }) => ({
       id: id ?? null, tindakan_id, jumlah, petugas_id: petugas_id || null, icd9cm_id: icd9cm_id ?? null,
       gigi: gigi || null, permukaan: gigi && permukaan ? permukaan : null, rencana_item_id: rencana_item_id ?? null,
+      paket_pasien_item_id: paket_pasien_item_id || null,
     })),
     resep: form.resep.map(({ obat_id, jumlah, aturan_pakai }) => ({ obat_id, jumlah, aturan_pakai })),
     catatan_resep: form.catatan_resep || null,
@@ -360,6 +412,11 @@ async function simpan({ silent = false } = {}) {
   errors.value = {}
   try {
     const { data } = await api.put(`/kunjungans/${route.params.id}/pemeriksaan`, payload())
+    // Sisa paket dimuat ulang SEBELUM form diisi ulang: sesi yang dipesan baris tersimpan dihitung dari data terbaru.
+    if (paketAktif.value.length || form.tindakans.some((t) => t.paket_pasien_item_id)) {
+      await muatPaket()
+      paketCard.value?.muatUlang()
+    }
     isiForm(data)
     // Tindakan per gigi memperbarui odontogram & status item rencana di backend.
     if (isGigi.value) {
@@ -434,6 +491,7 @@ async function load() {
     isiForm(data)
     loadRiwayat(data)
     muatFavorit()
+    muatPaket()
     if (isDokter.value) cachedGet('/petugas').then((p) => (petugas.value = p)).catch(() => {})
   } catch (e) {
     loadError.value = errorMessage(e)
@@ -496,7 +554,7 @@ onMounted(load)
       <ul class="list-disc pl-5"><li v-for="m in consentKurang" :key="m">{{ m }}</li></ul>
     </div>
 
-    <div class="grid gap-5 xl:grid-cols-3">
+    <div class="grid grid-cols-1 gap-5 xl:grid-cols-3">
       <div class="space-y-5 xl:col-span-2">
         <!-- Tanda vital -->
         <section class="card">
@@ -647,6 +705,23 @@ onMounted(load)
                       {{ t.nama }}<span v-if="t.gigi" class="tabular-nums"> · {{ formatGigi(t.gigi, t.permukaan) }}</span>
                       <span v-if="!t.id" class="text-xs font-normal text-amber-700">· belum disimpan</span>
                     </p>
+                    <div v-if="opsiPaket(t).length" class="mt-1.5">
+                      <label class="sr-only" :for="`paket-${i}`">Pembayaran {{ t.nama }}</label>
+                      <select
+                        :id="`paket-${i}`"
+                        v-model="t.paket_pasien_item_id"
+                        class="input w-auto py-1 text-xs"
+                        :class="t.paket_pasien_item_id ? 'text-emerald-800' : ''"
+                        :disabled="!editable || !isDokter"
+                        @change="t.paket_no = opsiPaket(t).find((o) => o.id === t.paket_pasien_item_id)?.no"
+                      >
+                        <option :value="null">Bayar normal (tidak pakai paket)</option>
+                        <option v-for="o in opsiPaket(t)" :key="o.id" :value="o.id" :disabled="o.sisa < t.jumlah && o.id !== t.paket_pasien_item_id">
+                          Pakai paket {{ o.no }} · tersedia {{ o.sisa }} sesi
+                        </option>
+                      </select>
+                      <p v-if="errors[`tindakans.${i}.paket_pasien_item_id`]" class="field-error">{{ errors[`tindakans.${i}.paket_pasien_item_id`] }}</p>
+                    </div>
                     <p v-if="t.rencana_item_id" class="text-xs text-slate-500">Dari rencana perawatan<template v-if="t.rencana_judul">: {{ t.rencana_judul }}</template></p>
                     <p v-if="errors[`tindakans.${i}.rencana_item_id`]" class="field-error">{{ errors[`tindakans.${i}.rencana_item_id`] }}</p>
                     <div class="mt-0.5 text-xs text-slate-500">
@@ -690,7 +765,10 @@ onMounted(load)
                     <label class="sr-only" :for="`jumlah-${i}`">Jumlah {{ t.nama }}</label>
                     <input :id="`jumlah-${i}`" v-model.number="t.jumlah" type="number" min="1" class="input py-1" :disabled="!editable || !isDokter" />
                   </div>
-                  <p class="w-28 pt-1.5 text-right tabular-nums">{{ rupiah(t.tarif * t.jumlah) }}</p>
+                  <p class="w-28 pt-1.5 text-right tabular-nums">
+                    <template v-if="t.paket_pasien_item_id">{{ rupiah(0) }}<span class="block text-[11px] text-emerald-700">paket</span></template>
+                    <template v-else>{{ rupiah(t.tarif * t.jumlah) }}</template>
+                  </p>
                   <button v-if="editable && isDokter" type="button" class="pt-1 text-slate-400 hover:text-rose-600" :aria-label="`Hapus ${t.nama}`" @click="form.tindakans.splice(i, 1)">&times;</button>
                 </div>
                 <div class="mt-2 flex flex-wrap items-center gap-2">
@@ -789,6 +867,7 @@ onMounted(load)
           </div>
         </div>
 
+        <PaketPasienCard ref="paketCard" :pasien="kunjungan.pasien" ringkas />
         <FotoKlinisCard ref="fotoCard" :pasien="kunjungan.pasien" :kunjungan-id="kunjungan.id" :tindakans="tindakanFoto" :bisa-ambil="editable" />
         <LampiranBerkas :pasien-id="kunjungan.pasien_id" :kunjungan-id="kunjungan.id" :readonly="kunjungan.status === 'batal'" tanpa-foto />
 

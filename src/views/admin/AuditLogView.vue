@@ -68,6 +68,12 @@ const TIPE = {
   odontogram_kondisi: 'Kondisi odontogram',
   rencana_perawatan: 'Rencana perawatan gigi',
   rencana_perawatan_item: 'Item rencana perawatan',
+  paket: 'Paket treatment',
+  paket_item: 'Isi paket',
+  paket_pasien: 'Paket pasien',
+  paket_pasien_item: 'Sesi paket pasien',
+  promo: 'Voucher & promo',
+  promo_pemakaian: 'Pemakaian promo',
 }
 // Warna badge per kelompok aksi (merah = kegagalan / penghapusan, biru = akses data pasien)
 const warna = (aksi) =>

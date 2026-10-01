@@ -28,6 +28,16 @@ const MAP = {
   // Persetujuan foto
   berlaku: ['Berlaku', GREEN],
   diganti: ['Diganti', GRAY],
+  // Paket multi-sesi (status_efektif)
+  menunggu_bayar: ['Menunggu Bayar', VIOLET],
+  habis: ['Habis', GRAY],
+  kedaluwarsa: ['Kedaluwarsa', RED],
+  direfund: ['Direfund', GRAY],
+  dialihkan: ['Dialihkan', GRAY],
+  // Voucher & promo
+  belum_mulai: ['Belum Mulai', INDIGO],
+  berakhir: ['Berakhir', GRAY],
+  kuota_habis: ['Kuota Habis', ORANGE],
   // Rencana perawatan gigi
   draf: ['Draf', ORANGE],
   dibatalkan: ['Dibatalkan', GRAY],

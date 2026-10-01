@@ -130,6 +130,22 @@ Resep detail juga memuat `cabang` (kop etiket).
 - `GET /pengaturan` + `foto: { wajib_consent, naskah_consent }`. Enum: tahap `sebelum`/`sesudah`/`kontrol`, tingkat
   `klinis`/`edukasi`/`marketing`, status persetujuan `berlaku`/`diganti`/`dicabut`. Audit baru: `protokol_foto`, `persetujuan_foto`.
 
+## Paket & voucher/promo (F1-08)
+- `GET /pakets?aktif=1` → `[{ id, kode, nama, harga, masa_berlaku_hari, lintas_cabang, items: [{ tindakan_id, jumlah_sesi, tindakan: {nama, tarif} }], nilai_normal, terjual_count }]`.
+- Paket pasien (`GET /pasiens/{id}/pakets[?aktif=1]`, `GET /paket-pasiens/{id}`): `{ id, no_paket, nama, harga, nilai, status, status_efektif
+  (menunggu_bayar/aktif/habis/kedaluwarsa/dibatalkan/direfund/dialihkan), lintas_cabang, berlaku_sampai, total_sesi, sisa_sesi, nilai_terpakai,
+  cabang, tagihan: {id, no_tagihan, status, grand_total}, dialihkan_dari, dialihkan_ke, refund_nominal, direfund_at, items: [{ id, tindakan_id,
+  jumlah_sesi, nilai_per_sesi, terpakai, dipesan, sisa, tindakan }] }`; detail + `pemakaian[]` (tindakan kunjungan: kunjungan, petugas, cabang)
+  & `refund_sisa: { diizinkan, sisa_nilai, potongan_persen, potongan, nominal }`.
+- `POST /pasiens/{id}/pakets { paket_id, catatan }` → paket + `tagihan_id` (bayar di `/kasir/{tagihan_id}`).
+- Tagihan detail + `promo: {kode, nama, jenis, nilai}`, `diskon_promo`, `paket_pasiens[]`, `items[].tindakan_id/paket_id`; `kunjungan` bisa
+  **null** (tagihan mandiri, pakai `pasien` & `keterangan`). Grand total = (total − diskon − diskon_promo) + pajak_persen.
+- Pemeriksaan: `tindakans[].paket_pasien_item_id` (+ `paket_item.paket_pasien.no_paket` di respons); 422 `tindakans.{i}.paket_pasien_item_id`.
+- Promo: `{ id, kode, nama, jenis: persen|nominal, nilai, maks_potongan, min_transaksi, mulai, berakhir, kuota, kuota_per_pasien, cabang_ids,
+  tindakan_ids, paket_ids, is_active, dipakai, tindakans[], pakets[], cabangs[] }`. `POST /tagihans/{id}/promo {kode}` 422 `kode`.
+- Pengaturan + `paket: { boleh_transfer, refund_sisa, potongan_refund_persen }`, `penomoran.prefix_paket`. Izin `promo.kelola`. Audit baru:
+  `paket`, `paket_item`, `paket_pasien`, `paket_pasien_item`, `promo`, `promo_pemakaian`, aksi `perpanjang_paket`.
+
 ## Kedokteran gigi (F1-07)
 - `GET /odontogram/referensi` → `{ kondisi: [{ kode, label, cakupan: 'permukaan'|'gigi', kelompok, warna }], permukaan: ['M','O','D','B','L'] }`.
 - `GET /pasiens/{id}/odontogram[?kunjungan_id=]` → `{ kondisis: [Kondisi], perubahan: { dicatat: [Kondisi], diakhiri: [Kondisi] } | null,

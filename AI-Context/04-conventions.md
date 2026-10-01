@@ -48,6 +48,8 @@
 | `rme/ConsentFormModal` / `rme/ConsentLihatModal` | `kunjungan`, `tindakan` / `uuid`, `bisaCabut` | Ambil consent (naskah backend + tanda tangan) / lihat, cetak, cabut. |
 | `foto/FotoKlinisCard` | `pasien`, `kunjunganId?`, `tindakans`, `bisaAmbil`; expose `ambil(tindakan?)` | Persetujuan foto + kamera + galeri (F1-06). |
 | `foto/GaleriFoto`, `foto/BandingFoto`, `foto/KameraFoto`, `foto/PersetujuanFotoPanel` | lihat `08-fitur-fase-1.md` | Galeri & before-after, kamera terpandu, consent foto. |
+| `paket/PaketPasienCard` | `pasien`, `ringkas`; expose `muatUlang()`, `@changed` | Paket pasien: sisa per treatment (bar), riwayat pemakaian, jual, perpanjang/alihkan/refund sisa. `ringkas` = hanya paket aktif, tanpa aksi, tersembunyi bila kosong. |
+| `paket/JualPaketModal` | `v-model`, `pasien?` (null = pilih pasien) | Pilih paket katalog → tagihan → `/kasir/{tagihan_id}`. |
 | `gigi/OdontogramCard` | `pasien`, `kunjunganId?`, `editable`, `bisaTambahTindakan`, `@tambah-tindakan({gigi, permukaan})`; expose `muatUlang()` | Odontogram + panel gigi terpilih + perubahan kunjungan / riwayat (F1-07). |
 | `gigi/OdontogramChart` | `kondisis`, `peta`, `terpilih`, `tampilSulung`, `@pilih({gigi, permukaan})` | Gambar SVG FDI; `g[data-gigi]`, `polygon[data-permukaan]`. |
 | `gigi/PilihGigi` | `v-model:gigi`, `v-model:permukaan`, `tanpaPermukaan`, `disabled`, `invalid`, `idInput` | Select nomor gigi (grup kuadran) + tombol M/O/D/B/L. |
@@ -117,6 +119,8 @@
 | Foto klinis dari `<input type=file>` | Selalu lewat `siapkanFoto()` (`lib/foto.js`) agar EXIF/GPS terbuang & thumbnail terbentuk; jangan unggah berkas mentah ke kategori `foto_klinis`. |
 | Tautan foto & audit | Setiap tautan (termasuk thumbnail) tercatat audit — minta untuk foto yang tampil saja, jangan prefetch seluruh riwayat. |
 | Pemeriksaan yang sudah ditandatangani | Jangan tampilkan form edit; koreksi lewat `AddendumModal`. Backend menolak semua perubahan. |
+| Grid halaman (`grid lg:grid-cols-3`) melebar di mobile karena tabel | Tanpa `grid-cols-*` di mobile kolomnya `auto` → min-content tabel (riwayat, struk) melebarkan halaman. Tulis `grid grid-cols-1 gap-5 lg:grid-cols-…` (minmax(0,1fr)) + bungkus tabel `overflow-x-auto`. Ukur `scrollWidth` **setelah** transisi halaman selesai (±1,5 dtk). |
+| Prettier | Repo **tidak** punya konfigurasi Prettier; `npx prettier --write` memakai default (titik koma, kutip ganda, 80 kolom) dan merusak gaya. Jangan dijalankan. |
 | Konten lebar di dalam kolom grid (mis. SVG odontogram `min-w-[640px]`) | Item grid punya `min-width: auto` → seluruh halaman mobile ikut melebar. Bungkus dengan `overflow-x-auto [contain:inline-size]` (lihat `OdontogramCard`) agar hanya pembungkusnya yang bisa digeser. Cek `document.documentElement.scrollWidth` = lebar viewport di E2E. |
 | Baris tindakan pemeriksaan | `:key="t._key"` (bukan `tindakan_id`): tindakan yang sama boleh beberapa baris (beda gigi). Tindakan per gigi selalu baris baru; yang lain tetap digabung (`jumlah++`). |
 | Kode / warna kondisi gigi | Jangan disalin ke frontend — `referensiGigi()` (`lib/gigi.js`). Gambar odontogram hanya menerima `peta` dari situ. |

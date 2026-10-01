@@ -8,7 +8,7 @@ Kolom **Izin** = `meta.izin` di router (salah satu; administrator memegang semua
 | `/` | `DashboardView` | — | `GET /dashboard` (cabang aktif) |
 | `/profil` | `ProfilView` | — | `GET /me`, `PUT /me/password`, `POST /me/2fa`, `POST /me/2fa/konfirmasi`, `POST /me/2fa/kode-pemulihan`, `DELETE /me/2fa` |
 | `/pasien` | `pasien/PasienList` | pasien.lihat | `GET /pasiens`, form via `PasienFormModal` (`POST/PUT /pasiens`, tombol: pasien.kelola) |
-| `/pasien/:id` | `pasien/PasienDetail` | pasien.lihat | `GET /pasiens/{id}` (riwayat semua cabang; kolom diagnosa & lampiran bila rme.lihat), tombol Jejak Akses (audit.lihat). Odontogram (+ status per kunjungan) & rencana perawatan gigi bila rme.lihat dan `data_gigi` / pernah ke poli gigi |
+| `/pasien/:id` | `pasien/PasienDetail` | pasien.lihat | `GET /pasiens/{id}` (riwayat semua cabang; kolom diagnosa & lampiran bila rme.lihat), tombol Jejak Akses (audit.lihat). Kartu Paket Treatment (`/pasiens/{id}/pakets`, jual: kasir.tagihan, perpanjang/alihkan/refund sisa: kasir.void). Odontogram (+ status per kunjungan) & rencana perawatan gigi bila rme.lihat dan `data_gigi` / pernah ke poli gigi |
 | `/pendaftaran` | `pendaftaran/PendaftaranView` | kunjungan.daftar | `GET /polis?aktif=1`, `GET /dokters`, `GET /kunjungans`, `POST /kunjungans`, `POST /kunjungans/{id}/batal`. Query `?pasien_id=` memilih pasien otomatis. Cetak tiket antrian (nama klinik & cabang). |
 | `/kunjungan/:id` | `KunjunganDetail` | — | `GET /kunjungans/{id}` (lintas cabang, read-only). Rekam medis & lampiran hanya bila rme.lihat (dan bukan `rme_disembunyikan`); `GET .../verifikasi` (tombol Cek keutuhan), `POST .../addendum` (pemeriksaan.dokter, cabang aktif). Odontogram pada kunjungan itu (baca) untuk poli gigi / kunjungan berdata gigi |
 | `/antrian` | `pemeriksaan/AntrianView` | pemeriksaan.panggil, .vital, .dokter | `GET /kunjungans` (tab status, filter poli default = poli user), `POST .../panggil`. Auto-refresh 30 dtk. |
@@ -16,10 +16,12 @@ Kolom **Izin** = `meta.izin` di router (salah satu; administrator memegang semua
 | `/farmasi/resep` | `farmasi/ResepList` | farmasi.resep | `GET /reseps` |
 | `/farmasi/resep/:id` | `farmasi/ResepDetail` | farmasi.resep | `GET /reseps/{id}`, `POST .../serahkan`; cetak etiket (nama klinik & cabang) |
 | `/farmasi/obat` | `farmasi/ObatList` | farmasi.obat | `GET/POST/PUT /obats`, `DELETE` (master.kelola), `GET/POST /obats/{id}/mutasi` |
-| `/kasir` | `kasir/TagihanList` | kasir.tagihan | `GET /tagihans` |
-| `/kasir/:id` | `kasir/TagihanDetail` | kasir.tagihan | `GET /tagihans/{id}`, `POST .../bayar`; cetak struk (kop klinik/cabang, catatan kaki & lebar kertas dari pengaturan) |
+| `/kasir` | `kasir/TagihanList` | kasir.tagihan | `GET /tagihans` (tagihan dengan/tanpa kunjungan); "+ Jual paket" (`JualPaketModal`: `/pasiens`, `/pakets?aktif=1`, `POST /pasiens/{id}/pakets`) |
+| `/kasir/:id` | `kasir/TagihanDetail` | kasir.tagihan | `GET /tagihans/{id}`, `POST/DELETE .../promo` (kode voucher), `POST .../bayar`; tagihan mandiri (paket/produk) tanpa kunjungan; pajak & potongan promo di layar; cetak struk (kop klinik/cabang, catatan kaki & lebar kertas dari pengaturan) |
+| `/promo` | `kasir/PromoView` | promo.kelola | `GET/POST/PUT/DELETE /promos`, `/cabangs`, `/pakets?aktif=1`, `AsyncSelect` `/tindakans` |
 | `/master/poli` | `master/PoliView` | master.kelola | `/polis` via `MasterCrud` (+ spesialisasi: `gigi` menampilkan odontogram) |
 | `/master/tindakan` | `master/TindakanView` | master.kelola | Katalog treatment (halaman khusus, bukan MasterCrud): `GET /tindakans` (filter kategori/status), `GET /tindakans/{id}` saat Ubah, `POST/PUT/DELETE /tindakans`, `GET /kategori-tindakans`, `GET /cabangs` (grid harga), `AsyncSelect` `/obats` (BHP). `?baru=1` membuka form |
+| `/master/paket` | `master/PaketView` | master.kelola | `GET/POST/PUT/DELETE /pakets` (isi treatment × sesi, harga, masa berlaku, lintas cabang; hemat % dari `nilai_normal`) |
 | `/master/kategori-treatment` | `master/KategoriTindakanView` | master.kelola | `/kategori-tindakans` via `MasterCrud` |
 | `/master/icd10` | `master/Icd10View` | master.kelola | `/icd10s` via `MasterCrud` (+ penanda sensitif) |
 | `/master/icd9cm` | `master/Icd9cmView` | master.kelola | `/icd9cms` via `MasterCrud` |
@@ -50,6 +52,8 @@ klik nama/avatar di header. Lihat [07-navigasi-modul.md](07-navigasi-modul.md).
   - Menampilkan alergi pasien (merah), IMT, estimasi biaya, lampiran & foto klinis kunjungan, riwayat kunjungan (dengan nama cabang).
   - Poli gigi (F1-07): kartu Odontogram & Rencana Perawatan Gigi di bawah SOAP, input gigi + permukaan per tindakan — lihat
     [08-fitur-fase-1.md](08-fitur-fase-1.md) bagian F1-07.
+  - Paket (F1-08): pilihan "Pakai paket" per tindakan (otomatis bila pasien punya sisa sesi treatment itu) → Rp 0; kartu Paket
+    Treatment ringkas di kolom kanan.
 - **AntrianView**: "Pasien saya saja" hanya untuk `user.tercatat_dokter`; tombol "Isi TTV" untuk pemegang `pemeriksaan.vital` tanpa `pemeriksaan.dokter`.
 - **ResepDetail**: tombol serahkan nonaktif bila tagihan belum lunas atau stok kurang.
 - **TagihanDetail**: metode default `penjamin` bila penjamin kunjungan bukan umum; tombol pecahan uang cepat; kembalian dihitung di UI tetapi nilai final dari backend.

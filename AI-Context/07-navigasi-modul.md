@@ -33,8 +33,8 @@ permintaan user** — pertahankan rail mengambang ini, jangan digabung menjadi s
 | Pendaftaran (`pendaftaran`) | Data Pasien, Pendaftaran Kunjungan |
 | Pelayanan (`pelayanan`) | Antrian Poli (+ `/pemeriksaan/:id`) |
 | Farmasi (`farmasi`) | Resep, Obat & Stok |
-| Keuangan (`keuangan`) | Kasir |
-| Master Data (`master`) | Poli, Treatment, Kategori Treatment, Cabang |
+| Keuangan (`keuangan`) | Kasir, Voucher & Promo (F1-08, `promo.kelola`) |
+| Master Data (`master`) | Poli, Treatment, Paket Treatment (F1-08), Kategori Treatment, Cabang |
 | Rekam Medis (`rekam-medis`) | ICD-10, ICD-9-CM, Template SOAP, Protokol Foto (F1-06), Template Consent (F1-05; dipisah dari Master Data agar tab header tidak terlipat dua baris) |
 | Administrasi (`administrasi`) | Pengguna, Peran & Izin, Pengaturan, Audit Log |
 
