@@ -83,7 +83,7 @@
 - **Sumber tunggal: `public/favicon.svg`** — huruf K bersudut biru (12 faset), latar transparan, digambar ulang sebagai vektor dari
   gambar logo yang diberikan user (1 Okt 2026). Ganti file ini untuk mengganti logo di mana pun.
 - Pakai komponen **`<AppLogo class="size-11" />`** (`components/AppLogo.vue`, `<img>` ke favicon.svg) — jangan menyalin SVG ke template.
-  Dipakai di header `AppLayout`, drawer mobile, dan `LoginView` (di panel biru diberi alas putih `bg-white rounded-2xl` agar kontras).
+  Dipakai di header `AppLayout`, drawer mobile, dan `LoginView` (pojok kiri atas panel form + lingkaran putih "avatar" di bawah kutipan).
 - Ikon turunan dibuat dari favicon.svg dengan **`npm run ikon`** (`scripts/buat-ikon.mjs`, Chrome headless lewat `playwright-core`;
   set `CHROME_PATH` bila Chrome tidak di lokasi default Windows): `favicon.ico` (16/32/48, juga disalin ke `backend/public/`),
   `icon-192.png`, `icon-512.png` (manifest), `apple-touch-icon.png` (180 px, latar putih). Jalankan ulang setiap logo berubah.
@@ -93,6 +93,23 @@
   `klinik` tipis, ditulis huruf kecil; di kalimat/judul ditulis "Lefaklinik". Nama teknis tetap `eklinik` (folder, database, container,
   `config/eklinik.php`, email demo `@eklinik.test`, kunci `localStorage`) — jangan diganti tanpa migrasi data.
 - Logo = identitas **produk**. Kop dokumen cetak (struk, tiket, etiket, consent) tetap memakai identitas **klinik** dari pengaturan.
+
+## Halaman login (`LoginView`)
+
+- Tata letak mengikuti referensi desain dari user (2 Okt 2026; contoh aslinya aplikasi hotel, diadaptasi ke klinik): latar gelap senada
+  brand + pola garis gedung samar, kartu `rounded-[2rem]` dua kolom — **kiri** panel form (logo + nama klinik, judul "Masuk" di tengah,
+  input pil putih tanpa garis dengan ikon, tombol mata tampil/sembunyi password, tombol utama pil penuh, pemisah "Akun demo" + tombol
+  akun demo), **kanan** (≥ `lg`) kutipan bertanda kutip oranye + logo & nama klinik + ilustrasi klinik di bawah. Mobile = panel form saja.
+- **Fungsi tetap**: email + password, langkah kode 2FA, pesan `?sesi=habis`, akun demo. **Tanpa SSO, tanpa daftar akun, tanpa lupa
+  password** — elemen itu di referensi sengaja tidak dibawa. Akun demo disembunyikan saat langkah 2FA.
+- Aset (`components/login/`, SVG inline agar ikut tema & mode gelap):
+  - `IlustrasiKlinik` — line-art gedung klinik bertanda silang + panel detak jantung, dua menara, apotek (tenda & papan kapsul),
+    pepohonan. Garis = `color-mix(brand-950, slate)`, isian biru = `brand-100`, pastel persik/kuning/mint tetap; varian `dark:` per isian.
+    Bagian bawah & kanan sengaja terpotong (menempel di sudut panel). Diletakkan dalam alur flex (`mt-auto`), bukan `absolute`,
+    agar tidak menimpa kutipan saat kartu memendek (langkah 2FA).
+  - `PolaLatarKlinik` — deret garis gedung tanpa isian (`currentColor`, `preserveAspectRatio="xMidYMax slice"`), dipakai
+    `text-white/[0.07]` di bawah latar.
+- Warna panel & latar dari `color-mix(in oklab, var(--color-brand-*) …)` (kelas arbitrer Tailwind) sehingga ikut rona tema.
 
 ## Identitas klinik & cetak
 

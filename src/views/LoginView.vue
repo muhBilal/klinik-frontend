@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import AppIcon from '@/components/AppIcon.vue'
 import AppLogo from '@/components/AppLogo.vue'
 import AppSpinner from '@/components/AppSpinner.vue'
+import IlustrasiKlinik from '@/components/login/IlustrasiKlinik.vue'
+import PolaLatarKlinik from '@/components/login/PolaLatarKlinik.vue'
 import { errorMessage, validationErrors } from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 import { useKlinikStore } from '@/stores/klinik'
@@ -17,17 +19,27 @@ const form = reactive({ email: '', password: '' })
 const errors = ref({})
 const message = ref(route.query.sesi === 'habis' ? 'Sesi Anda telah berakhir. Silakan masuk kembali.' : '')
 const loading = ref(false)
+const lihatPassword = ref(false)
 // Langkah kedua login untuk akun ber-2FA
 const tantangan = ref('')
 const kode = ref('')
 
-// Tile modul di panel hero (ikon heroicons outline)
-const fitur = [
-  { label: 'Antrian poli', icon: 'M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z' },
-  { label: 'Rekam medis', icon: 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z' },
-  { label: 'Farmasi', icon: 'M9.75 3.104v5.714a2.25 2.25 0 01-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 014.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0112 15a9.065 9.065 0 00-6.23-.693L5 14.5m14.8.8l1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0112 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5' },
-  { label: 'Kasir', icon: 'M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z' },
-]
+// Ikon heroicons outline
+const ikon = {
+  email:
+    'M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75',
+  kunci:
+    'M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z',
+  mata: 'M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z',
+  mataTutup:
+    'M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88',
+  kembali: 'M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18',
+}
+// Tanda kutip pembuka (penutup = diputar 180°)
+const KUTIP = 'M3 12.5C3 8.4 5.5 5.4 9.3 4.5l.8 2C8 7.3 6.9 8.9 6.8 10.8H10V19H3v-6.5zm11 0c0-4.1 2.5-7.1 6.3-8l.8 2c-2.1.8-3.2 2.4-3.3 4.3H21V19h-7v-6.5z'
+
+/** Kolom pil putih tanpa garis (gaya referensi desain); garis merah tetap muncul saat ada error. */
+const kolom = (error) => ['input rounded-full py-3', error ? 'input-error' : 'border-transparent focus:border-brand-400 dark:bg-slate-800/70']
 
 const demoAkun = [
   ['admin', 'Admin'],
@@ -85,95 +97,146 @@ function isiDemo(role) {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center p-4 sm:p-8">
-    <div class="glass grid w-full max-w-5xl motion-safe:animate-pop overflow-hidden rounded-[2rem] lg:grid-cols-[1.1fr_1fr]">
-      <!-- Panel hero -->
-      <div class="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-brand-500 via-brand-700 to-brand-950 p-10 text-white lg:flex">
-        <div class="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full border border-white/20 bg-white/10" />
-        <div class="pointer-events-none absolute -bottom-32 -left-20 size-80 rounded-full border border-white/10 bg-white/5" />
-        <div class="pointer-events-none absolute right-12 bottom-28 size-24 rotate-12 rounded-3xl border border-white/25 bg-white/10 shadow-xl backdrop-blur-md" />
+  <!-- Latar gelap senada brand + pola garis gedung samar; warna mengikuti tema (--color-brand-*) -->
+  <div
+    class="relative isolate flex min-h-screen items-center justify-center overflow-hidden bg-[color-mix(in_oklab,var(--color-brand-950)_50%,#04070d)] p-4 sm:p-8 dark:bg-[color-mix(in_oklab,var(--color-brand-950)_22%,#020617)]"
+  >
+    <PolaLatarKlinik class="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-64 w-full text-white/[0.07] sm:h-80" />
 
-        <div class="relative flex items-center gap-3">
-          <!-- Logo biru di atas latar biru: diberi alas putih agar kontras -->
-          <div class="grid size-12 place-items-center rounded-2xl bg-white shadow-lg shadow-blue-900/30">
-            <AppLogo class="size-8" />
-          </div>
-          <div>
-            <p class="text-lg leading-tight font-bold">{{ klinik.nama }}</p>
-            <p class="text-xs text-white/70">Sistem Informasi Klinik</p>
-          </div>
+    <div
+      class="grid w-full max-w-[68rem] overflow-hidden rounded-[2rem] shadow-2xl ring-1 shadow-black/40 ring-white/10 motion-safe:animate-pop lg:min-h-[40rem] lg:grid-cols-2"
+    >
+      <!-- Panel form -->
+      <section class="flex flex-col bg-[color-mix(in_oklab,var(--color-brand-100)_45%,#eeede8)] px-6 py-7 sm:px-12 sm:py-9 dark:bg-slate-900">
+        <div class="flex items-center gap-2.5">
+          <AppLogo class="size-9" />
+          <p class="text-[17px] font-bold tracking-tight text-slate-800 dark:text-white">{{ klinik.nama }}</p>
         </div>
 
-        <div class="relative">
-          <h1 class="text-3xl leading-tight font-bold">Pelayanan klinik yang tertata,<br />dari pendaftaran hingga kasir.</h1>
-          <p class="mt-4 max-w-md text-white/80">Antrian poli, rekam medis SOAP dengan ICD-10, resep elektronik, stok farmasi, dan pembayaran dalam satu sistem.</p>
-          <div class="mt-8 grid max-w-sm grid-cols-2 gap-3">
-            <div
-              v-for="(f, i) in fitur"
-              :key="f.label"
-              :class="i === 0 ? 'bg-white text-slate-900 shadow-xl shadow-black/40' : 'border border-white/15 bg-white/10 text-white backdrop-blur'"
-              class="flex items-center gap-2.5 rounded-2xl px-4 py-3 text-sm font-medium"
+        <div class="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">
+          <h1 class="text-center text-[28px] font-bold tracking-tight text-slate-900 dark:text-white">{{ tantangan ? 'Verifikasi Dua Langkah' : 'Masuk' }}</h1>
+          <p class="mt-1.5 text-center text-sm text-slate-500 dark:text-slate-400">
+            {{
+              tantangan
+                ? 'Masukkan kode 6 digit dari aplikasi authenticator, atau salah satu kode pemulihan.'
+                : 'Selamat datang kembali! Masuk dengan akun yang diberikan administrator klinik.'
+            }}
+          </p>
+
+          <form class="mt-8 space-y-5" @submit.prevent="submit">
+            <div v-if="message" class="alert alert-danger py-2">{{ message }}</div>
+            <template v-if="!tantangan">
+              <div>
+                <label class="label text-[13px] text-slate-700 dark:text-slate-300" for="email">Email <span class="text-brand-700 dark:text-brand-400">*</span></label>
+                <div class="relative">
+                  <AppIcon :path="ikon.email" size="size-4.5" class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    id="email"
+                    v-model="form.email"
+                    type="email"
+                    :class="kolom(errors.email)"
+                    class="pl-11"
+                    placeholder="nama@klinik.com"
+                    autocomplete="username"
+                    required
+                    autofocus
+                  />
+                </div>
+                <p v-if="errors.email" class="field-error pl-4">{{ errors.email }}</p>
+              </div>
+              <div>
+                <label class="label text-[13px] text-slate-700 dark:text-slate-300" for="password">Password <span class="text-brand-700 dark:text-brand-400">*</span></label>
+                <div class="relative">
+                  <AppIcon :path="ikon.kunci" size="size-4.5" class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-slate-400" />
+                  <input
+                    id="password"
+                    v-model="form.password"
+                    :type="lihatPassword ? 'text' : 'password'"
+                    :class="kolom(errors.password)"
+                    class="pr-12 pl-11"
+                    placeholder="Masukkan password"
+                    autocomplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    class="absolute top-1/2 right-2 grid size-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 transition hover:bg-slate-900/5 hover:text-slate-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 dark:hover:bg-white/10 dark:hover:text-slate-200"
+                    :aria-label="lihatPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                    :aria-pressed="lihatPassword"
+                    @click="lihatPassword = !lihatPassword"
+                  >
+                    <AppIcon :path="lihatPassword ? ikon.mataTutup : ikon.mata" size="size-4.5" />
+                  </button>
+                </div>
+                <p v-if="errors.password" class="field-error pl-4">{{ errors.password }}</p>
+              </div>
+            </template>
+            <div v-else>
+              <label class="label text-[13px] text-slate-700 dark:text-slate-300" for="kode">Kode verifikasi</label>
+              <input
+                id="kode"
+                v-model="kode"
+                :class="kolom(errors.kode)"
+                class="text-center font-mono text-lg tracking-[0.3em]"
+                autocomplete="one-time-code"
+                maxlength="20"
+                required
+                autofocus
+              />
+              <p v-if="errors.kode" class="field-error pl-4">{{ errors.kode }}</p>
+            </div>
+            <button type="submit" class="btn btn-primary w-full py-3 text-[15px]" :disabled="loading">
+              <AppSpinner v-if="loading" />{{ loading ? 'Memproses...' : tantangan ? 'Verifikasi' : 'Masuk' }}
+            </button>
+            <button
+              v-if="tantangan"
+              type="button"
+              class="mx-auto flex items-center gap-1.5 text-[13px] font-medium text-slate-500 hover:text-brand-900 hover:underline dark:text-slate-400 dark:hover:text-brand-300"
+              @click="batal2fa"
             >
-              <AppIcon :path="f.icon" size="size-4.5" />{{ f.label }}
+              <AppIcon :path="ikon.kembali" size="size-3.5" />Kembali ke email & password
+            </button>
+          </form>
+
+          <div v-if="!tantangan" class="mt-9">
+            <div class="flex items-center gap-3 text-[11px] font-semibold tracking-wider text-slate-400 uppercase">
+              <span class="h-px flex-1 bg-slate-900/10 dark:bg-white/10" />Akun demo<span class="h-px flex-1 bg-slate-900/10 dark:bg-white/10" />
+            </div>
+            <p class="mt-2 text-center text-xs text-slate-500 dark:text-slate-400">
+              Password semua akun: <code class="rounded bg-slate-900/5 px-1 dark:bg-white/10">password</code>
+            </p>
+            <div class="mt-3 flex flex-wrap justify-center gap-1.5">
+              <button v-for="[role, label] in demoAkun" :key="role" type="button" class="btn btn-secondary btn-sm border-transparent" @click="isiDemo(role)">{{ label }}</button>
             </div>
           </div>
         </div>
 
-        <p class="relative text-sm text-white/60">&copy; {{ new Date().getFullYear() }} {{ klinik.nama }}</p>
-      </div>
+        <p class="text-center text-xs text-slate-400 dark:text-slate-500">&copy; {{ new Date().getFullYear() }} Lefateach</p>
+      </section>
 
-      <!-- Form -->
-      <div class="p-8 sm:p-12">
-        <div class="mb-8 flex items-center gap-3 lg:hidden">
-          <AppLogo class="size-10" />
-          <p class="text-lg font-bold text-slate-800">{{ klinik.nama }}</p>
-        </div>
-
-        <h2 class="text-2xl font-bold tracking-tight text-slate-800">Selamat datang</h2>
-        <p class="mt-1 text-sm text-slate-500">Masuk dengan akun yang diberikan administrator klinik.</p>
-
-        <form class="mt-8 space-y-4" @submit.prevent="submit">
-          <div v-if="message" class="alert alert-danger py-2">{{ message }}</div>
-          <template v-if="!tantangan">
+      <!-- Panel kutipan + ilustrasi klinik -->
+      <!-- Ilustrasi ikut alur flex (bukan absolute) agar tidak pernah menimpa kutipan saat kartu memendek (langkah 2FA) -->
+      <aside class="hidden flex-col overflow-hidden bg-[color-mix(in_oklab,var(--color-brand-50)_45%,#fbfbf8)] lg:flex dark:bg-slate-800/60">
+        <div class="px-14 pt-16 pb-8 xl:px-16">
+          <svg class="size-7 text-orange-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path :d="KUTIP" /></svg>
+          <blockquote class="mt-4 max-w-md text-xl leading-snug font-semibold text-slate-800 xl:text-[22px] dark:text-slate-100">
+            Pendaftaran, rekam medis, farmasi, hingga kasir tertata dalam satu sistem, sehingga tim klinik bisa lebih fokus melayani pasien.
+          </blockquote>
+          <div class="flex max-w-md justify-end">
+            <svg class="mt-2 size-7 rotate-180 text-orange-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path :d="KUTIP" /></svg>
+          </div>
+          <div class="mt-5 flex items-center gap-3">
+            <div class="grid size-11 place-items-center rounded-full bg-white shadow-xs ring-1 ring-slate-900/5 dark:bg-slate-700 dark:ring-white/10">
+              <AppLogo class="size-6" />
+            </div>
             <div>
-              <label class="label" for="email">Email</label>
-              <input id="email" v-model="form.email" type="email" class="input" :class="{ 'input-error': errors.email }" autocomplete="username" required autofocus />
-              <p v-if="errors.email" class="field-error">{{ errors.email }}</p>
+              <p class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ klinik.nama }}</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Sistem Informasi Klinik</p>
             </div>
-            <div>
-              <label class="label" for="password">Password</label>
-              <input id="password" v-model="form.password" type="password" class="input" :class="{ 'input-error': errors.password }" autocomplete="current-password" required />
-              <p v-if="errors.password" class="field-error">{{ errors.password }}</p>
-            </div>
-          </template>
-          <div v-else>
-            <p class="mb-3 text-sm text-slate-600">Masukkan kode 6 digit dari aplikasi authenticator, atau salah satu kode pemulihan.</p>
-            <label class="label" for="kode">Kode verifikasi</label>
-            <input
-              id="kode"
-              v-model="kode"
-              class="input text-center font-mono text-lg tracking-[0.3em]"
-              :class="{ 'input-error': errors.kode }"
-              autocomplete="one-time-code"
-              maxlength="20"
-              required
-              autofocus
-            />
-            <p v-if="errors.kode" class="field-error">{{ errors.kode }}</p>
-            <button type="button" class="mt-2 text-xs font-medium text-slate-500 hover:underline" @click="batal2fa">Kembali ke email & password</button>
-          </div>
-          <button type="submit" class="btn btn-primary w-full py-2.5" :disabled="loading">
-            <AppSpinner v-if="loading" />{{ loading ? 'Memproses...' : tantangan ? 'Verifikasi' : 'Masuk' }}
-          </button>
-        </form>
-
-        <div class="mt-8 rounded-2xl border border-white/70 bg-white/40 p-4">
-          <p class="text-xs font-medium text-slate-500">Akun demo (password: <code class="rounded bg-slate-900/5 px-1">password</code>)</p>
-          <div class="mt-2 flex flex-wrap gap-1.5">
-            <button v-for="[role, label] in demoAkun" :key="role" type="button" class="btn btn-secondary btn-sm" @click="isiDemo(role)">{{ label }}</button>
           </div>
         </div>
-      </div>
+        <IlustrasiKlinik class="pointer-events-none mt-auto block w-full" />
+      </aside>
     </div>
   </div>
 </template>
