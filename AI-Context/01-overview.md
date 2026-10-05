@@ -42,7 +42,7 @@ menyajikan `dist/` dari Nginx di container yang sama dengan API, di http://local
 Syarat: repo ini berada di folder `frontend/` sejajar dengan `backend/`:
 
 ```
-lefaklinik/     (folder: eklinik)
+vertiqo/        (folder: eklinik)
 ├── backend/    klinik-backend (docker-compose.yml di sini)
 └── frontend/   repo ini
 ```

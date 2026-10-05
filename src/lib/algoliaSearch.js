@@ -1,5 +1,5 @@
 /**
- * Algolia Search Engine untuk Menu, Modul, Aksi Cepat & Navigasi Lefaklinik.
+ * Algolia Search Engine untuk Menu, Modul, Aksi Cepat & Navigasi Vertiqo.
  * Menyediakan Algolia-style fuzzy matching, typo tolerance (Damerau-Levenshtein),
  * multi-token search, ranking relevance, text highlighting, dan recent searches history.
  */

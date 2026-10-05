@@ -1,8 +1,8 @@
 <script setup>
 /**
- * Logo lefaklinik (huruf K bersudut, latar transparan). Sumber tunggal: `public/favicon.svg` — ganti file itu untuk
- * mengganti logo di seluruh aplikasi (favicon, header, login, drawer). Ikon PNG/ICO dibuat dari file yang sama
- * (lihat `frontend/AI-Context/04-conventions.md` bagian Logo).
+ * Logo Vertiqo (jaringan simpul + panah naik + centang oranye, latar transparan). Sumber tunggal: `public/favicon.svg` —
+ * ganti file itu untuk mengganti logo di seluruh aplikasi (favicon, header, login, drawer). Ikon PNG/ICO dibuat dari file
+ * yang sama (lihat `frontend/AI-Context/04-conventions.md` bagian Logo).
  */
 defineProps({
   /** Teks alternatif; kosong = dekoratif (nama klinik/produk sudah tertulis di sebelahnya). */

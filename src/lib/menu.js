@@ -1,5 +1,5 @@
 /**
- * Menu navigasi Lefaklinik: MODUL (grup, satu tombol di rail kiri) -> ITEM halaman (tampil di navbar saat modulnya dipilih).
+ * Menu navigasi Vertiqo: MODUL (grup, satu tombol di rail kiri) -> ITEM halaman (tampil di navbar saat modulnya dipilih).
  * Modul: `key` (unik), `title`, `description`, `icon`. Item: `label`, `to`, `izin`, `match`, `icon`, metadata pencarian.
  * `izin` = tampil bila user punya SALAH SATU izin (sama dengan `meta.izin` route); kosong = semua user.
  * Modul tanpa item yang boleh diakses tidak ditampilkan. Administrator memegang semua izin. Ikon: path SVG (Heroicons outline 24px).

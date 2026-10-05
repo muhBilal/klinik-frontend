@@ -1,4 +1,4 @@
-# AI-Context — Frontend Lefaklinik
+# AI-Context — Frontend Vertiqo
 
 Konteks untuk AI assistant (dan developer baru) yang akan bekerja di `frontend/`.
 
@@ -23,7 +23,7 @@ Dokumen per fitur (backend + frontend): `backend/AI-Context/modul/`.
 - Menu & halaman dibatasi per **izin** (`auth.can('pasien.kelola')`, `meta.izin`, `izin` di menu) — bukan kode peran. Administrator
   memegang semua izin. Backend tetap sumber kebenaran hak akses.
 - User lintas cabang memilih **cabang aktif** di header (dikirim sebagai header `X-Cabang-Id`); staf cabang terkunci ke cabangnya.
-- Nama klinik, kop struk, lebar kertas dari `GET /info` (`useKlinikStore`) — jangan menulis "Lefaklinik" / nama klinik di template (kecuali wordmark produk di `AppLayout`).
+- Nama klinik, kop struk, lebar kertas dari `GET /info` (`useKlinikStore`) — jangan menulis "Vertiqo" / nama klinik di template (kecuali wordmark produk di `AppLayout`).
 - Bahasa UI: **Bahasa Indonesia**.
 
 ## Aturan emas

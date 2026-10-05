@@ -1,20 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 680" role="img" aria-label="lefaklinik">
-  <!-- Logo lefaklinik: huruf K bersudut (batang tegak + dua lengan), latar transparan. Sumber tunggal logo aplikasi. -->
-  <g stroke-linejoin="round">
-    <!-- Batang tegak -->
-    <polygon points="71,31 133,89 133,589 71,649" fill="#0D99DB" stroke="#0D99DB" stroke-width="2" />
-    <polygon points="196,31 196,649 133,589 133,89" fill="#0567B5" stroke="#0567B5" stroke-width="2" />
-    <polygon points="71,31 196,31 133,89" fill="#5AABE0" stroke="#5AABE0" stroke-width="2" />
-    <polygon points="71,649 133,589 196,649" fill="#2582C8" stroke="#2582C8" stroke-width="2" />
-    <!-- Lengan atas -->
-    <polygon points="229,259 445,31 476,77 275,292" fill="#55A8DF" stroke="#55A8DF" stroke-width="2" />
-    <polygon points="445,31 608,31 476,77" fill="#7AB8E3" stroke="#7AB8E3" stroke-width="2" />
-    <polygon points="275,292 476,77 608,31 229,432" fill="#1B7ABF" stroke="#1B7ABF" stroke-width="2" />
-    <polygon points="229,259 275,292 229,432" fill="#2B8DD7" stroke="#2B8DD7" stroke-width="2" />
-    <!-- Lengan bawah -->
-    <polygon points="283,432 363,344 358,430" fill="#3A9DDF" stroke="#3A9DDF" stroke-width="2" />
-    <polygon points="283,432 358,430 489,594 451,649" fill="#1590D7" stroke="#1590D7" stroke-width="2" />
-    <polygon points="363,344 608,649 489,594 358,430" fill="#0B7AC4" stroke="#0B7AC4" stroke-width="2" />
-    <polygon points="451,649 489,594 608,649" fill="#1F7EC4" stroke="#1F7EC4" stroke-width="2" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="1 2 125 125" role="img" aria-label="Vertiqo">
+  <!-- Logo Vertiqo: jaringan 5 simpul biru + panah naik + centang oranye, latar transparan. Sumber tunggal logo aplikasi. -->
+  <defs>
+    <linearGradient id="biru" gradientUnits="userSpaceOnUse" x1="5" y1="125" x2="125" y2="5">
+      <stop offset="0.2" stop-color="#16466F" />
+      <stop offset="0.5" stop-color="#1D6698" />
+      <stop offset="0.8" stop-color="#2189C0" />
+    </linearGradient>
+    <!-- Celah di sekeliling centang (memotong garis biru di bawahnya; transparan, aman di mode gelap) -->
+    <mask id="celah-centang" maskUnits="userSpaceOnUse" x="-10" y="-10" width="150" height="150">
+      <rect x="-10" y="-10" width="150" height="150" fill="#fff" />
+      <polygon points="43,73.4 49.8,66.7 60.8,80.8 104.2,15.2 117.2,4.3 118.5,6.5 118.7,18.3 107,28.6 61,100.8" fill="#000" />
+      <path d="M60.8 80.8 L104.2 15.2 L117.2 4.3 L118.5 6.5 L118.7 18.3 L123 21.5 M107 28.6 L61 100.8" fill="none" stroke="#000" stroke-width="7.2" stroke-linejoin="round" />
+    </mask>
+    <!-- Celah tempat garis simpul kiri-atas -> bawah menyilang garis simpul kiri-bawah -> tengah -->
+    <mask id="celah-garis" maskUnits="userSpaceOnUse" x="-10" y="-10" width="150" height="150">
+      <rect x="-10" y="-10" width="150" height="150" fill="#fff" />
+      <path d="M11.6 85.1 L59.2 49.3" stroke="#000" stroke-width="13.2" />
+    </mask>
+  </defs>
+
+  <!-- Garis simpul kiri-atas -> bawah: biru sebelum silang, berlanjut sebagai garis oranye tipis -->
+  <g mask="url(#celah-garis)" stroke-width="4.7">
+    <path d="M11.9 37.6 L31.94 69.8" stroke="url(#biru)" />
+    <path d="M31.14 69.8 L61.4 118.4" stroke="#EF7A24" stroke-width="4.6" />
   </g>
+
+  <g mask="url(#celah-centang)" fill="none" stroke="url(#biru)">
+    <!-- Garis antarsimpul -->
+    <path d="M11.9 37.6 L59.2 49.3 M11.9 37.6 L11.6 85.1 L59.2 49.3 L112.6 84.1 M11.6 85.1 L62.2 118.4 L112.6 84.1" stroke-width="4.7" />
+    <!-- Panah naik (kerangka): sisi kiri dari simpul tengah, sisi kanan dari simpul bawah -->
+    <path d="M66.5 56 L85.2 25.7 L75.5 18.2 L118 7 M63.6 118.1 L109.6 42.6 L118.9 50.4 L116.4 4" stroke-width="5.6" stroke-linejoin="miter" stroke-miterlimit="10" />
+    <polygon points="69.3,17 80.7,27.6 85.2,25.7" fill="url(#biru)" stroke="none" />
+    <!-- Simpul -->
+    <g fill="url(#biru)" stroke="none">
+      <circle cx="11.9" cy="37.6" r="7.2" />
+      <circle cx="59.2" cy="49.3" r="7.2" />
+      <circle cx="11.6" cy="85.1" r="7.2" />
+      <circle cx="62.2" cy="118.4" r="7.2" />
+      <circle cx="112.6" cy="84.1" r="7.2" />
+    </g>
+  </g>
+
+  <!-- Centang oranye: faset gelap (dasar) + faset terang -->
+  <polygon points="43,73.4 49.8,66.7 60.8,80.8 104.2,15.2 117.2,4.3 118.5,6.5 118.7,18.3 107,28.6 61,100.8" fill="#EE6E21" />
+  <polygon points="43,73.4 49.8,66.7 60.8,80.8 104.2,15.2 117.2,4.3 61,90" fill="#F7932A" />
 </svg>

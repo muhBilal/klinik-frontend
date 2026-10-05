@@ -80,17 +80,22 @@
 
 ## Logo produk
 
-- **Sumber tunggal: `public/favicon.svg`** — huruf K bersudut biru (12 faset), latar transparan, digambar ulang sebagai vektor dari
-  gambar logo yang diberikan user (1 Okt 2026). Ganti file ini untuk mengganti logo di mana pun.
+- **Sumber tunggal: `public/favicon.svg`** — logo Vertiqo: jaringan 5 simpul biru (gradien navy `#16466F` → biru `#2189C0`),
+  panah naik berkerangka biru, centang oranye dua faset (`#F7932A` terang, `#EE6E21` gelap) + garis oranye tipis; latar transparan,
+  `viewBox` persegi. Celah di sekeliling centang dan di persilangan garis dibuat dengan `<mask>` (bukan garis putih) sehingga tetap
+  transparan di mode gelap. Digambar ulang sebagai vektor dari gambar logo PNG yang diberikan user (5 Okt 2026), bukan file asli.
+  Ganti file ini untuk mengganti logo di mana pun.
 - Pakai komponen **`<AppLogo class="size-11" />`** (`components/AppLogo.vue`, `<img>` ke favicon.svg) — jangan menyalin SVG ke template.
   Dipakai di header `AppLayout`, drawer mobile, dan `LoginView` (pojok kiri atas panel form + lingkaran putih "avatar" di bawah kutipan).
 - Ikon turunan dibuat dari favicon.svg dengan **`npm run ikon`** (`scripts/buat-ikon.mjs`, Chrome headless lewat `playwright-core`;
   set `CHROME_PATH` bila Chrome tidak di lokasi default Windows): `favicon.ico` (16/32/48, juga disalin ke `backend/public/`),
-  `icon-192.png`, `icon-512.png` (manifest), `apple-touch-icon.png` (180 px, latar putih). Jalankan ulang setiap logo berubah.
-- `index.html` memuat favicon SVG + ICO, apple-touch-icon, `site.webmanifest` (nama "lefaklinik", `theme_color` #0567B5), `<title>` "Lefaklinik".
-- **Nama produk: lefaklinik** (sejak 1 Okt 2026, sebelumnya e-klinik). **Header desktop hanya logo K** (wordmark di header sengaja
-  dikomentari oleh user di `AppLayout.vue` — jangan dikembalikan tanpa diminta); drawer mobile: logo + wordmark `<b>lefa</b>` tebal +
-  `klinik` tipis, ditulis huruf kecil; di kalimat/judul ditulis "Lefaklinik". Nama teknis tetap `eklinik` (folder, database, container,
+  `icon-192.png`, `icon-512.png` (manifest), `apple-touch-icon.png` (180 px, latar putih). Jalankan ulang setiap logo berubah
+  (terakhir 5 Okt 2026 untuk logo Vertiqo).
+- `index.html` memuat favicon SVG + ICO, apple-touch-icon, `site.webmanifest` (nama "Vertiqo", `theme_color` #0567B5), `<title>` "Vertiqo".
+- **Nama produk: Vertiqo** (sejak 5 Okt 2026; sebelumnya lefaklinik sejak 1 Okt 2026, awalnya e-klinik) — ditulis persis "Vertiqo"
+  (V kapital) di judul, kalimat, dan wordmark, **tanpa embel-embel "klinik"** (bukan "Vertiqo Klinik", tanpa wordmark dua bagian).
+  **Header desktop hanya logo** (wordmark di header sengaja dikomentari oleh user di `AppLayout.vue` — jangan dikembalikan tanpa
+  diminta); drawer mobile: logo + wordmark "Vertiqo" tebal satu kata. Nama teknis tetap `eklinik` (folder, database, container,
   `config/eklinik.php`, email demo `@eklinik.test`, kunci `localStorage`) — jangan diganti tanpa migrasi data.
 - Logo = identitas **produk**. Kop dokumen cetak (struk, tiket, etiket, consent) tetap memakai identitas **klinik** dari pengaturan.
 

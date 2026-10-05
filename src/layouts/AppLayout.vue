@@ -145,7 +145,7 @@ watch(idle, async (value) => {
     <header class="flex items-center gap-4 px-4 pt-4 sm:px-6 lg:gap-6 lg:pt-5 lg:pr-8 lg:pl-5 print:hidden">
       <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" :aria-label="`${klinik.nama}, ke dashboard`" :title="klinik.nama">
         <AppLogo class="size-11 drop-shadow-[0_6px_10px_rgba(5,103,181,0.25)]" />
-        <!-- <span class="text-[22px] leading-none tracking-tight text-slate-900"><b class="font-bold">lefa</b><span class="font-light">klinik</span></span> -->
+        <!-- <span class="text-[22px] leading-none font-bold tracking-tight text-slate-900">Vertiqo</span> -->
       </RouterLink>
 
       <!-- Tab halaman dari modul yang dipilih di rail (desktop) -->
@@ -268,7 +268,7 @@ watch(idle, async (value) => {
       <aside v-if="drawerOpen" class="glass-strong fixed inset-y-3 left-3 z-50 flex w-72 flex-col rounded-3xl lg:hidden" aria-label="Menu">
         <div class="flex items-center justify-between px-5 pt-5 pb-2">
           <span class="flex items-center gap-2 text-[22px] leading-none tracking-tight text-slate-900 dark:text-white">
-            <AppLogo class="size-8" /><span><b class="font-bold">lefa</b><span class="font-light">klinik</span></span>
+            <AppLogo class="size-8" /><span class="font-bold">Vertiqo</span>
           </span>
           <button class="btn-icon size-9" aria-label="Tutup menu" @click="drawerOpen = false"><AppIcon :path="ICON.close" size="size-4" /></button>
         </div>

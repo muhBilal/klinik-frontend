@@ -10,7 +10,7 @@ export const useKlinikStore = defineStore('klinik', () => {
   const info = ref(null)
   let pending = null
 
-  const nama = computed(() => info.value?.klinik?.nama || 'Lefaklinik')
+  const nama = computed(() => info.value?.klinik?.nama || 'Vertiqo')
 
   function muat(paksa = false) {
     if (pending && !paksa) return pending
