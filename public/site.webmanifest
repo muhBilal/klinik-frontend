@@ -1,6 +1,6 @@
 {
-  "name": "Vertiqo",
-  "short_name": "Vertiqo",
+  "name": "lefaklinik",
+  "short_name": "lefaklinik",
   "description": "Sistem manajemen klinik estetika",
   "start_url": "/",
   "display": "standalone",
