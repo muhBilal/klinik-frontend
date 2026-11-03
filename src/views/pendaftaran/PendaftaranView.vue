@@ -135,7 +135,7 @@ onMounted(() => {
       <div class="card-body space-y-4">
         <div>
           <label class="label">Pasien *</label>
-          <div v-if="pasienLoading" class="flex items-center gap-2 rounded-xl border border-white/70 bg-white/40 p-3 text-sm text-slate-500">
+          <div v-if="pasienLoading" class="flex items-center gap-2 rounded-xl border border-white/70 bg-white/40 p-3 text-sm text-slate-500 dark:bg-slate-900/40">
             <AppSpinner class="text-brand-600" /> Memuat data pasien...
           </div>
           <div v-else-if="pasien" class="space-y-2 rounded-xl border border-brand-300/50 bg-brand-500/10 p-3">

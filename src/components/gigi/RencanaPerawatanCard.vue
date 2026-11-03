@@ -138,7 +138,7 @@ onMounted(muat)
       <button v-if="bolehKelola" type="button" class="btn btn-secondary btn-sm ml-auto" @click="baru">+ Rencana baru</button>
     </div>
     <div class="card-body space-y-4">
-      <article v-for="r in [...aktif, ...(tampilRiwayat ? riwayat : [])]" :key="r.id" class="rounded-2xl border border-line bg-white/40 p-3 text-sm">
+      <article v-for="r in [...aktif, ...(tampilRiwayat ? riwayat : [])]" :key="r.id" class="rounded-2xl border border-line bg-white/40 p-3 text-sm dark:bg-slate-900/40">
         <header class="flex flex-wrap items-start gap-2">
           <div class="min-w-0 flex-1">
             <p class="font-semibold">{{ r.judul }}</p>
@@ -147,7 +147,7 @@ onMounted(muat)
               <template v-if="r.disetujui_at"> · disetujui {{ r.penyetuju_nama }} ({{ waktu(r.disetujui_at) }})</template>
             </p>
             <p v-if="r.catatan" class="text-xs text-slate-600">{{ r.catatan }}</p>
-            <p v-if="r.status === 'dibatalkan'" class="text-xs text-rose-700">Dibatalkan: {{ r.alasan_batal }}</p>
+            <p v-if="r.status === 'dibatalkan'" class="text-xs text-rose-700 dark:text-rose-400">Dibatalkan: {{ r.alasan_batal }}</p>
           </div>
           <StatusBadge :status="r.status" />
         </header>
@@ -165,9 +165,9 @@ onMounted(muat)
                   </td>
                   <td class="w-28 text-right tabular-nums">{{ rupiah(item.tarif * item.jumlah) }}</td>
                   <td class="w-40 text-right text-xs">
-                    <span v-if="item.status === 'selesai'" class="text-emerald-700">Selesai {{ tanggal(item.selesai_at) }}</span>
+                    <span v-if="item.status === 'selesai'" class="text-emerald-700 dark:text-emerald-400">Selesai {{ tanggal(item.selesai_at) }}</span>
                     <span v-else-if="dipakaiDiSini(item)" class="text-slate-500">ada di tindakan</span>
-                    <span v-else-if="sedangDikerjakan(item)" class="text-amber-700">dikerjakan · {{ item.pelaksanaan.kunjungan.no_registrasi }}</span>
+                    <span v-else-if="sedangDikerjakan(item)" class="text-amber-700 dark:text-amber-400">dikerjakan · {{ item.pelaksanaan.kunjungan.no_registrasi }}</span>
                     <button v-else-if="bisaKerjakan && item.status === 'rencana' && ['draf', 'disetujui'].includes(r.status)" type="button" class="btn btn-secondary btn-sm" @click="kerjakan(item, r)">Kerjakan</button>
                   </td>
                 </tr>
@@ -178,7 +178,7 @@ onMounted(muat)
 
         <footer class="mt-2 flex flex-wrap items-center gap-2">
           <p class="text-xs text-slate-500">
-            Estimasi <b class="text-sm text-slate-900 tabular-nums">{{ rupiah(r.estimasi_total) }}</b>
+            Estimasi <b class="text-sm text-slate-900 tabular-nums dark:text-white">{{ rupiah(r.estimasi_total) }}</b>
             <template v-if="r.estimasi_selesai"> · sudah dikerjakan {{ rupiah(r.estimasi_selesai) }}</template>
           </p>
           <div class="ml-auto flex flex-wrap gap-1.5">
@@ -196,7 +196,7 @@ onMounted(muat)
       <p v-if="!memuat && !aktif.length" class="text-sm text-slate-400">
         Belum ada rencana perawatan berjalan.<template v-if="bolehKelola"> Susun rencana per gigi lengkap dengan fase & estimasi biaya.</template>
       </p>
-      <button v-if="riwayat.length" type="button" class="text-xs text-slate-500 hover:text-slate-900 hover:underline" @click="tampilRiwayat = !tampilRiwayat">
+      <button v-if="riwayat.length" type="button" class="text-xs text-slate-500 hover:text-slate-900 hover:underline dark:hover:text-white" @click="tampilRiwayat = !tampilRiwayat">
         {{ tampilRiwayat ? 'Sembunyikan' : 'Tampilkan' }} rencana selesai / dibatalkan ({{ riwayat.length }})
       </button>
     </div>
@@ -237,11 +237,11 @@ onMounted(muat)
           <dt class="text-slate-500">Dokter</dt><dd>{{ dicetak.dokter?.name ?? '-' }}<template v-if="dicetak.dokter?.sip"> · SIP {{ dicetak.dokter.sip }}</template></dd>
         </dl>
         <table class="w-full border-collapse text-xs">
-          <thead><tr class="border-b border-slate-400 text-left"><th class="py-1">Gigi</th><th>Tindakan</th><th class="text-right">Jml</th><th class="text-right">Estimasi</th></tr></thead>
+          <thead><tr class="border-b border-slate-400 text-left dark:border-slate-600"><th class="py-1">Gigi</th><th>Tindakan</th><th class="text-right">Jml</th><th class="text-right">Estimasi</th></tr></thead>
           <tbody>
             <template v-for="[fase, items] in perFase(dicetak)" :key="fase">
               <tr><td colspan="4" class="pt-2 font-semibold">{{ labelFase(fase) }}</td></tr>
-              <tr v-for="item in items.filter((i) => i.status !== 'batal')" :key="item.id" class="border-b border-slate-200">
+              <tr v-for="item in items.filter((i) => i.status !== 'batal')" :key="item.id" class="border-b border-slate-200 dark:border-slate-800">
                 <td class="py-1">{{ formatGigi(item.gigi, item.permukaan) || '—' }}</td>
                 <td>{{ item.tindakan?.nama }}<template v-if="item.keterangan"> — {{ item.keterangan }}</template></td>
                 <td class="text-right">{{ item.jumlah }}</td>
@@ -249,14 +249,14 @@ onMounted(muat)
               </tr>
             </template>
           </tbody>
-          <tfoot><tr class="border-t border-slate-400 font-semibold"><td colspan="3" class="py-1">Estimasi total</td><td class="text-right tabular-nums">{{ rupiah(dicetak.estimasi_total) }}</td></tr></tfoot>
+          <tfoot><tr class="border-t border-slate-400 font-semibold dark:border-slate-600"><td colspan="3" class="py-1">Estimasi total</td><td class="text-right tabular-nums">{{ rupiah(dicetak.estimasi_total) }}</td></tr></tfoot>
         </table>
         <p class="text-[11px] text-slate-500">
           Estimasi dapat berubah sesuai kondisi klinis saat tindakan dan harga yang berlaku saat tindakan dikerjakan.
         </p>
         <div class="grid grid-cols-2 gap-10 pt-6 text-center text-xs">
-          <div><p class="h-16">Pasien / wali</p><p class="border-t border-slate-400 pt-1">{{ dicetak.penyetuju_nama ?? pasien.nama }}</p></div>
-          <div><p class="h-16">Dokter gigi</p><p class="border-t border-slate-400 pt-1">{{ dicetak.dokter?.name ?? '' }}</p></div>
+          <div><p class="h-16">Pasien / wali</p><p class="border-t border-slate-400 pt-1 dark:border-slate-600">{{ dicetak.penyetuju_nama ?? pasien.nama }}</p></div>
+          <div><p class="h-16">Dokter gigi</p><p class="border-t border-slate-400 pt-1 dark:border-slate-600">{{ dicetak.dokter?.name ?? '' }}</p></div>
         </div>
         <KakiDokumen />
       </article>

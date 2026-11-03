@@ -295,7 +295,7 @@ onMounted(() => {
               <p class="font-medium">{{ t.nama }}</p>
               <p class="text-xs text-slate-500">
                 {{ t.kategori?.nama ?? 'Tanpa kategori' }}<template v-if="t.icd9cm"> · ICD-9-CM {{ t.icd9cm.kode }}</template>
-                <span v-if="t.template_consent_id" class="text-amber-700"> · wajib consent</span>
+                <span v-if="t.template_consent_id" class="text-amber-700 dark:text-amber-400"> · wajib consent</span>
                 <template v-if="t.per_gigi"> · per gigi<template v-if="t.kondisi_gigi_hasil"> → {{ t.kondisi_gigi_hasil }}</template></template>
               </p>
             </td>
@@ -375,11 +375,11 @@ onMounted(() => {
 
       <!-- Rekam medis: kode tindakan, bentuk catatan, informed consent (RM-02/03/05) -->
       <section class="space-y-3">
-        <h3 class="text-sm font-semibold text-slate-800">Rekam medis</h3>
+        <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Rekam medis</h3>
         <div class="grid gap-4 sm:grid-cols-2">
           <div class="sm:col-span-2">
             <label class="label">Kode ICD-9-CM default</label>
-            <div v-if="form.icd9cm" class="flex items-center justify-between gap-2 rounded-2xl bg-white/60 px-3 py-2 text-sm">
+            <div v-if="form.icd9cm" class="flex items-center justify-between gap-2 rounded-2xl bg-white/60 px-3 py-2 text-sm dark:bg-slate-900/60">
               <span><b class="tabular-nums">{{ form.icd9cm.kode }}</b> {{ form.icd9cm.nama }}</span>
               <button type="button" class="text-xs text-slate-400 hover:text-slate-700" @click="form.icd9cm = null">ganti</button>
             </div>
@@ -436,9 +436,9 @@ onMounted(() => {
 
       <!-- Harga per cabang -->
       <section>
-        <h3 class="text-sm font-semibold text-slate-800">Harga per cabang</h3>
+        <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Harga per cabang</h3>
         <p class="mb-2 text-xs text-slate-500">Cabang tanpa harga khusus memakai harga dasar {{ rupiah(form.tarif) }}.</p>
-        <div class="overflow-x-auto rounded-xl border border-line bg-white/30">
+        <div class="overflow-x-auto rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
           <table class="table">
             <thead><tr><th>Cabang</th><th class="w-44">Harga</th><th class="w-44 text-right">Tarif (Rp)</th></tr></thead>
             <tbody>
@@ -476,21 +476,21 @@ onMounted(() => {
       <!-- Komisi & jasa medis per peran (KM-01) -->
       <section v-if="bolehKomisi" class="space-y-2">
         <div>
-          <h3 class="text-sm font-semibold text-slate-800">Komisi & jasa medis</h3>
+          <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Komisi & jasa medis</h3>
           <p class="text-xs text-slate-500">
             Persen dari nilai tindakan (bruto/neto sesuai Pengaturan → Komisi), nominal per tindakan. Kosongkan = peran itu tanpa komisi.
             Untuk treatment jasa konsultasi poli, yang dipakai komisi dokter.
           </p>
         </div>
         <!-- Grid, bukan tabel: di layar sempit tiap peran jadi dua baris (peran; jenis + nilai; contoh) tanpa kolom terjepit -->
-        <div class="divide-y divide-line rounded-xl border border-line bg-white/30">
+        <div class="divide-y divide-line rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
           <div
             v-for="(k, i) in form.komisis"
             :key="k.peran"
             class="grid grid-cols-2 items-center gap-x-3 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_8rem_8rem_10rem]"
           >
             <div class="col-span-2 sm:col-span-1">
-              <p class="text-sm text-slate-800">{{ PERAN_TREATMENT[i][1] }}</p>
+              <p class="text-sm text-slate-800 dark:text-slate-200">{{ PERAN_TREATMENT[i][1] }}</p>
               <p class="text-xs text-slate-400">{{ PERAN_TREATMENT[i][2] }}</p>
             </div>
             <select v-model="k.jenis" class="input py-1" :aria-label="`Jenis komisi ${PERAN_KOMISI[k.peran]}`">
@@ -520,14 +520,14 @@ onMounted(() => {
       <!-- Ruang & alat wajib (BK-08) -->
       <section class="space-y-2">
         <div>
-          <h3 class="text-sm font-semibold text-slate-800">Ruang & alat wajib</h3>
+          <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Ruang & alat wajib</h3>
           <p class="text-xs text-slate-500">
             Booking treatment ini wajib memakai salah satu ruang/alat yang dicentang untuk setiap tipe (mis. salah satu ruang laser
             <b>dan</b> mesin laser). Tidak dicentang = tidak butuh ruang/alat tertentu.
           </p>
         </div>
         <p v-if="errors.sumber_daya_ids" class="field-error">{{ errors.sumber_daya_ids }}</p>
-        <div v-for="g in grupSumberDaya" :key="g.cabang?.id" class="rounded-xl border border-line bg-white/30 p-3">
+        <div v-for="g in grupSumberDaya" :key="g.cabang?.id" class="rounded-xl border border-line bg-white/30 p-3 dark:bg-slate-900/30">
           <p class="mb-2 text-xs font-semibold text-slate-600">{{ g.cabang?.nama }}</p>
           <div class="flex flex-wrap gap-2">
             <label v-for="sd in g.items" :key="sd.id" class="choice cursor-pointer px-3 py-1.5 text-sm" :class="{ 'choice-active': form.sumber_daya_ids?.includes(sd.id) }">
@@ -548,14 +548,14 @@ onMounted(() => {
       <!-- BHP standar -->
       <section class="space-y-2">
         <div>
-          <h3 class="text-sm font-semibold text-slate-800">Bahan habis pakai (BHP) standar</h3>
+          <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Bahan habis pakai (BHP) standar</h3>
           <p class="text-xs text-slate-500">Pemakaian per satu kali treatment, dalam satuan stok (boleh desimal, mis. 0,3 vial).</p>
         </div>
         <AsyncSelect endpoint="/obats" :params="{ aktif: 1 }" placeholder="Cari bahan / obat..." @select="tambahBhp">
           <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">· {{ item.satuan }} · stok {{ angka(item.stok) }}</span></template>
         </AsyncSelect>
         <p v-if="errors.bhps" class="field-error">{{ errors.bhps }}</p>
-        <div v-if="form.bhps?.length" class="overflow-x-auto rounded-xl border border-line bg-white/30">
+        <div v-if="form.bhps?.length" class="overflow-x-auto rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
           <table class="table">
             <thead><tr><th>Bahan</th><th class="w-36">Jumlah</th><th>Satuan</th><th class="w-8" /></tr></thead>
             <tbody>

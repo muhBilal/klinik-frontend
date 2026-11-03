@@ -71,9 +71,9 @@ async function proses() {
     <form id="form-jual-paket" class="space-y-3" @submit.prevent="proses">
       <div v-if="!pasien">
         <p class="label">Pasien *</p>
-        <p v-if="dipilihPasien" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 text-sm">
+        <p v-if="dipilihPasien" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 text-sm dark:bg-slate-900/60">
           <span>{{ dipilihPasien.nama }} <span class="text-xs text-slate-500">RM {{ dipilihPasien.no_rm }}</span></span>
-          <button type="button" class="text-xs text-slate-500 hover:text-slate-900" @click="dipilihPasien = null">ganti</button>
+          <button type="button" class="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white" @click="dipilihPasien = null">ganti</button>
         </p>
         <AsyncSelect v-else endpoint="/pasiens" placeholder="Cari nama / No. RM / NIK..." @select="(p) => (dipilihPasien = p)">
           <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">RM {{ item.no_rm }}</span></template>

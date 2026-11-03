@@ -723,14 +723,14 @@ onMounted(load)
       <label
         v-if="isDokter && editable"
         class="ml-auto flex items-center gap-2 rounded-xl px-3 py-2"
-        :class="form.akses_terbatas ? 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-400/30' : 'text-slate-500'"
+        :class="form.akses_terbatas ? 'bg-rose-500/10 text-rose-700 ring-1 ring-rose-400/30 dark:text-rose-400' : 'text-slate-500'"
         title="Isi rekam medis hanya dapat dibuka tim yang menangani & pemegang izin rme.terbatas (mis. kasus IMS)"
       >
         <input v-model="form.akses_terbatas" type="checkbox" class="accent-rose-600" :disabled="adaDiagnosaSensitif" />
         Akses terbatas
         <span v-if="adaDiagnosaSensitif" class="text-xs">(diagnosa sensitif)</span>
       </label>
-      <span v-else-if="kunjungan.akses_terbatas" class="ml-auto rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700">Akses terbatas</span>
+      <span v-else-if="kunjungan.akses_terbatas" class="ml-auto rounded-xl bg-rose-500/10 px-3 py-2 text-xs font-semibold text-rose-700 dark:text-rose-400">Akses terbatas</span>
     </div>
 
     <!-- Peringatan klinis pasien (PS-03): alergi, hamil/menyusui, Fitzpatrick, riwayat obat & penyakit -->
@@ -849,7 +849,7 @@ onMounted(load)
                   v-for="f in favorits"
                   :key="f.id"
                   type="button"
-                  class="chip hover:bg-white"
+                  class="chip hover:bg-white dark:hover:bg-slate-900"
                   :class="{ 'opacity-40': form.diagnosas.some((d) => d.icd10_id === f.id) }"
                   :title="f.nama"
                   @click="tambahDiagnosa(f)"
@@ -858,7 +858,7 @@ onMounted(load)
                 </button>
               </div>
               <p v-if="errors.diagnosas" class="field-error">{{ errors.diagnosas }}</p>
-              <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white/30">
+              <ul class="divide-y divide-line overflow-hidden rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
                 <li v-for="(d, i) in form.diagnosas" :key="d.icd10_id" class="flex items-center gap-3 px-3 py-2 text-sm">
                   <button
                     type="button"
@@ -892,7 +892,7 @@ onMounted(load)
         <section v-if="bolehInputTindakan" ref="tindakanCard" class="card scroll-mt-24">
           <div class="card-header flex-wrap">
             <h2 class="card-title">Tindakan</h2>
-            <span v-if="consentBelum.length && editable" class="text-xs font-semibold text-amber-700">{{ consentBelum.length }} tindakan menunggu informed consent</span>
+            <span v-if="consentBelum.length && editable" class="text-xs font-semibold text-amber-700 dark:text-amber-400">{{ consentBelum.length }} tindakan menunggu informed consent</span>
             <button v-if="editable && bolehInputTindakan" type="button" class="btn btn-secondary btn-sm ml-auto" @click="pesanPaketOpen = true">Pesan paket</button>
           </div>
           <div class="card-body space-y-3">
@@ -927,12 +927,12 @@ onMounted(load)
               </template>
             </AsyncSelect>
             <div v-if="form.tindakans.length" class="space-y-2">
-              <div v-for="(t, i) in form.tindakans" :key="t._key" class="rounded-2xl border border-line bg-white/30 p-3">
+              <div v-for="(t, i) in form.tindakans" :key="t._key" class="rounded-2xl border border-line bg-white/30 p-3 dark:bg-slate-900/30">
                 <div class="flex flex-wrap items-start gap-3">
                   <div class="min-w-48 flex-1">
                     <p class="font-medium">
                       {{ t.nama }}<span v-if="t.gigi" class="tabular-nums"> · {{ formatGigi(t.gigi, t.permukaan) }}</span>
-                      <span v-if="!t.id || paketBerubah(t)" class="text-xs font-normal text-amber-700">· belum disimpan</span>
+                      <span v-if="!t.id || paketBerubah(t)" class="text-xs font-normal text-amber-700 dark:text-amber-400">· belum disimpan</span>
                       <span v-if="!bolehUbahBaris(t)" class="text-xs font-normal text-slate-500" title="Hanya dokter atau pelaksananya yang bisa mengubah; pemakaian paket tetap bisa diganti">· dicatat {{ t.petugas_nama ?? 'petugas lain' }}</span>
                     </p>
                     <div v-if="opsiPaket(t).length" class="mt-1.5">
@@ -941,7 +941,7 @@ onMounted(load)
                         :id="`paket-${i}`"
                         v-model="t.paket_pasien_item_id"
                         class="input w-auto max-w-full py-1 text-xs"
-                        :class="t.paket_pasien_item_id ? 'text-emerald-800' : ''"
+                        :class="t.paket_pasien_item_id ? 'text-emerald-800 dark:text-emerald-300' : ''"
                         :disabled="!editable || !bolehInputTindakan"
                         @change="t.paket_no = opsiPaket(t).find((o) => o.id === t.paket_pasien_item_id)?.no"
                       >
@@ -960,7 +960,7 @@ onMounted(load)
                           <template #default="{ item }"><AppIcon v-if="item.favorit" :path="IKON.bintang" size="size-3.5" class="mr-1 inline fill-amber-400 align-[-2px] text-amber-500" /><span v-if="item.favorit" class="sr-only">Favorit: </span><b class="tabular-nums">{{ item.kode }}</b> {{ item.nama }}</template>
                         </AsyncSelect>
                       </template>
-                      <button v-else type="button" class="hover:text-slate-800" :disabled="!editable || !isDokter" @click="icd9Edit = i">
+                      <button v-else type="button" class="hover:text-slate-800 dark:hover:text-slate-200" :disabled="!editable || !isDokter" @click="icd9Edit = i">
                         ICD-9-CM: <b class="tabular-nums">{{ t.icd9cm?.kode ?? '—' }}</b> {{ t.icd9cm?.nama ?? '' }}<span v-if="editable && isDokter" class="underline"> ubah</span>
                       </button>
                     </div>
@@ -1004,7 +1004,7 @@ onMounted(load)
                     <input :id="`jumlah-${i}`" v-model.number="t.jumlah" type="number" min="1" class="input py-1" :disabled="!editable || !bolehInputTindakan || !bolehUbahBaris(t)" />
                   </div>
                   <p class="w-28 pt-1.5 text-right tabular-nums">
-                    <template v-if="t.paket_pasien_item_id">{{ rupiah(0) }}<span class="block text-[11px] text-emerald-700">paket</span></template>
+                    <template v-if="t.paket_pasien_item_id">{{ rupiah(0) }}<span class="block text-[11px] text-emerald-700 dark:text-emerald-400">paket</span></template>
                     <template v-else>{{ rupiah(t.tarif * t.jumlah) }}</template>
                   </p>
                   <button v-if="editable && bolehInputTindakan && bolehUbahBaris(t)" type="button" class="pt-1 text-slate-400 hover:text-rose-600" :aria-label="`Hapus ${t.nama}`" @click="form.tindakans.splice(i, 1)">&times;</button>
@@ -1029,7 +1029,7 @@ onMounted(load)
                   >
                     {{ t.template_consent_id ? 'Ambil informed consent (wajib)' : 'Informed consent' }}
                   </button>
-                  <span v-else-if="t.template_consent_id" class="text-xs text-amber-700">Informed consent wajib — belum diambil</span>
+                  <span v-else-if="t.template_consent_id" class="text-xs text-amber-700 dark:text-amber-400">Informed consent wajib — belum diambil</span>
                 </div>
               </div>
             </div>
@@ -1059,7 +1059,7 @@ onMounted(load)
                 <button type="button" class="btn btn-secondary" @click="bukaRacikan()">+ Racikan</button>
               </div>
               <datalist id="aturan-pakai"><option v-for="a in ATURAN_PAKAI" :key="a" :value="a" /></datalist>
-              <div v-if="form.resep.length" class="overflow-x-auto rounded-xl border border-line bg-white/30">
+              <div v-if="form.resep.length" class="overflow-x-auto rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
                 <table class="table">
                   <thead><tr><th>Obat</th><th class="w-24">Jumlah</th><th>Aturan pakai</th><th class="w-8" /></tr></thead>
                   <tbody>
@@ -1093,7 +1093,7 @@ onMounted(load)
       <aside class="space-y-5">
         <div v-if="!isPerawat" class="card card-body">
           <p class="text-xs font-medium text-slate-500">Estimasi biaya</p>
-          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900">{{ rupiah(totalEstimasi) }}</p>
+          <p class="mt-1 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ rupiah(totalEstimasi) }}</p>
           <p class="mt-1 text-xs text-slate-400">
             {{ konsultasi ? `${konsultasi.nama} ${rupiah(konsultasi.tarif_cabang)}` : 'Tanpa jasa konsultasi' }} + tindakan + obat
           </p>
@@ -1106,12 +1106,12 @@ onMounted(load)
             <button v-if="isDokter" class="btn btn-ghost btn-sm" @click="addendumOpen = true">+ Addendum</button>
           </div>
           <div class="card-body space-y-3 text-sm">
-            <p class="rounded-xl bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800">
+            <p class="rounded-xl bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
               Ditandatangani oleh <b>{{ kunjungan.pemeriksaan.penandatangan?.name }}</b>
               <template v-if="kunjungan.pemeriksaan.penandatangan?.sip"> (SIP {{ kunjungan.pemeriksaan.penandatangan.sip }})</template>
               · {{ waktu(kunjungan.pemeriksaan.ditandatangani_at) }}
             </p>
-            <div v-for="a in kunjungan.pemeriksaan.addendums ?? []" :key="a.id" class="rounded-xl border-l-4 border-amber-400 bg-amber-50/70 px-3 py-2">
+            <div v-for="a in kunjungan.pemeriksaan.addendums ?? []" :key="a.id" class="rounded-xl border-l-4 border-amber-400 bg-amber-50/70 px-3 py-2 dark:bg-amber-950/70">
               <p class="text-xs text-slate-500">{{ BAGIAN_ADDENDUM[a.bagian] ?? a.bagian }} · {{ a.user?.name }} · {{ waktu(a.created_at) }}</p>
               <p class="whitespace-pre-line">{{ a.isi }}</p>
               <p class="text-xs text-slate-500">Alasan: {{ a.alasan }}</p>
@@ -1131,8 +1131,8 @@ onMounted(load)
           </div>
           <div v-if="riwayatLoading && !riwayat.length" class="divide-y divide-line" aria-busy="true">
             <div v-for="i in 3" :key="i" class="space-y-2 px-5 py-3">
-              <div class="h-3.5 w-1/2 animate-pulse rounded bg-slate-200/70" />
-              <div class="h-3 w-3/4 animate-pulse rounded bg-slate-100" />
+              <div class="h-3.5 w-1/2 animate-pulse rounded bg-slate-200/70 dark:bg-slate-700/70" />
+              <div class="h-3 w-3/4 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
             </div>
           </div>
           <div v-else-if="riwayat.length" class="max-h-[640px] divide-y divide-line overflow-y-auto">

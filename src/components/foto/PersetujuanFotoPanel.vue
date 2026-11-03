@@ -122,10 +122,10 @@ async function lihat(uuid) {
     <div class="flex flex-wrap items-center gap-2">
       <AppSpinner v-if="loading && !data" size="size-3" class="text-slate-400" />
       <template v-else-if="aktif">
-        <span class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800">Persetujuan foto: {{ TINGKAT_FOTO[aktif.tingkat] }}</span>
+        <span class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">Persetujuan foto: {{ TINGKAT_FOTO[aktif.tingkat] }}</span>
         <span class="text-xs text-slate-500">{{ tanggal(aktif.ditandatangani_at) }}</span>
       </template>
-      <span v-else-if="data" class="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800">Belum ada persetujuan foto yang berlaku</span>
+      <span v-else-if="data" class="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300">Belum ada persetujuan foto yang berlaku</span>
       <div class="ml-auto flex gap-1">
         <button v-if="aktif" type="button" class="btn btn-ghost btn-sm" @click="lihat(aktif.uuid)">Lihat</button>
         <button v-if="bolehKelola" type="button" :class="aktif ? 'btn-ghost' : 'btn-primary'" class="btn btn-sm" @click="bukaForm">{{ aktif ? 'Ubah tingkat' : 'Tanda tangani' }}</button>
@@ -133,7 +133,7 @@ async function lihat(uuid) {
         <button v-if="data?.riwayat?.length" type="button" class="btn btn-ghost btn-sm" @click="riwayatOpen = !riwayatOpen">Riwayat ({{ data.riwayat.length }})</button>
       </div>
     </div>
-    <ul v-if="riwayatOpen" class="divide-y divide-line rounded-2xl border border-line bg-white/40 text-xs">
+    <ul v-if="riwayatOpen" class="divide-y divide-line rounded-2xl border border-line bg-white/40 text-xs dark:bg-slate-900/40">
       <li v-for="r in data.riwayat" :key="r.uuid" class="flex flex-wrap items-center gap-2 px-3 py-2">
         <StatusBadge :status="r.status" />
         <span class="font-medium">{{ TINGKAT_FOTO[r.tingkat] }}</span>
@@ -162,7 +162,7 @@ async function lihat(uuid) {
           </div>
         </fieldset>
         <div v-if="naskahLoading" class="flex items-center gap-2 text-slate-500"><AppSpinner />Menyiapkan naskah...</div>
-        <article v-else class="max-h-64 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-4 text-sm leading-relaxed whitespace-pre-line text-slate-800">{{ naskah }}</article>
+        <article v-else class="max-h-64 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-4 text-sm leading-relaxed whitespace-pre-line text-slate-800 dark:bg-slate-900 dark:text-slate-200">{{ naskah }}</article>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
             <label class="label" for="pf-nama">Nama penanda tangan *</label>
@@ -212,7 +212,7 @@ async function lihat(uuid) {
           <figure class="max-w-xs">
             <figcaption class="text-xs text-slate-500">{{ HUBUNGAN_PENANDATANGAN[dokumen.hubungan] }}</figcaption>
             <img :src="dokumen.ttd" alt="Tanda tangan" class="h-24 w-full object-contain" draggable="false" @contextmenu.prevent />
-            <p class="border-t border-slate-400 pt-1 text-center font-medium">{{ dokumen.penandatangan_nama }}</p>
+            <p class="border-t border-slate-400 pt-1 text-center font-medium dark:border-slate-600">{{ dokumen.penandatangan_nama }}</p>
           </figure>
           <p class="text-[11px] text-slate-500">
             Ditandatangani {{ waktu(dokumen.ditandatangani_at) }} · dicatat oleh {{ dokumen.pembuat?.name ?? '-' }}

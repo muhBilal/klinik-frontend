@@ -131,10 +131,10 @@ async function lihat(uuid) {
     <div class="flex flex-wrap items-center gap-2">
       <AppSpinner v-if="loading && !data" size="size-3" class="text-slate-400" />
       <template v-else-if="data">
-        <span v-if="data.pemrosesan" class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+        <span v-if="data.pemrosesan" class="rounded-full bg-emerald-600/10 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
           Persetujuan data berlaku<template v-if="!ringkas"> · {{ tanggal(data.pemrosesan.ditandatangani_at) }}</template>
         </span>
-        <span v-else class="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800">Belum ada persetujuan pemrosesan data</span>
+        <span v-else class="rounded-full bg-amber-500/15 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:text-amber-300">Belum ada persetujuan pemrosesan data</span>
         <span v-if="data.marketing" class="rounded-full bg-brand-500/10 px-2.5 py-1 text-xs font-semibold text-brand-800">Opt-in promosi: {{ teksKanal(data.marketing.kanal) }}</span>
         <span v-else-if="!ringkas" class="rounded-full bg-slate-500/10 px-2.5 py-1 text-xs text-slate-600">Tidak opt-in promosi</span>
       </template>
@@ -150,7 +150,7 @@ async function lihat(uuid) {
         </template>
       </div>
     </div>
-    <ul v-if="riwayatOpen && !ringkas" class="divide-y divide-line rounded-2xl border border-line bg-white/40 text-xs">
+    <ul v-if="riwayatOpen && !ringkas" class="divide-y divide-line rounded-2xl border border-line bg-white/40 text-xs dark:bg-slate-900/40">
       <li v-for="r in data.riwayat" :key="r.uuid" class="flex flex-wrap items-center gap-2 px-3 py-2">
         <StatusBadge :status="r.status" />
         <span class="font-medium">{{ r.jenis === 'marketing' ? `Promosi (${teksKanal(r.kanal)})` : 'Pemrosesan data' }}</span>
@@ -166,8 +166,8 @@ async function lihat(uuid) {
         <div v-if="naskahLoading && !naskah" class="flex items-center gap-2 text-slate-500"><AppSpinner />Menyiapkan naskah...</div>
         <template v-else-if="naskah">
           <section class="space-y-2">
-            <h3 class="text-sm font-semibold text-slate-800">1. {{ JENIS_PERSETUJUAN_DATA.pemrosesan }}</h3>
-            <article class="max-h-56 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-4 text-sm leading-relaxed whitespace-pre-line text-slate-800">{{ naskah.pemrosesan }}</article>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">1. {{ JENIS_PERSETUJUAN_DATA.pemrosesan }}</h3>
+            <article class="max-h-56 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-4 text-sm leading-relaxed whitespace-pre-line text-slate-800 dark:bg-slate-900 dark:text-slate-200">{{ naskah.pemrosesan }}</article>
             <label class="flex items-start gap-2 text-sm">
               <input v-model="form.setuju_pemrosesan" type="checkbox" class="mt-0.5 accent-brand-600" required />
               <span>Pasien/wali telah membaca dan <b>menyetujui</b> pemrosesan data pribadi & kesehatan di atas *</span>
@@ -176,8 +176,8 @@ async function lihat(uuid) {
           </section>
 
           <!-- Opt-in marketing terpisah: tidak dicentang bawaan, tidak memengaruhi layanan -->
-          <section class="space-y-2 rounded-2xl border border-line bg-white/40 p-4">
-            <h3 class="text-sm font-semibold text-slate-800">2. {{ JENIS_PERSETUJUAN_DATA.marketing }} <span class="font-normal text-slate-500">— opsional</span></h3>
+          <section class="space-y-2 rounded-2xl border border-line bg-white/40 p-4 dark:bg-slate-900/40">
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">2. {{ JENIS_PERSETUJUAN_DATA.marketing }} <span class="font-normal text-slate-500">— opsional</span></h3>
             <div class="flex flex-wrap gap-2">
               <label :class="{ 'choice-active': !form.marketing }" class="choice"><input v-model="form.marketing" type="radio" :value="false" class="sr-only" />Tidak bersedia</label>
               <label :class="{ 'choice-active': form.marketing }" class="choice"><input v-model="form.marketing" type="radio" :value="true" class="sr-only" @change="muatNaskah" />Bersedia menerima promosi</label>
@@ -190,7 +190,7 @@ async function lihat(uuid) {
                 </label>
               </fieldset>
               <p v-if="errors.kanal" class="field-error">{{ errors.kanal }}</p>
-              <article class="max-h-40 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-3 text-sm leading-relaxed whitespace-pre-line text-slate-800">{{ naskah.marketing }}</article>
+              <article class="max-h-40 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-3 text-sm leading-relaxed whitespace-pre-line text-slate-800 dark:bg-slate-900 dark:text-slate-200">{{ naskah.marketing }}</article>
             </template>
           </section>
 
@@ -245,7 +245,7 @@ async function lihat(uuid) {
       <template v-if="dokumen">
         <p v-if="!dokumen.checksum_valid" class="alert alert-danger mb-3">Sidik dokumen tidak cocok: dokumen berubah di luar aplikasi.</p>
         <article id="cetak-persetujuan-data" class="space-y-3 rounded-2xl border border-line bg-white px-6 py-5 text-sm leading-relaxed text-slate-800">
-          <header class="border-b border-slate-300 pb-2 text-center">
+          <header class="border-b border-slate-300 pb-2 text-center dark:border-slate-700">
             <p class="text-base font-bold">{{ klinik.nama }}</p>
             <p class="text-xs text-slate-600">{{ dokumen.cabang?.nama }}</p>
           </header>
@@ -258,7 +258,7 @@ async function lihat(uuid) {
           <figure class="max-w-xs">
             <figcaption class="text-xs text-slate-500">{{ HUBUNGAN_PENANDATANGAN[dokumen.hubungan] }}</figcaption>
             <img :src="dokumen.ttd" alt="Tanda tangan" class="h-24 w-full object-contain" draggable="false" @contextmenu.prevent />
-            <p class="border-t border-slate-400 pt-1 text-center font-medium">{{ dokumen.penandatangan_nama }}</p>
+            <p class="border-t border-slate-400 pt-1 text-center font-medium dark:border-slate-600">{{ dokumen.penandatangan_nama }}</p>
           </figure>
           <p class="text-[11px] text-slate-500">
             Ditandatangani {{ waktu(dokumen.ditandatangani_at) }} · dicatat oleh {{ dokumen.pembuat?.name ?? '-' }}

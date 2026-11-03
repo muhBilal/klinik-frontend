@@ -56,7 +56,7 @@ onMounted(muat)
       <div class="card-header"><h2 class="card-title">Periode</h2><AppSpinner v-if="memuat" class="text-slate-400" /></div>
       <ul class="divide-y divide-line">
         <li v-for="p in periodes" :key="p.id">
-          <button type="button" class="flex w-full items-center justify-between gap-2 px-5 py-3 text-left text-sm hover:bg-white/50" :class="{ 'bg-white/60': slip?.id === p.id }" @click="buka(p)">
+          <button type="button" class="flex w-full items-center justify-between gap-2 px-5 py-3 text-left text-sm hover:bg-white/50 dark:hover:bg-slate-900/50" :class="{ 'bg-white/60 dark:bg-slate-900/60': slip?.id === p.id }" @click="buka(p)">
             <span>
               <span class="block font-medium">{{ p.nama }}</span>
               <span class="text-xs text-slate-500">{{ tanggal(p.mulai) }} – {{ tanggal(p.selesai) }} · {{ p.cabang?.nama }}</span>

@@ -196,7 +196,7 @@ defineExpose({ muat })
             <img v-if="thumbs[f.uuid]" :src="thumbs[f.uuid]" :alt="labelPosisi(f)" class="size-full object-cover" draggable="false" @contextmenu.prevent />
             <span v-else class="flex size-full items-center justify-center text-xs text-slate-400">{{ f.ada_thumbnail ? '...' : 'Foto' }}</span>
           </button>
-          <label class="absolute top-1.5 left-1.5 flex size-6 cursor-pointer items-center justify-center rounded-full bg-white/90 shadow" :title="dipilih.includes(f.uuid) ? 'Batal pilih' : 'Pilih untuk dibandingkan'">
+          <label class="absolute top-1.5 left-1.5 flex size-6 cursor-pointer items-center justify-center rounded-full bg-white/90 shadow dark:bg-slate-900/90" :title="dipilih.includes(f.uuid) ? 'Batal pilih' : 'Pilih untuk dibandingkan'">
             <input type="checkbox" class="accent-brand-600" :checked="dipilih.includes(f.uuid)" :aria-label="`Pilih ${labelPosisi(f)} untuk dibandingkan`" @change="toggle(f)" />
           </label>
           <span v-if="f.tahap" class="absolute top-1.5 right-1.5 rounded-full bg-slate-900/70 px-2 py-0.5 text-[10px] font-semibold text-white">{{ TAHAP_FOTO[f.tahap] }}</span>
@@ -205,7 +205,7 @@ defineExpose({ muat })
             <button
               v-if="fotoAwal(f)"
               type="button"
-              class="shrink-0 rounded-full bg-white/90 px-1.5 text-[10px] font-semibold text-slate-800"
+              class="shrink-0 rounded-full bg-white/90 px-1.5 text-[10px] font-semibold text-slate-800 dark:bg-slate-900/90 dark:text-slate-200"
               title="Bandingkan dengan foto pertama posisi yang sama"
               @click="banding([fotoAwal(f), f])"
             >

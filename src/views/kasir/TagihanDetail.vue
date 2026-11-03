@@ -204,7 +204,7 @@ onMounted(load)
       <!-- Rincian / struk -->
       <div class="card lg:col-span-3">
         <div id="struk" class="card-body">
-          <div class="mb-4 flex items-start justify-between gap-4 border-b border-dashed border-slate-300 pb-4">
+          <div class="mb-4 flex items-start justify-between gap-4 border-b border-dashed border-slate-300 pb-4 dark:border-slate-700">
             <div>
               <p class="font-semibold">{{ klinik.nama }}<template v-if="tagihan.cabang"> · {{ tagihan.cabang.nama }}</template></p>
               <p v-if="kontak" class="text-xs text-slate-500">{{ kontak }}</p>
@@ -262,7 +262,7 @@ onMounted(load)
             <template v-else-if="p.status === 'menunggu_bayar'">aktif setelah tagihan ini lunas</template>
             <template v-else>{{ p.status }}</template>
           </p>
-          <p v-if="lunas" class="mt-6 border-t border-dashed border-slate-300 pt-3 text-center text-xs text-slate-500">
+          <p v-if="lunas" class="mt-6 border-t border-dashed border-slate-300 pt-3 text-center text-xs text-slate-500 dark:border-slate-700">
             Lunas {{ waktu(tagihan.dibayar_at) }} · Kasir: {{ tagihan.kasir?.name }}<template v-if="tagihan.penyetuju_diskon"> · Diskon disetujui {{ tagihan.penyetuju_diskon.name }}</template><template v-if="klinik.info?.struk?.catatan_kaki"><br />{{ klinik.info.struk.catatan_kaki }}</template>
           </p>
         </div>
@@ -285,7 +285,7 @@ onMounted(load)
           <!-- Voucher & kode promo (TR-06) -->
           <div>
             <label class="label" for="kode-promo">Kode voucher / promo</label>
-            <div v-if="tagihan.promo" class="flex items-center justify-between gap-2 rounded-2xl bg-emerald-600/10 px-3 py-2 text-sm text-emerald-800">
+            <div v-if="tagihan.promo" class="flex items-center justify-between gap-2 rounded-2xl bg-emerald-600/10 px-3 py-2 text-sm text-emerald-800 dark:text-emerald-300">
               <span><b class="font-mono">{{ tagihan.promo.kode }}</b> · {{ tagihan.promo.nama }} · -{{ rupiah(tagihan.diskon_promo) }}</span>
               <button type="button" class="text-xs hover:underline" :disabled="memasangPromo" @click="lepasPromo">Lepas</button>
             </div>
@@ -304,9 +304,9 @@ onMounted(load)
             </div>
 
             <!-- Persetujuan atasan untuk diskon di atas batas peran (BL-02) -->
-            <div v-if="persetujuan.perlu" class="space-y-2 rounded-2xl border border-amber-300/70 bg-amber-50/80 p-3">
-              <p class="text-sm font-medium text-amber-900">Persetujuan atasan</p>
-              <p class="text-xs text-amber-800">Atasan (mis. manajer) memasukkan email & password-nya di perangkat ini. Persetujuan tercatat di audit log.</p>
+            <div v-if="persetujuan.perlu" class="space-y-2 rounded-2xl border border-amber-300/70 bg-amber-50/80 p-3 dark:bg-amber-950/80">
+              <p class="text-sm font-medium text-amber-900 dark:text-amber-200">Persetujuan atasan</p>
+              <p class="text-xs text-amber-800 dark:text-amber-300">Atasan (mis. manajer) memasukkan email & password-nya di perangkat ini. Persetujuan tercatat di audit log.</p>
               <input v-model="persetujuan.email" type="email" class="input" placeholder="Email atasan" autocomplete="off" aria-label="Email atasan" required />
               <input v-model="persetujuan.password" type="password" class="input" placeholder="Password atasan" autocomplete="new-password" aria-label="Password atasan" required />
               <p v-if="errors.persetujuan" class="field-error">{{ errors.persetujuan }}</p>
@@ -319,7 +319,7 @@ onMounted(load)
 
             <!-- Split payment (BL-03) -->
             <div class="space-y-3">
-              <div v-for="(b, i) in bayar.baris" :key="i" class="space-y-2 rounded-2xl border border-line bg-white/40 p-3">
+              <div v-for="(b, i) in bayar.baris" :key="i" class="space-y-2 rounded-2xl border border-line bg-white/40 p-3 dark:bg-slate-900/40">
                 <div class="flex gap-2">
                   <select v-model="b.metode" class="input" :aria-label="`Metode bayar ${i + 1}`">
                     <option v-for="[key, label] in METODE_SPLIT" :key="key" :value="key">{{ label }}</option>

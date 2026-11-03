@@ -91,7 +91,7 @@ onUnmounted(() => {
         </thead>
         <tbody>
           <TableSkeleton v-if="loading && !items.length" :cols="7" />
-          <tr v-for="k in items" :key="k.id" :class="{ 'bg-white/60': k.status === 'diperiksa' }">
+          <tr v-for="k in items" :key="k.id" :class="{ 'bg-white/60 dark:bg-slate-900/60': k.status === 'diperiksa' }">
             <td class="tabular-nums text-lg font-semibold text-brand-700">{{ k.no_antrian }}</td>
             <td>
               <p class="font-medium">{{ k.pasien.nama }}</p>

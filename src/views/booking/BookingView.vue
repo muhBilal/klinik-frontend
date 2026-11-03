@@ -315,7 +315,7 @@ onMounted(async () => {
         <button class="btn btn-secondary btn-sm" @click="tgl = hariIni()">Hari ini</button>
         <button class="btn btn-secondary btn-icon btn-sm" aria-label="Berikutnya" @click="geser(1)">›</button>
         <input v-model="tgl" type="date" class="input w-auto py-1.5" aria-label="Tanggal" />
-        <span class="font-semibold text-slate-800">{{ judulTanggal }}</span>
+        <span class="font-semibold text-slate-800 dark:text-slate-200">{{ judulTanggal }}</span>
         <AppSpinner v-if="loading" class="text-slate-400" />
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -327,9 +327,9 @@ onMounted(async () => {
     </div>
 
     <div class="flex flex-wrap gap-x-5 gap-y-1 border-b border-line px-5 py-2 text-xs text-slate-600">
-      <span><b class="tabular-nums text-slate-800">{{ ringkasan.total }}</b> booking</span>
-      <span><b class="tabular-nums text-violet-700">{{ ringkasan.dikonfirmasi }}</b> dikonfirmasi</span>
-      <span><b class="tabular-nums text-emerald-700">{{ ringkasan.hadir }}</b> hadir</span>
+      <span><b class="tabular-nums text-slate-800 dark:text-slate-200">{{ ringkasan.total }}</b> booking</span>
+      <span><b class="tabular-nums text-violet-700 dark:text-violet-400">{{ ringkasan.dikonfirmasi }}</b> dikonfirmasi</span>
+      <span><b class="tabular-nums text-emerald-700 dark:text-emerald-400">{{ ringkasan.hadir }}</b> hadir</span>
       <span><b class="tabular-nums text-rose-600">{{ ringkasan.tidak_hadir }}</b> tidak hadir</span>
       <span><b class="tabular-nums">{{ ringkasan.batal }}</b> batal</span>
     </div>
@@ -341,7 +341,7 @@ onMounted(async () => {
       </div>
       <div v-else class="flex min-w-max">
         <!-- Sumbu jam -->
-        <div class="sticky left-0 z-10 w-14 shrink-0 bg-white/70 backdrop-blur">
+        <div class="sticky left-0 z-10 w-14 shrink-0 bg-white/70 backdrop-blur dark:bg-slate-900/70">
           <div class="h-12 border-b border-line" />
           <div class="relative" :style="{ height: `${tinggi}px` }">
             <span v-for="m in jamGaris" :key="m" class="absolute -translate-y-1/2 pl-2 text-[11px] tabular-nums text-slate-400" :style="{ top: `${(m - batas[0]) * PIKSEL_PER_MENIT}px` }">{{ labelMenit(m) }}</span>
@@ -354,12 +354,12 @@ onMounted(async () => {
           </div>
           <div
             class="relative"
-            :class="{ 'cursor-copy': bisaKelola && mode === 'petugas' && c.id !== null, 'bg-slate-200/40': c.kerja !== null }"
+            :class="{ 'cursor-copy': bisaKelola && mode === 'petugas' && c.id !== null, 'bg-slate-200/40 dark:bg-slate-700/40': c.kerja !== null }"
             :style="{ height: `${tinggi}px` }"
             @click.self="klikKolom(c, $event)"
           >
             <!-- jam praktik (putih) di atas latar abu = di luar jadwal -->
-            <div v-for="([m, s], i) in c.kerja ?? []" :key="i" class="pointer-events-none absolute inset-x-0 bg-white/60" :style="posisi(m, s)" />
+            <div v-for="([m, s], i) in c.kerja ?? []" :key="i" class="pointer-events-none absolute inset-x-0 bg-white/60 dark:bg-slate-900/60" :style="posisi(m, s)" />
             <div v-for="m in jamGaris" :key="m" class="pointer-events-none absolute inset-x-0 border-t border-line/70" :style="{ top: `${(m - batas[0]) * PIKSEL_PER_MENIT}px` }" />
             <div v-if="garisSekarang !== null" class="pointer-events-none absolute inset-x-0 z-10 border-t-2 border-rose-500" :style="{ top: `${garisSekarang}px` }" />
             <button
@@ -372,7 +372,7 @@ onMounted(async () => {
               @click="bukaDetail(a)"
             >
               <p class="font-semibold tabular-nums">{{ rentangJam(a) }}<span v-if="a.minta_ubah_at" class="ml-1 rounded bg-amber-500 px-1 text-[10px] font-bold text-white" title="Pasien meminta ubah jadwal lewat WhatsApp">UBAH?</span></p>
-              <p class="truncate font-medium text-slate-800">{{ a.pasien.nama }}</p>
+              <p class="truncate font-medium text-slate-800 dark:text-slate-200">{{ a.pasien.nama }}</p>
               <p class="truncate text-slate-600">{{ namaTreatment(a) }}</p>
               <p v-if="mode === 'ruang'" class="truncate text-slate-500">{{ a.petugas?.name }}</p>
             </button>
@@ -450,7 +450,7 @@ onMounted(async () => {
       </dl>
       <p v-if="bisaDiubah(detail) && hariIniBooking(detail) && !detail.poli_id" class="alert alert-warning">Lengkapi poli (Ubah) sebelum check-in.</p>
       <p v-if="detail.minta_ubah_at" class="alert alert-warning">Pasien meminta ubah jadwal lewat WhatsApp ({{ waktu(detail.minta_ubah_at) }}). Hubungi pasien lalu ubah jadwal — tanda ini hilang setelah booking diubah.</p>
-      <p v-if="detail.status === 'dikonfirmasi' && detail.dikonfirmasi_via === 'wa'" class="text-xs text-emerald-700">Dikonfirmasi pasien lewat WhatsApp</p>
+      <p v-if="detail.status === 'dikonfirmasi' && detail.dikonfirmasi_via === 'wa'" class="text-xs text-emerald-700 dark:text-emerald-400">Dikonfirmasi pasien lewat WhatsApp</p>
     </div>
     <template #footer>
       <template v-if="detail && bisaKelola">

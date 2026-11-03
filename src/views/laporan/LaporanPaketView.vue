@@ -60,23 +60,23 @@ onMounted(muat)
 
   <div v-if="data" id="laporan-paket" class="space-y-5 transition-opacity" :class="{ 'opacity-60': loading }">
     <p class="text-sm text-slate-500">
-      <b class="text-slate-800">{{ klinik.nama }}</b> · {{ cakupan }} · {{ tanggal(data.periode.mulai) }} – {{ tanggal(data.periode.selesai) }}
+      <b class="text-slate-800 dark:text-slate-200">{{ klinik.nama }}</b> · {{ cakupan }} · {{ tanggal(data.periode.mulai) }} – {{ tanggal(data.periode.selesai) }}
     </p>
 
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div class="card card-body">
         <p class="text-sm font-medium text-slate-500">Paket terjual</p>
-        <p class="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-900">{{ rupiah(r.nilai_terjual) }}</p>
+        <p class="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ rupiah(r.nilai_terjual) }}</p>
         <p class="mt-1 text-xs text-slate-500">{{ angka(r.terjual) }} paket (nilai bersih)</p>
       </div>
       <div class="card card-body">
         <p class="text-sm font-medium text-slate-500">Pendapatan diakui</p>
-        <p class="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-900">{{ rupiah(r.nilai_dipakai) }}</p>
+        <p class="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ rupiah(r.nilai_dipakai) }}</p>
         <p class="mt-1 text-xs text-slate-500">{{ angka(r.sesi_dipakai) }} sesi dikerjakan</p>
       </div>
       <div class="card card-body">
         <p class="text-sm font-medium text-slate-500">Refund & hangus</p>
-        <p class="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-900">{{ rupiah(r.refund + r.hangus) }}</p>
+        <p class="mt-2 truncate text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ rupiah(r.refund + r.hangus) }}</p>
         <p class="mt-1 text-xs text-slate-500">Refund {{ rupiah(r.refund) }} · hangus (kedaluwarsa) {{ rupiah(r.hangus) }}</p>
       </div>
       <div class="card card-body border-brand-900 bg-brand-900 text-white inset-shadow-dark">

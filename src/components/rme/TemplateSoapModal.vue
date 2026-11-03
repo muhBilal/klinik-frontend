@@ -112,7 +112,7 @@ async function salinTeks() {
         <dl class="space-y-3">
           <div v-for="[key, huruf] in SOAP" :key="key">
             <dt class="text-xs font-semibold text-slate-500">{{ huruf }}</dt>
-            <dd class="whitespace-pre-line rounded-xl bg-white/50 px-3 py-2">{{ dipilih[key] || '—' }}</dd>
+            <dd class="whitespace-pre-line rounded-xl bg-white/50 px-3 py-2 dark:bg-slate-900/50">{{ dipilih[key] || '—' }}</dd>
           </div>
         </dl>
         <p v-if="dipilih.diagnosas?.length" class="text-xs text-slate-500">

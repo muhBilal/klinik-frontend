@@ -287,7 +287,7 @@ async function simpanBhp() {
         <div v-if="form.jenis === 'injeksi'" v-show="tab === 'face'" class="grid gap-5 lg:grid-cols-[18rem_1fr]">
           <div>
             <FaceChart v-model="form.titiks" v-model:terpilih="terpilih" :readonly="!bolehUbah" @tambah="tambahTitik" />
-            <div v-if="totalProduk.length" class="mt-3 rounded-2xl border border-line bg-white/40 px-4 py-3 text-sm">
+            <div v-if="totalProduk.length" class="mt-3 rounded-2xl border border-line bg-white/40 px-4 py-3 text-sm dark:bg-slate-900/40">
               <p class="text-xs font-semibold text-slate-500">Total per produk</p>
               <p v-for="p in totalProduk" :key="`${p.nama}${p.satuan}`" class="tabular-nums">{{ p.nama }}: <b>{{ angka(p.jumlah) }} {{ p.satuan }}</b></p>
               <p class="mt-1 text-xs text-slate-400">Sesuaikan pemakaian BHP (satuan stok) di tab Pemakaian BHP.</p>
@@ -301,7 +301,7 @@ async function simpanBhp() {
             <div
               v-for="(t, i) in form.titiks"
               :key="i"
-              :class="terpilih === i ? 'border-rose-300 bg-rose-50/60' : 'border-line bg-white/40'"
+              :class="terpilih === i ? 'border-rose-300 bg-rose-50/60 dark:bg-rose-950/60' : 'border-line bg-white/40 dark:bg-slate-900/40'"
               class="rounded-2xl border p-3"
               @click="terpilih = i"
             >
@@ -314,7 +314,7 @@ async function simpanBhp() {
                   <AsyncSelect v-if="bolehUbah && !t.obat_id" endpoint="/obats" :params="{ aktif: 1 }" placeholder="Cari produk..." @select="(o) => pilihObat(t, o)">
                     <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">· {{ item.satuan }}</span></template>
                   </AsyncSelect>
-                  <div v-else class="flex items-center justify-between gap-2 rounded-xl bg-white/60 px-3 py-1.5 text-sm">
+                  <div v-else class="flex items-center justify-between gap-2 rounded-xl bg-white/60 px-3 py-1.5 text-sm dark:bg-slate-900/60">
                     <span class="truncate">{{ t.obat_nama ?? 'Tanpa produk' }}</span>
                     <button v-if="bolehUbah" type="button" class="text-xs text-slate-400 hover:text-slate-700" @click="t.obat_id = null; t.batch_id = null">ganti</button>
                   </div>
@@ -400,7 +400,7 @@ async function simpanBhp() {
           <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">· {{ item.satuan }}</span></template>
         </AsyncSelect>
         <div v-if="bhpLoading" class="flex items-center gap-2 text-sm text-slate-500"><AppSpinner />Memuat BHP...</div>
-        <div v-else class="overflow-x-auto rounded-xl border border-line bg-white/30">
+        <div v-else class="overflow-x-auto rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
           <table class="table">
             <thead><tr><th>Bahan</th><th class="text-right">Standar</th><th class="w-36">Pemakaian</th><th>Satuan</th><th class="w-8" /></tr></thead>
             <tbody>

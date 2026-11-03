@@ -127,7 +127,7 @@ async function submit() {
       </div>
       <div v-if="kandidat.length" class="alert alert-warning space-y-2 sm:col-span-2" role="status">
         <p class="font-medium">Kemungkinan pasien sudah terdaftar:</p>
-        <div v-for="k in kandidat" :key="k.id" class="flex flex-wrap items-center gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm">
+        <div v-for="k in kandidat" :key="k.id" class="flex flex-wrap items-center gap-2 rounded-xl bg-white/60 px-3 py-2 text-sm dark:bg-slate-900/60">
           <div class="min-w-0 flex-1">
             <p class="font-medium">{{ k.nama }} <span class="text-xs text-slate-500">· RM {{ k.no_rm }}</span></p>
             <p class="text-xs text-slate-600">

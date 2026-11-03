@@ -218,7 +218,7 @@ onMounted(load)
         <div>
           <p class="label">Batas diskon manual per peran (% dari total tagihan)</p>
           <div class="grid gap-2 sm:grid-cols-2">
-            <label v-for="p in perans.filter((x) => !x.akses_penuh)" :key="p.kode" class="flex items-center justify-between gap-3 rounded-2xl bg-white/40 px-3 py-1.5 text-sm">
+            <label v-for="p in perans.filter((x) => !x.akses_penuh)" :key="p.kode" class="flex items-center justify-between gap-3 rounded-2xl bg-white/40 px-3 py-1.5 text-sm dark:bg-slate-900/40">
               <span>{{ p.nama }}</span>
               <input
                 :value="batasDiskon(p.kode)"

@@ -109,7 +109,7 @@ async function simpan() {
       </div>
 
       <div v-if="naskahLoading" class="flex items-center gap-2 text-sm text-slate-500"><AppSpinner />Menyiapkan naskah...</div>
-      <article v-else-if="naskah" class="max-h-80 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-4 text-sm leading-relaxed text-slate-800">
+      <article v-else-if="naskah" class="max-h-80 overflow-y-auto rounded-2xl border border-line bg-white px-5 py-4 text-sm leading-relaxed text-slate-800 dark:bg-slate-900 dark:text-slate-200">
         <h3 class="mb-3 text-center text-base font-semibold uppercase tracking-wide">{{ naskah.judul }}</h3>
         <p class="whitespace-pre-line">{{ naskah.isi }}</p>
       </article>
@@ -151,7 +151,7 @@ async function simpan() {
         <label class="flex items-center gap-2 text-sm">
           <input v-model="pakaiSaksi" type="checkbox" class="accent-brand-600" /> Dengan saksi
         </label>
-        <div v-if="pakaiSaksi" class="space-y-3 rounded-2xl border border-line bg-white/40 p-4">
+        <div v-if="pakaiSaksi" class="space-y-3 rounded-2xl border border-line bg-white/40 p-4 dark:bg-slate-900/40">
           <div>
             <label class="label" for="consent-saksi">Nama saksi *</label>
             <input id="consent-saksi" v-model="form.saksi_nama" class="input" :class="{ 'input-error': errors.saksi_nama }" maxlength="150" />

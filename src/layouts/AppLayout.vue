@@ -145,7 +145,7 @@ watch(idle, async (value) => {
     <header class="flex items-center gap-4 px-4 pt-4 sm:px-6 lg:gap-6 lg:pt-5 lg:pr-8 lg:pl-5 print:hidden">
       <RouterLink to="/" class="flex shrink-0 items-center gap-2.5" :aria-label="`${klinik.nama}, ke dashboard`" :title="klinik.nama">
         <AppLogo class="size-11 drop-shadow-[0_6px_10px_rgba(5,103,181,0.25)]" />
-        <!-- <span class="text-[22px] leading-none tracking-tight text-slate-900"><b class="font-bold">lefa</b><span class="font-light">klinik</span></span> -->
+        <!-- <span class="text-[22px] leading-none tracking-tight text-slate-900 dark:text-white"><b class="font-bold">lefa</b><span class="font-light">klinik</span></span> -->
       </RouterLink>
 
       <!-- Tab halaman dari modul yang dipilih di rail (desktop) -->
@@ -239,23 +239,22 @@ watch(idle, async (value) => {
     </div>
 
     <!-- ===== Rail modul (desktop): satu tombol per modul, di tengah layar secara vertikal ===== -->
-    <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col items-center lg:flex print:hidden" aria-label="Modul">
-      <button v-if="canGoBack" class="rail-btn" aria-label="Kembali" @click="router.back()">
-        <AppIcon :path="ICON.back" size="size-4.5" class="shrink-0" />
-        <span class="rail-tip">Kembali</span>
+    <aside class="rail fixed top-1/2 left-5 z-30 hidden -translate-y-1/2 flex-col lg:flex print:hidden" aria-label="Modul">
+      <button v-if="canGoBack" class="rail-btn" @click="router.back()">
+        <span class="rail-ico"><AppIcon :path="ICON.back" size="size-4.5" /></span>
+        <span class="rail-label">Kembali</span>
       </button>
-      <nav class="rail-nav glass flex flex-col items-center rounded-full p-1.5" aria-label="Modul">
+      <nav class="rail-nav glass flex flex-col p-1.5" aria-label="Modul">
         <RouterLink
           v-for="group in groups"
           :key="group.key"
           :to="tujuanModul(group)"
-          :aria-label="group.label"
           :aria-current="activeGroup?.key === group.key ? 'true' : undefined"
           :class="{ 'rail-btn-active': activeGroup?.key === group.key }"
           class="rail-btn"
         >
-          <AppIcon :path="group.icon" size="size-[1.15rem]" />
-          <span class="rail-tip">{{ group.label }}</span>
+          <span class="rail-ico"><AppIcon :path="group.icon" size="size-[1.15rem]" /></span>
+          <span class="rail-label">{{ group.label }}</span>
         </RouterLink>
       </nav>
     </aside>

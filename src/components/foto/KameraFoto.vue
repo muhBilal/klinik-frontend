@@ -216,7 +216,7 @@ onBeforeUnmount(() => {
           v-for="(p, i) in posisiList"
           :key="p.kode ?? i"
           type="button"
-          :class="i === langkah ? 'bg-brand-900 text-white' : sudah(p) ? 'bg-emerald-600/15 text-emerald-800' : 'bg-slate-900/5 text-slate-600'"
+          :class="i === langkah ? 'bg-brand-900 text-white' : sudah(p) ? 'bg-emerald-600/15 text-emerald-800 dark:text-emerald-300' : 'bg-slate-900/5 text-slate-600'"
           class="rounded-full px-3 py-1 text-xs font-semibold transition disabled:opacity-60"
           :disabled="mengunggah"
           @click="langkah = i; lepasPratinjau()"
@@ -267,12 +267,12 @@ onBeforeUnmount(() => {
           <button
             v-if="kameraSiap"
             type="button"
-            class="flex size-16 items-center justify-center rounded-full bg-white ring-4 ring-slate-900/80 transition active:scale-95 disabled:opacity-50"
+            class="flex size-16 items-center justify-center rounded-full bg-white ring-4 ring-slate-900/80 transition active:scale-95 disabled:opacity-50 dark:bg-slate-900"
             :disabled="memproses"
             aria-label="Ambil foto"
             @click="jepret"
           >
-            <AppSpinner v-if="memproses" class="text-slate-900" /><span v-else class="size-12 rounded-full bg-slate-900" />
+            <AppSpinner v-if="memproses" class="text-slate-900 dark:text-white" /><span v-else class="size-12 rounded-full bg-slate-900" />
           </button>
           <button type="button" class="btn btn-secondary btn-sm" @click="inputFile?.click()">Unggah berkas</button>
           <input ref="inputFile" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" class="hidden" @change="pilihFile" />

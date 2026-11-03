@@ -260,7 +260,7 @@ onMounted(() => load())
     <form id="form-terima" class="grid gap-4 sm:grid-cols-2" @submit.prevent="simpanTerima">
       <div class="sm:col-span-2">
         <label class="label">Obat / bahan *</label>
-        <div v-if="terima.obat" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 text-sm">
+        <div v-if="terima.obat" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 text-sm dark:bg-slate-900/60">
           <span>{{ terima.obat.nama }} <span class="text-xs text-slate-500">· {{ terima.obat.satuan }}</span></span>
           <button type="button" class="text-xs text-slate-400 hover:text-slate-700" @click="terima.obat = null">ganti</button>
         </div>
@@ -313,7 +313,7 @@ onMounted(() => load())
         <label class="label" for="a-jumlah">{{ aksi.jenis === 'opname' ? 'Jumlah fisik hasil hitung *' : 'Jumlah dipindahkan *' }}</label>
         <input id="a-jumlah" v-model="aksiForm.jumlah" type="number" step="any" min="0" class="input text-lg" :class="{ 'input-error': errors.jumlah }" required />
         <p v-if="errors.jumlah" class="field-error">{{ errors.jumlah }}</p>
-        <p v-else-if="aksi.jenis === 'opname' && selisihOpname" class="mt-1 text-sm" :class="selisihOpname < 0 ? 'text-rose-600' : 'text-amber-700'">
+        <p v-else-if="aksi.jenis === 'opname' && selisihOpname" class="mt-1 text-sm" :class="selisihOpname < 0 ? 'text-rose-600' : 'text-amber-700 dark:text-amber-400'">
           Selisih {{ selisihOpname > 0 ? '+' : '' }}{{ angka(selisihOpname) }} {{ aksi.batch.obat?.satuan }}
         </p>
       </div>

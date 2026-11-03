@@ -191,7 +191,7 @@ async function salinKode() {
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2">
                 <button type="button" class="btn btn-secondary btn-sm" @click="fileEl.click()">Pilih foto</button>
-                <button v-if="profil.avatar" type="button" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50" @click="profil.avatar = ''">
+                <button v-if="profil.avatar" type="button" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40" @click="profil.avatar = ''">
                   <AppIcon :path="ICON_TRASH" size="size-3.5" /> Hapus
                 </button>
               </div>
@@ -216,7 +216,7 @@ async function salinKode() {
             <p v-if="profilErrors.sip" class="field-error">{{ profilErrors.sip }}</p>
           </div>
 
-          <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-slate-100 pt-3 text-sm">
+          <dl class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 border-t border-slate-100 pt-3 text-sm dark:border-slate-800">
             <dt class="text-slate-500">Peran</dt><dd>{{ auth.user?.role_label }}</dd>
             <dt class="text-slate-500">Cabang</dt><dd>{{ auth.user?.cabang?.nama ?? 'Semua cabang' }}</dd>
             <template v-if="auth.user?.poli"><dt class="text-slate-500">Poli</dt><dd>{{ auth.user.poli.nama }}</dd></template>
@@ -264,11 +264,11 @@ async function salinKode() {
         </p>
 
         <!-- Kode pemulihan: ditampilkan sekali -->
-        <div v-if="kodePemulihan.length" class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4">
-          <p class="font-semibold text-amber-900">Simpan kode pemulihan ini sekarang</p>
-          <p class="mt-1 text-xs text-amber-800">Setiap kode hanya bisa dipakai sekali bila ponsel hilang. Kode tidak akan ditampilkan lagi.</p>
+        <div v-if="kodePemulihan.length" class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-500/40 dark:bg-amber-950/80">
+          <p class="font-semibold text-amber-900 dark:text-amber-200">Simpan kode pemulihan ini sekarang</p>
+          <p class="mt-1 text-xs text-amber-800 dark:text-amber-300">Setiap kode hanya bisa dipakai sekali bila ponsel hilang. Kode tidak akan ditampilkan lagi.</p>
           <ul class="mt-3 grid grid-cols-2 gap-1.5 font-mono text-sm tabular-nums">
-            <li v-for="k in kodePemulihan" :key="k" class="rounded-lg bg-white px-2 py-1 text-center">{{ k }}</li>
+            <li v-for="k in kodePemulihan" :key="k" class="rounded-lg bg-white px-2 py-1 text-center dark:bg-slate-900">{{ k }}</li>
           </ul>
           <div class="mt-3 flex gap-2">
             <button class="btn btn-secondary btn-sm" @click="salinKode">Salin</button>
@@ -285,7 +285,7 @@ async function salinKode() {
               <li>Masukkan kode 6 digit yang muncul di aplikasi.</li>
             </ol>
             <div class="flex flex-wrap items-center gap-4">
-              <img :src="setup.qr" alt="QR code 2FA" class="size-44 rounded-2xl bg-white p-2 shadow-sm" />
+              <img :src="setup.qr" alt="QR code 2FA" class="size-44 rounded-2xl bg-white p-2 shadow-sm dark:bg-slate-900" />
               <div>
                 <p class="text-xs text-slate-500">Kunci manual</p>
                 <p class="font-mono text-sm tracking-wider break-all select-all">{{ secretTampil }}</p>

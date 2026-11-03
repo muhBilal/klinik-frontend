@@ -118,7 +118,7 @@ onMounted(() => load())
             <td class="text-xs text-slate-600">{{ p.items.map((i) => `${i.tindakan?.nama} ×${i.jumlah_sesi}`).join(' · ') }}</td>
             <td class="text-right tabular-nums">
               {{ rupiah(p.harga) }}
-              <p v-if="hemat(p.nilai_normal, p.harga)" class="text-xs text-emerald-700">hemat {{ hemat(p.nilai_normal, p.harga) }}% dari {{ rupiah(p.nilai_normal) }}</p>
+              <p v-if="hemat(p.nilai_normal, p.harga)" class="text-xs text-emerald-700 dark:text-emerald-400">hemat {{ hemat(p.nilai_normal, p.harga) }}% dari {{ rupiah(p.nilai_normal) }}</p>
             </td>
             <td class="whitespace-nowrap text-slate-600">{{ p.masa_berlaku_hari ? `${p.masa_berlaku_hari} hari` : 'Tanpa batas' }}</td>
             <td class="text-center tabular-nums">{{ p.terjual_count }}</td>
@@ -158,7 +158,7 @@ onMounted(() => load())
           <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">· {{ rupiah(item.tarif) }}</span></template>
         </AsyncSelect>
         <p v-if="errors.items" class="field-error">{{ errors.items }}</p>
-        <div v-for="(i, idx) in form.items" :key="i.tindakan_id" class="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white/40 px-3 py-2 text-sm">
+        <div v-for="(i, idx) in form.items" :key="i.tindakan_id" class="flex flex-wrap items-center gap-3 rounded-2xl border border-line bg-white/40 px-3 py-2 text-sm dark:bg-slate-900/40">
           <span class="min-w-40 flex-1 font-medium">{{ i.nama }}</span>
           <label class="flex items-center gap-1.5 text-xs text-slate-500">
             <input v-model.number="i.jumlah_sesi" type="number" min="1" max="100" class="input w-20 py-1 text-sm" :aria-label="`Jumlah sesi ${i.nama}`" /> sesi

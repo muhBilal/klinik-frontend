@@ -92,11 +92,11 @@ function simpan() {
       </div>
 
       <section class="space-y-2">
-        <h3 class="text-sm font-semibold text-slate-800">Komponen per satu racikan</h3>
+        <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Komponen per satu racikan</h3>
         <AsyncSelect endpoint="/obats" :params="{ aktif: 1 }" placeholder="Cari obat / bahan komponen..." @select="tambahKomponen">
           <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">· {{ item.satuan }} · stok {{ angka(item.stok) }}</span></template>
         </AsyncSelect>
-        <div v-if="form.komponen.length" class="overflow-x-auto rounded-xl border border-line bg-white/30">
+        <div v-if="form.komponen.length" class="overflow-x-auto rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
           <table class="table">
             <thead><tr><th>Komponen</th><th class="w-32">Jumlah</th><th>Satuan</th><th class="text-right">Estimasi</th><th class="w-8" /></tr></thead>
             <tbody>

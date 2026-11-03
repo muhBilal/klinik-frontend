@@ -124,7 +124,7 @@ onMounted(muat)
       <button v-if="!ringkas && auth.can('kasir.tagihan')" type="button" class="btn btn-secondary btn-sm ml-auto" @click="jualOpen = true">+ Jual paket</button>
     </div>
     <div class="card-body space-y-3">
-      <article v-for="p in daftar" :key="p.id" class="rounded-2xl border border-line bg-white/40 p-3 text-sm">
+      <article v-for="p in daftar" :key="p.id" class="rounded-2xl border border-line bg-white/40 p-3 text-sm dark:bg-slate-900/40">
         <header class="flex flex-wrap items-start gap-2">
           <div class="min-w-0 flex-1">
             <p class="font-semibold">{{ p.nama }}</p>
@@ -160,7 +160,7 @@ onMounted(muat)
           <RouterLink v-if="p.status === 'menunggu_bayar' && p.tagihan && auth.can('kasir.tagihan')" :to="`/kasir/${p.tagihan.id}`" class="btn btn-primary btn-sm">
             Bayar {{ rupiah(p.tagihan.grand_total) }}
           </RouterLink>
-          <span v-else-if="p.status === 'menunggu_bayar'" class="text-xs text-amber-700">
+          <span v-else-if="p.status === 'menunggu_bayar'" class="text-xs text-amber-700 dark:text-amber-400">
             {{ p.tagihan ? `Aktif setelah tagihan ${p.tagihan.no_tagihan} lunas` : 'Ditagihkan saat pemeriksaan ditutup' }}
           </span>
           <button type="button" class="btn btn-ghost btn-sm" @click="toggleRiwayat(p)">{{ terbuka === p.id ? 'Tutup riwayat' : 'Riwayat pemakaian' }}</button>
@@ -192,7 +192,7 @@ onMounted(muat)
       </article>
 
       <p v-if="!memuat && !daftar.length" class="text-sm text-slate-400">Pasien belum punya paket aktif.</p>
-      <button v-if="!ringkas && jumlahLain" type="button" class="text-xs text-slate-500 hover:text-slate-900 hover:underline" @click="tampilSelesai = !tampilSelesai">
+      <button v-if="!ringkas && jumlahLain" type="button" class="text-xs text-slate-500 hover:text-slate-900 hover:underline dark:hover:text-white" @click="tampilSelesai = !tampilSelesai">
         {{ tampilSelesai ? 'Sembunyikan' : 'Tampilkan' }} paket habis / kedaluwarsa / dibatalkan ({{ jumlahLain }})
       </button>
     </div>
@@ -210,9 +210,9 @@ onMounted(muat)
         </div>
         <div v-else-if="aksi.mode === 'alihkan'">
           <p class="label">Pasien penerima *</p>
-          <p v-if="aksi.pasien" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2">
+          <p v-if="aksi.pasien" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 dark:bg-slate-900/60">
             <span>{{ aksi.pasien.nama }} <span class="text-xs text-slate-500">RM {{ aksi.pasien.no_rm }}</span></span>
-            <button type="button" class="text-xs text-slate-500 hover:text-slate-900" @click="aksi.pasien = null">ganti</button>
+            <button type="button" class="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white" @click="aksi.pasien = null">ganti</button>
           </p>
           <AsyncSelect v-else endpoint="/pasiens" placeholder="Cari nama / No. RM..." @select="(p) => (aksi.pasien = p)">
             <template #default="{ item }">{{ item.nama }} <span class="text-xs text-slate-500">RM {{ item.no_rm }}</span></template>
@@ -224,7 +224,7 @@ onMounted(muat)
           <div v-if="aksi.simulasi" class="rounded-2xl bg-slate-900/5 px-3 py-2">
             <p>Nilai sesi tersisa {{ rupiah(aksi.simulasi.sisa_nilai) }}<template v-if="aksi.simulasi.potongan"> − potongan {{ aksi.simulasi.potongan_persen }}% ({{ rupiah(aksi.simulasi.potongan) }})</template></p>
             <p class="text-base font-semibold">Dikembalikan {{ rupiah(aksi.simulasi.nominal) }}</p>
-            <p v-if="!aksi.simulasi.diizinkan" class="text-xs text-rose-700">Kebijakan klinik saat ini tidak mengizinkan refund sisa paket (Pengaturan → Paket).</p>
+            <p v-if="!aksi.simulasi.diizinkan" class="text-xs text-rose-700 dark:text-rose-400">Kebijakan klinik saat ini tidak mengizinkan refund sisa paket (Pengaturan → Paket).</p>
           </div>
           <div class="grid gap-3 sm:grid-cols-2">
             <div>

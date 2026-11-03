@@ -424,15 +424,15 @@ function onKeydown(e) {
       >
         <!-- Modal Card Bergaya Algolia DocSearch -->
         <div
-          class="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-2xl shadow-slate-900/30 inset-shadow-glass backdrop-blur-2xl motion-safe:animate-pop"
+          class="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-white/80 bg-white/95 shadow-2xl shadow-slate-900/30 inset-shadow-glass backdrop-blur-2xl motion-safe:animate-pop dark:bg-slate-900/95"
           role="dialog"
           aria-modal="true"
           aria-label="Pencarian Global Algolia"
         >
           <!-- ===== Input Header Ala Algolia ===== -->
-          <div class="relative flex items-center gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5">
+          <div class="relative flex items-center gap-3 border-b border-slate-200/80 px-4 py-3 sm:px-5 sm:py-3.5 dark:border-slate-800/80">
             <!-- Icon Algolia Search -->
-            <div class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600">
+            <div class="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/30">
               <AppIcon :path="ICON.search" size="size-5" />
             </div>
 
@@ -447,7 +447,7 @@ function onKeydown(e) {
               aria-autocomplete="list"
               :aria-activedescendant="activeEntry ? `algolia-${activeEntry.id}` : undefined"
               :placeholder="canSearchPasien ? 'Cari menu, modul, aksi, atau pasien...' : 'Cari menu, modul, atau aksi cepat...'"
-              class="h-11 min-w-0 flex-1 bg-transparent text-base font-normal text-slate-900 placeholder:text-slate-400 focus:outline-none sm:text-lg"
+              class="h-11 min-w-0 flex-1 bg-transparent text-base font-normal text-slate-900 placeholder:text-slate-400 focus:outline-none sm:text-lg dark:text-white"
               autocomplete="off"
               spellcheck="false"
               @keydown="onKeydown"
@@ -457,7 +457,7 @@ function onKeydown(e) {
             <button
               v-if="query"
               type="button"
-              class="grid size-7 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              class="grid size-7 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800"
               title="Bersihkan input"
               aria-label="Bersihkan"
               @click="query = ''; inputEl?.focus()"
@@ -471,7 +471,7 @@ function onKeydown(e) {
             <!-- ESC Shortcut Badge -->
             <button
               type="button"
-              class="grid h-7 items-center rounded-lg border border-slate-200 bg-slate-100/80 px-2 text-[11px] font-semibold text-slate-500 shadow-xs transition hover:bg-slate-200"
+              class="grid h-7 items-center rounded-lg border border-slate-200 bg-slate-100/80 px-2 text-[11px] font-semibold text-slate-500 shadow-xs transition hover:bg-slate-200 dark:border-slate-800 dark:bg-slate-800/80 dark:hover:bg-slate-700"
               title="Tutup (Esc)"
               @click="open = false"
             >
@@ -519,7 +519,7 @@ function onKeydown(e) {
                   :class="[
                     entry === activeEntry
                       ? 'bg-brand-900 text-white shadow-lg shadow-brand-900/30 ring-1 ring-brand-900'
-                      : 'text-slate-700 hover:bg-slate-100/80',
+                      : 'text-slate-700 hover:bg-slate-100/80 dark:hover:bg-slate-800/80',
                   ]"
                   class="group relative flex cursor-pointer items-center gap-3.5 rounded-2xl px-3.5 py-3 transition duration-150 select-none"
                   @mousemove="active = flat.indexOf(entry)"
@@ -529,8 +529,8 @@ function onKeydown(e) {
                   <span
                     :class="[
                       entry === activeEntry
-                        ? 'border-white/20 bg-white/15 text-white'
-                        : 'border-slate-200/90 bg-white text-slate-600 group-hover:border-slate-300 shadow-2xs',
+                        ? 'border-white/20 bg-white/15 text-white dark:bg-slate-900/15'
+                        : 'border-slate-200/90 bg-white text-slate-600 group-hover:border-slate-300 shadow-2xs dark:border-slate-800/90 dark:bg-slate-900 dark:group-hover:border-slate-700',
                     ]"
                     class="grid size-9 shrink-0 place-items-center rounded-xl border transition"
                   >
@@ -554,7 +554,7 @@ function onKeydown(e) {
                             v-if="seg.isMatch"
                             :class="[
                               entry === activeEntry
-                                ? 'bg-white/30 text-white font-bold'
+                                ? 'bg-white/30 text-white font-bold dark:bg-slate-900/30'
                                 : 'bg-brand-200 text-brand-950 font-bold',
                             ]"
                             class="rounded-sm px-0.5"
@@ -575,8 +575,8 @@ function onKeydown(e) {
                           v-if="seg.isMatch"
                           :class="[
                             entry === activeEntry
-                              ? 'bg-white/25 text-white'
-                              : 'bg-brand-100 text-brand-950 font-semibold',
+                              ? 'bg-white/25 text-white dark:bg-slate-900/25'
+                              : 'bg-brand-100 text-brand-950 font-semibold dark:bg-brand-900/30',
                           ]"
                           class="rounded-sm px-0.5"
                         >{{ seg.text }}</mark>
@@ -601,7 +601,7 @@ function onKeydown(e) {
                   <!-- Badge Navigasi Enter Ala Algolia -->
                   <span
                     v-if="entry === activeEntry && !section.isRecent"
-                    class="hidden shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2 py-1 text-xs font-medium text-white shadow-2xs sm:inline-flex"
+                    class="hidden shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2 py-1 text-xs font-medium text-white shadow-2xs sm:inline-flex dark:bg-slate-900/20"
                   >
                     Buka <AppIcon :path="ICON.arrowReturn" size="size-3" />
                   </span>
@@ -611,10 +611,10 @@ function onKeydown(e) {
 
             <!-- State Ketika Tidak Ditemukan Hasil -->
             <div v-if="!flat.length" class="flex flex-col items-center justify-center py-12 text-center">
-              <div class="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400">
+              <div class="grid size-14 place-items-center rounded-2xl bg-slate-100 text-slate-400 dark:bg-slate-800">
                 <AppIcon :path="ICON.search" size="size-7" />
               </div>
-              <h3 class="mt-4 text-sm font-semibold text-slate-900">
+              <h3 class="mt-4 text-sm font-semibold text-slate-900 dark:text-white">
                 <template v-if="pasienLoading">Mencari data...</template>
                 <template v-else>Tidak ada hasil untuk “{{ query }}”</template>
               </h3>
@@ -626,7 +626,7 @@ function onKeydown(e) {
           </div>
 
           <!-- ===== Footer Algolia DocSearch ===== -->
-          <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-slate-50/90 px-4 py-2.5 sm:px-5">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200/80 bg-slate-50/90 px-4 py-2.5 sm:px-5 dark:border-slate-800/80 dark:bg-slate-800/90">
             <!-- Petunjuk Tombol Keyboard -->
             <div class="flex items-center gap-3 text-[11px] text-slate-500">
               <span class="flex items-center gap-1">

@@ -124,7 +124,7 @@ onMounted(() => load())
       </div>
       <div class="space-y-2">
         <p class="label">Posisi (urutan pengambilan) *</p>
-        <div v-for="(p, i) in form.posisi" :key="i" class="grid gap-2 rounded-2xl border border-line bg-white/40 p-3 sm:grid-cols-[2rem_1fr_9rem_auto]">
+        <div v-for="(p, i) in form.posisi" :key="i" class="grid gap-2 rounded-2xl border border-line bg-white/40 p-3 sm:grid-cols-[2rem_1fr_9rem_auto] dark:bg-slate-900/40">
           <span class="flex size-7 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">{{ i + 1 }}</span>
           <div class="space-y-2">
             <input v-model="p.label" class="input py-1.5" placeholder="Label, mis. 45° kanan" maxlength="50" required :aria-label="`Label posisi ${i + 1}`" />

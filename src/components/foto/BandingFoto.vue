@@ -77,8 +77,8 @@ watch(open, async (buka) => {
             :style="{ clipPath: `inset(0 ${100 - geser}% 0 0)` }"
             draggable="false"
           />
-          <div class="pointer-events-none absolute inset-y-0 w-0.5 bg-white shadow" :style="{ left: `${geser}%` }">
-            <span class="absolute top-1/2 left-1/2 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-800 shadow">⇆</span>
+          <div class="pointer-events-none absolute inset-y-0 w-0.5 bg-white shadow dark:bg-slate-900" :style="{ left: `${geser}%` }">
+            <span class="absolute top-1/2 left-1/2 flex size-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-800 shadow dark:bg-slate-900 dark:text-slate-200">⇆</span>
           </div>
           <span class="absolute top-3 left-3 rounded-full bg-slate-900/70 px-2.5 py-1 text-xs font-semibold text-white">{{ TAHAP_FOTO[kiri.tahap] ?? 'Sebelum' }}</span>
           <span class="absolute top-3 right-3 rounded-full bg-slate-900/70 px-2.5 py-1 text-xs font-semibold text-white">{{ TAHAP_FOTO[kanan.tahap] ?? 'Sesudah' }}</span>

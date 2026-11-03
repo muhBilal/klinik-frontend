@@ -51,8 +51,8 @@ const aktif = computed(() => PRESETS.find(isPresetActive)?.label ?? 'Khusus')
               type="button"
               :style="previewStyle(p)"
               :aria-pressed="isPresetActive(p)"
-              :class="isPresetActive(p) ? 'border-brand-900 ring-2 ring-brand-500/30' : 'border-slate-200/80 hover:bg-white'"
-              class="flex items-center gap-3 rounded-2xl border bg-white/80 px-3.5 py-3 text-left shadow-xs transition"
+              :class="isPresetActive(p) ? 'border-brand-900 ring-2 ring-brand-500/30' : 'border-slate-200/80 hover:bg-white dark:border-slate-800/80 dark:hover:bg-slate-900'"
+              class="flex items-center gap-3 rounded-2xl border bg-white/80 px-3.5 py-3 text-left shadow-xs transition dark:bg-slate-900/80"
               @click="setTheme(p)"
             >
               <span class="grid size-9 shrink-0 place-items-center rounded-full bg-brand-900 text-white shadow-lg shadow-brand-900/30 inset-shadow-dark">
@@ -115,7 +115,7 @@ const aktif = computed(() => PRESETS.find(isPresetActive)?.label ?? 'Khusus')
           <div class="tile flex items-center gap-3">
             <span class="grid size-10 shrink-0 place-items-center rounded-full bg-brand-900 text-xs font-bold text-white shadow-lg shadow-brand-900/30">RM</span>
             <div class="min-w-0 leading-tight">
-              <p class="truncate text-sm font-semibold text-slate-900">Contoh kartu</p>
+              <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">Contoh kartu</p>
               <p class="truncate text-xs text-brand-700">Teks beraksen tema</p>
             </div>
           </div>

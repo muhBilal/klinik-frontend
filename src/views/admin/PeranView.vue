@@ -109,7 +109,7 @@ onMounted(load)
               <p class="text-xs text-slate-500"><code>{{ p.kode }}</code><template v-if="p.deskripsi"> · {{ p.deskripsi }}</template></p>
             </td>
             <td class="max-w-xl text-xs text-slate-600">
-              <span v-if="p.akses_penuh" class="font-medium text-slate-900">Akses penuh (semua izin)</span>
+              <span v-if="p.akses_penuh" class="font-medium text-slate-900 dark:text-white">Akses penuh (semua izin)</span>
               <template v-else-if="p.izin.length">{{ p.izin.map((k) => labelIzin[k] ?? k).join(' · ') }}</template>
               <span v-else class="text-slate-400">Tanpa izin</span>
             </td>
@@ -148,8 +148,8 @@ onMounted(load)
 
       <p v-if="editing?.akses_penuh" class="alert alert-warning py-2">Administrator selalu memegang semua izin; daftar izin tidak dapat diubah.</p>
       <div v-else class="grid gap-4 sm:grid-cols-2">
-        <fieldset v-for="g in katalog" :key="g.grup" class="rounded-2xl border border-line bg-white/50 p-4">
-          <legend class="flex w-full items-center justify-between px-1 text-sm font-semibold text-slate-800">
+        <fieldset v-for="g in katalog" :key="g.grup" class="rounded-2xl border border-line bg-white/50 p-4 dark:bg-slate-900/50">
+          <legend class="flex w-full items-center justify-between px-1 text-sm font-semibold text-slate-800 dark:text-slate-200">
             {{ g.grup }}
             <span class="flex gap-2 text-xs font-normal">
               <button type="button" class="text-slate-500 hover:underline" @click="toggleGrup(g, true)">semua</button>

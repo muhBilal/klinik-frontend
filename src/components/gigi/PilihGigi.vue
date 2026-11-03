@@ -50,7 +50,7 @@ function toggle(p) {
         :key="p"
         type="button"
         :disabled="disabled"
-        :class="(permukaan ?? '').includes(p) ? 'bg-brand-900 text-white' : 'bg-white/70 text-slate-500 hover:bg-white'"
+        :class="(permukaan ?? '').includes(p) ? 'bg-brand-900 text-white' : 'bg-white/70 text-slate-500 hover:bg-white dark:bg-slate-900/70 dark:hover:bg-slate-900'"
         class="size-7 rounded-full text-[11px] font-semibold ring-1 ring-line"
         :aria-pressed="(permukaan ?? '').includes(p)"
         :title="labelPermukaan(Number(gigi), p)"

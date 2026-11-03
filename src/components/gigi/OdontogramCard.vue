@@ -164,7 +164,7 @@ onMounted(muat)
         Odontogram bisa diisi setelah pasien dipanggil dan selama pemeriksaan belum ditutup.
       </p>
       <!-- contain:inline-size: lebar minimum gambar (640px) tidak melebarkan kolom grid induk; di layar sempit cukup digeser -->
-      <div class="overflow-x-auto rounded-2xl border border-line bg-white/50 p-2 [contain:inline-size]">
+      <div class="overflow-x-auto rounded-2xl border border-line bg-white/50 p-2 [contain:inline-size] dark:bg-slate-900/50">
         <OdontogramChart :kondisis="data?.kondisis ?? []" :peta="peta" :terpilih="terpilih" :tampil-sulung="tampilSulung" @pilih="pilih" />
       </div>
 
@@ -177,7 +177,7 @@ onMounted(muat)
 
       <div class="grid gap-4 lg:grid-cols-2">
         <!-- Gigi terpilih -->
-        <section class="rounded-2xl border border-line bg-white/40 p-3">
+        <section class="rounded-2xl border border-line bg-white/40 p-3 dark:bg-slate-900/40">
           <template v-if="terpilih">
             <h3 class="text-sm font-semibold">Gigi {{ terpilih.gigi }} <span class="font-normal text-slate-500">· {{ namaGigi(terpilih.gigi) }}</span></h3>
             <ul class="mt-2 space-y-1.5 text-sm">
@@ -190,7 +190,7 @@ onMounted(muat)
                 <span v-if="k.keterangan" class="w-full pl-4 text-xs text-slate-500">{{ k.keterangan }}</span>
                 <template v-if="bolehUbah && !k.kunjungan_tindakan_id">
                   <button v-if="dariKunjunganIni(k)" type="button" class="ml-auto text-xs text-rose-600 hover:underline" :disabled="menyimpan" @click="hapus(k)">Hapus</button>
-                  <button v-else type="button" class="ml-auto text-xs text-slate-500 hover:text-slate-900 hover:underline" :disabled="menyimpan" @click="akhiri(k)">Akhiri</button>
+                  <button v-else type="button" class="ml-auto text-xs text-slate-500 hover:text-slate-900 hover:underline dark:hover:text-white" :disabled="menyimpan" @click="akhiri(k)">Akhiri</button>
                 </template>
               </li>
               <li v-if="!kondisiGigi.length" class="text-xs text-slate-400">Tidak ada kondisi tercatat (sehat).</li>
@@ -212,7 +212,7 @@ onMounted(muat)
                   v-for="p in PERMUKAAN"
                   :key="p"
                   type="button"
-                  :class="form.permukaan.includes(p) ? 'bg-brand-900 text-white' : 'bg-white/70 text-slate-600 hover:bg-white'"
+                  :class="form.permukaan.includes(p) ? 'bg-brand-900 text-white' : 'bg-white/70 text-slate-600 hover:bg-white dark:bg-slate-900/70 dark:hover:bg-slate-900'"
                   class="rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-line"
                   :aria-pressed="form.permukaan.includes(p)"
                   :title="labelPermukaan(terpilih.gigi, p)"
@@ -232,11 +232,11 @@ onMounted(muat)
         </section>
 
         <!-- Perubahan di kunjungan ini, atau ringkasan semua kondisi -->
-        <section v-if="perubahan" class="rounded-2xl border border-line bg-white/40 p-3 text-sm">
+        <section v-if="perubahan" class="rounded-2xl border border-line bg-white/40 p-3 text-sm dark:bg-slate-900/40">
           <h3 class="text-sm font-semibold">Perubahan di kunjungan ini</h3>
           <ul class="mt-2 space-y-1">
             <li v-for="k in perubahan.dicatat" :key="`c${k.id}`" class="flex flex-wrap items-center gap-x-2">
-              <span class="text-emerald-700">+</span><b class="tabular-nums">{{ k.gigi }}</b> {{ label(k) }}
+              <span class="text-emerald-700 dark:text-emerald-400">+</span><b class="tabular-nums">{{ k.gigi }}</b> {{ label(k) }}
               <span class="text-xs text-slate-500">{{ k.permukaan ? labelPermukaan(k.gigi, k.permukaan) : '' }}</span>
               <span v-if="k.kunjungan_tindakan" class="text-xs text-slate-400">· hasil {{ k.kunjungan_tindakan.tindakan?.nama }}</span>
               <span v-if="tergeser(k)" class="text-xs text-slate-400">· tergeser</span>
@@ -244,12 +244,12 @@ onMounted(muat)
             <li v-for="k in perubahan.diakhiri.filter((d) => !dariKunjunganIni(d))" :key="`a${k.id}`" class="flex flex-wrap items-center gap-x-2 text-slate-500">
               <span class="text-rose-600">−</span><b class="tabular-nums">{{ k.gigi }}</b> <s>{{ label(k) }}</s>
               <span class="text-xs">{{ k.permukaan ? labelPermukaan(k.gigi, k.permukaan) : '' }} · {{ k.berakhir_karena_id ? 'diganti' : 'diakhiri' }}</span>
-              <button v-if="bolehUbah && !k.berakhir_karena_id" type="button" class="ml-auto text-xs hover:text-slate-900 hover:underline" :disabled="menyimpan" @click="pulihkan(k)">Pulihkan</button>
+              <button v-if="bolehUbah && !k.berakhir_karena_id" type="button" class="ml-auto text-xs hover:text-slate-900 hover:underline dark:hover:text-white" :disabled="menyimpan" @click="pulihkan(k)">Pulihkan</button>
             </li>
             <li v-if="!perubahan.dicatat.length && !perubahan.diakhiri.length" class="text-xs text-slate-400">Belum ada perubahan.</li>
           </ul>
         </section>
-        <section v-else-if="data" class="rounded-2xl border border-line bg-white/40 p-3 text-sm">
+        <section v-else-if="data" class="rounded-2xl border border-line bg-white/40 p-3 text-sm dark:bg-slate-900/40">
           <h3 class="text-sm font-semibold">Kondisi tercatat</h3>
           <ul class="mt-2 space-y-1">
             <li v-for="r in ringkasan" :key="r.gigi"><b class="tabular-nums">{{ r.gigi }}</b> {{ r.teks }}</li>

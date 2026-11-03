@@ -12,7 +12,7 @@ const width = (r, c) => `${45 + ((r * 7 + c * 13) % 50)}%`
 <template>
   <tr v-for="r in rows" :key="r" aria-hidden="true">
     <td v-for="c in cols" :key="c">
-      <div class="h-4 animate-pulse rounded bg-slate-200/70" :style="{ width: width(r, c) }" />
+      <div class="h-4 animate-pulse rounded bg-slate-200/70 dark:bg-slate-700/70" :style="{ width: width(r, c) }" />
     </td>
   </tr>
 </template>

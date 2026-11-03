@@ -103,7 +103,7 @@ defineExpose({ hapus })
       <button v-if="!disabled" type="button" class="btn btn-ghost btn-sm" @click="hapus">Ulangi</button>
     </div>
     <!-- Border di pembungkus: ukuran kanvas = area gambar, sehingga koordinat pointer tidak bergeser -->
-    <div :class="invalid ? 'border-rose-400 ring-2 ring-rose-300/50' : 'border-slate-300'" class="overflow-hidden rounded-2xl border-2 border-dashed bg-white">
+    <div :class="invalid ? 'border-rose-400 ring-2 ring-rose-300/50' : 'border-slate-300 dark:border-slate-700'" class="overflow-hidden rounded-2xl border-2 border-dashed bg-white dark:bg-slate-900">
       <canvas
         ref="canvas"
         class="block h-44 w-full cursor-crosshair touch-none"

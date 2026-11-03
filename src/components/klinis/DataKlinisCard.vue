@@ -55,7 +55,7 @@ watch(() => props.pasien.id, muat, { immediate: true })
         <dd>
           <ul v-if="data.alergis.length" class="space-y-1">
             <li v-for="a in data.alergis" :key="a.id">
-              <b class="text-rose-700">{{ a.zat }}</b>
+              <b class="text-rose-700 dark:text-rose-400">{{ a.zat }}</b>
               <span class="text-xs text-slate-500">
                 · {{ KATEGORI_ALERGI[a.kategori] }}<template v-if="a.keparahan"> · {{ KEPARAHAN_ALERGI[a.keparahan] }}</template>
                 <template v-if="a.reaksi"> · {{ a.reaksi }}</template><template v-if="a.obat"> · obat {{ a.obat.nama }}</template>

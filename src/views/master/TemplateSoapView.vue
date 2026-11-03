@@ -152,7 +152,7 @@ onMounted(async () => {
           <tr v-for="t in items" :key="t.id">
             <td>
               <p class="font-medium">{{ t.nama }}</p>
-              <p v-if="t.akses_terbatas" class="text-xs text-rose-700">akses terbatas</p>
+              <p v-if="t.akses_terbatas" class="text-xs text-rose-700 dark:text-rose-400">akses terbatas</p>
             </td>
             <td class="text-slate-600">{{ t.poli?.nama ?? 'Semua poli' }}</td>
             <td class="text-slate-600">{{ t.tindakan?.nama ?? '-' }}</td>
@@ -187,7 +187,7 @@ onMounted(async () => {
         </div>
         <div>
           <label class="label">Treatment terkait (opsional)</label>
-          <div v-if="form.tindakan" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 text-sm">
+          <div v-if="form.tindakan" class="flex items-center justify-between rounded-2xl bg-white/60 px-3 py-2 text-sm dark:bg-slate-900/60">
             <span class="truncate">{{ form.tindakan.nama }}</span>
             <button type="button" class="text-xs text-slate-400 hover:text-slate-700" @click="form.tindakan = null">lepas</button>
           </div>

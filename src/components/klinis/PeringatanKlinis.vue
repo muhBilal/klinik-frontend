@@ -28,7 +28,7 @@ const keteranganAlergi = (a) => [a.keparahan && KEPARAHAN_ALERGI[a.keparahan], a
     <span
       v-for="a in alergis"
       :key="a.id ?? a.zat"
-      class="rounded-full bg-rose-500/10 px-2.5 py-1 font-semibold text-rose-700 ring-1 ring-rose-400/30"
+      class="rounded-full bg-rose-500/10 px-2.5 py-1 font-semibold text-rose-700 ring-1 ring-rose-400/30 dark:text-rose-400"
       :title="keteranganAlergi(a)"
     >
       Alergi {{ a.zat }}<template v-if="keteranganAlergi(a)"> · {{ keteranganAlergi(a) }}</template>
@@ -39,23 +39,23 @@ const keteranganAlergi = (a) => [a.keparahan && KEPARAHAN_ALERGI[a.keparahan], a
       <span
         v-if="['hamil', 'menyusui'].includes(klinis?.status_kehamilan)"
         class="rounded-full px-2.5 py-1 font-semibold ring-1"
-        :class="klinis.status_kehamilan === 'hamil' ? 'bg-rose-500/10 text-rose-700 ring-rose-400/30' : 'bg-amber-500/15 text-amber-800 ring-amber-400/30'"
+        :class="klinis.status_kehamilan === 'hamil' ? 'bg-rose-500/10 text-rose-700 ring-rose-400/30 dark:text-rose-400' : 'bg-amber-500/15 text-amber-800 ring-amber-400/30 dark:text-amber-300'"
       >
         {{ STATUS_KEHAMILAN[klinis.status_kehamilan] }} · dicatat {{ tanggal(klinis.status_kehamilan_at) }}
       </span>
       <span v-else-if="klinis?.status_kehamilan === 'tidak'" class="rounded-full bg-slate-500/10 px-2.5 py-1 text-slate-600">
         Tidak hamil/menyusui · {{ tanggal(klinis.status_kehamilan_at) }}
       </span>
-      <span v-else-if="usiaSubur" class="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-800">Hamil/menyusui: belum ditanyakan</span>
+      <span v-else-if="usiaSubur" class="rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-800 dark:text-amber-300">Hamil/menyusui: belum ditanyakan</span>
     </template>
 
     <span v-if="klinis?.fitzpatrick" class="rounded-full bg-brand-500/10 px-2.5 py-1 font-medium text-brand-800" :title="FITZPATRICK[klinis.fitzpatrick]">
       Fitzpatrick {{ klinis.fitzpatrick }}
     </span>
-    <span v-if="klinis?.riwayat_obat" class="max-w-xs truncate rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-800" :title="klinis.riwayat_obat">
+    <span v-if="klinis?.riwayat_obat" class="max-w-xs truncate rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-800 dark:text-amber-300" :title="klinis.riwayat_obat">
       Obat: {{ klinis.riwayat_obat }}
     </span>
-    <span v-if="klinis?.riwayat_penyakit" class="max-w-xs truncate rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-800" :title="klinis.riwayat_penyakit">
+    <span v-if="klinis?.riwayat_penyakit" class="max-w-xs truncate rounded-full bg-amber-500/10 px-2.5 py-1 text-amber-800 dark:text-amber-300" :title="klinis.riwayat_penyakit">
       Riwayat: {{ klinis.riwayat_penyakit }}
     </span>
     <slot />

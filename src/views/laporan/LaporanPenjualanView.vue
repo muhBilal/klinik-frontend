@@ -63,7 +63,7 @@ onMounted(muat)
 
   <div v-if="data" id="laporan-penjualan" class="space-y-5 transition-opacity" :class="{ 'opacity-60': loading }">
     <p class="text-sm text-slate-500">
-      <b class="text-slate-800">{{ klinik.nama }}</b> · {{ cakupan }} · {{ tanggal(data.periode.mulai) }} – {{ tanggal(data.periode.selesai) }}
+      <b class="text-slate-800 dark:text-slate-200">{{ klinik.nama }}</b> · {{ cakupan }} · {{ tanggal(data.periode.mulai) }} – {{ tanggal(data.periode.selesai) }}
     </p>
 
     <!-- Ringkasan -->
@@ -75,17 +75,17 @@ onMounted(muat)
       </div>
       <div class="card card-body">
         <p class="text-sm font-medium text-slate-500">Transaksi</p>
-        <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{{ angka(r.transaksi) }}</p>
+        <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ angka(r.transaksi) }}</p>
         <p class="mt-1 text-xs text-slate-500">Rata-rata {{ rupiah(r.transaksi ? Math.round(r.penjualan_bersih / r.transaksi) : 0) }}</p>
       </div>
       <div class="card card-body">
         <p class="text-sm font-medium text-slate-500">Diskon & promo</p>
-        <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900">{{ rupiah(r.diskon + r.promo) }}</p>
+        <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ rupiah(r.diskon + r.promo) }}</p>
         <p class="mt-1 text-xs text-slate-500">Bruto {{ rupiah(r.bruto) }} · promo {{ rupiah(r.promo) }}</p>
       </div>
       <div class="card card-body">
         <p class="text-sm font-medium text-slate-500">Refund</p>
-        <p class="mt-2 text-3xl font-semibold tracking-tight" :class="r.refund.total + r.refund.paket_sisa ? 'text-rose-600' : 'text-slate-900'">
+        <p class="mt-2 text-3xl font-semibold tracking-tight" :class="r.refund.total + r.refund.paket_sisa ? 'text-rose-600' : 'text-slate-900 dark:text-white'">
           {{ rupiah(r.refund.total + r.refund.paket_sisa) }}
         </p>
         <p class="mt-1 text-xs text-slate-500">{{ r.refund.transaksi }} tagihan<template v-if="r.refund.paket_sisa"> + sisa paket {{ rupiah(r.refund.paket_sisa) }}</template></p>

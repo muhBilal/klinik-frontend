@@ -85,7 +85,7 @@ onMounted(load)
           <div class="card-header">
             <h2 class="card-title">Rekam Medis</h2>
             <template v-if="k.pemeriksaan?.ditandatangani_at">
-              <span v-if="verifikasi" :class="verifikasi.valid ? 'text-emerald-700' : 'text-rose-700'" class="text-xs font-semibold">
+              <span v-if="verifikasi" :class="verifikasi.valid ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'" class="text-xs font-semibold">
                 {{ verifikasi.valid ? 'Isi utuh sesuai tanda tangan' : 'Isi berubah setelah ditandatangani' }}
               </span>
               <button v-else class="btn btn-ghost btn-sm" :disabled="memverifikasi" @click="cekKeutuhan"><AppSpinner v-if="memverifikasi" size="size-3" />Cek keutuhan</button>

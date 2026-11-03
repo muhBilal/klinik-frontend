@@ -202,7 +202,7 @@ onMounted(() => {
 
   <AppModal v-model="lihatOpen" title="Rekap Shift">
     <div v-if="lihat" id="rekap-shift" class="space-y-3 text-sm">
-      <div class="border-b border-dashed border-slate-300 pb-2">
+      <div class="border-b border-dashed border-slate-300 pb-2 dark:border-slate-700">
         <p class="font-semibold">{{ klinik.nama }} · {{ lihat.cabang?.nama }}</p>
         <p class="text-xs text-slate-500">Rekap shift kas · {{ lihat.kasir?.name }}</p>
         <p class="text-xs text-slate-500">{{ waktu(lihat.dibuka_at) }} – {{ lihat.ditutup_at ? waktu(lihat.ditutup_at) : 'masih terbuka' }}</p>

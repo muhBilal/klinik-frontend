@@ -148,7 +148,7 @@ watch(() => [props.pasienId, props.kunjunganId], load)
         <li v-for="b in daftar" :key="b.uuid" class="flex flex-wrap items-center gap-3 py-2.5 text-sm">
           <span class="chip">{{ KATEGORI_BERKAS[b.kategori] ?? b.kategori }}</span>
           <div class="min-w-0 flex-1">
-            <p class="truncate font-medium text-slate-800">{{ b.nama_file }}</p>
+            <p class="truncate font-medium text-slate-800 dark:text-slate-200">{{ b.nama_file }}</p>
             <p class="text-xs text-slate-500">
               {{ b.keterangan ? `${b.keterangan} · ` : '' }}{{ ukuranBerkas(b.ukuran) }} · {{ b.pengunggah?.name ?? '-' }} · {{ waktu(b.created_at) }}
             </p>

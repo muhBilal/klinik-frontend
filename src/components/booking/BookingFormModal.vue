@@ -254,7 +254,7 @@ async function simpan() {
       <!-- Ruang & alat (BK-08) -->
       <div v-if="kebutuhan.length || sumberDayas.length" class="space-y-3">
         <div class="flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-slate-800">Ruang & alat</h3>
+          <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Ruang & alat</h3>
           <AppSpinner v-if="kebutuhanLoading" size="size-3" class="text-slate-400" />
         </div>
         <div v-for="k in kebutuhan" :key="`${k.tindakan_id}:${k.tipe}`">
@@ -281,7 +281,7 @@ async function simpan() {
       <!-- Slot -->
       <div>
         <div class="mb-1 flex items-center gap-2">
-          <h3 class="text-sm font-semibold text-slate-800">Jam mulai *</h3>
+          <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Jam mulai *</h3>
           <AppSpinner v-if="slotLoading" size="size-3" class="text-slate-400" />
         </div>
         <template v-if="form.petugas_id && form.tindakans.length">
@@ -304,7 +304,7 @@ async function simpan() {
               </button>
             </div>
           </template>
-          <p v-if="form.jam && slot?.slot?.length && !slotTerpilih" class="mt-2 text-xs text-amber-700">Jam {{ form.jam }} di luar slot kosong — kemungkinan bentrok dan ditolak.</p>
+          <p v-if="form.jam && slot?.slot?.length && !slotTerpilih" class="mt-2 text-xs text-amber-700 dark:text-amber-400">Jam {{ form.jam }} di luar slot kosong — kemungkinan bentrok dan ditolak.</p>
         </template>
         <div v-else class="flex items-center gap-3">
           <input v-model="form.jam" type="time" step="900" class="input w-36" aria-label="Jam mulai" />

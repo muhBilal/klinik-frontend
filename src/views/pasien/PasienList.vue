@@ -84,7 +84,7 @@ onMounted(() => load())
             <td>
               <RouterLink :to="`/pasien/${p.id}`" class="font-medium hover:text-brand-700 hover:underline">{{ p.nama }}</RouterLink>
               <p class="mt-0.5 flex flex-wrap gap-1 text-[11px]">
-                <span v-if="!p.pdp_pemrosesan" class="rounded-full bg-amber-500/15 px-2 py-0.5 font-medium text-amber-800">Belum persetujuan data</span>
+                <span v-if="!p.pdp_pemrosesan" class="rounded-full bg-amber-500/15 px-2 py-0.5 font-medium text-amber-800 dark:text-amber-300">Belum persetujuan data</span>
                 <span v-if="p.pdp_marketing" class="rounded-full bg-brand-500/10 px-2 py-0.5 font-medium text-brand-800">Opt-in promosi</span>
               </p>
             </td>

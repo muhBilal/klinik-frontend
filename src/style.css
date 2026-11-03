@@ -136,38 +136,76 @@
       dark:border-slate-700/80 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white;
   }
 
-  /* ---------- Rail modul (kiri): satu tombol per modul ---------- */
+  /* ---------- Rail modul (kiri): satu tombol per modul ----------
+     Diam = lingkaran ikon saja. Di-hover (atau saat salah satu tombol menerima fokus
+     keyboard) seluruh rail melebar jadi pil dan semua label modul ikut muncul. */
+  /* Tombol transparan: permukaan kaca hanya dimiliki `.rail-nav`, supaya tidak jadi pil di dalam pil */
   .rail-btn {
-    @apply relative grid size-11 place-items-center rounded-full border border-slate-200/70 bg-white/90 text-slate-600 shadow-xs transition
-      hover:bg-white hover:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30
-      dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white;
+    @apply relative flex h-11 w-full items-center overflow-hidden rounded-full px-3 text-slate-600
+      transition-[background-color,color,box-shadow] duration-200
+      hover:bg-slate-900/5 hover:text-brand-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30
+      dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white;
+  }
+  /* Kotak ikon berlebar tetap: menjaga ikon tetap di poros yang sama saat rail melebar */
+  .rail-ico {
+    @apply grid w-5 shrink-0 place-items-center;
   }
   .rail-btn-active {
-    @apply border-brand-900 bg-brand-900 text-white shadow-lg shadow-sky-600/30 inset-shadow-dark hover:bg-brand-900 hover:text-white;
+    @apply bg-brand-900 text-white shadow-lg shadow-sky-600/30 inset-shadow-dark hover:bg-brand-900 hover:text-white dark:hover:bg-brand-900 dark:hover:text-white;
   }
   .rail {
-    @apply gap-3;
+    @apply w-14 items-stretch gap-3 transition-[width] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)];
   }
+  /* rounded-full hanya benar saat ramping; setelah melebar radiusnya dikecilkan
+     agar tombol teratas & terbawah tidak menonjol keluar dari permukaan kaca. */
   .rail-nav {
-    @apply gap-2 border border-slate-200/80 bg-white/80 shadow-glass dark:border-slate-800 dark:bg-slate-900/80;
+    @apply gap-1 rounded-[1.75rem] border border-slate-200/80 bg-white/80 shadow-glass
+      transition-shadow duration-300 dark:border-slate-800 dark:bg-slate-900/80;
+  }
+  /* Tombol Kembali berdiri sendiri di luar nav: ia butuh permukaannya sendiri */
+  .rail > .rail-btn {
+    @apply border border-slate-200/80 bg-white/80 shadow-glass backdrop-blur-xl
+      hover:bg-white dark:border-slate-800 dark:bg-slate-900/80 dark:hover:bg-slate-800;
+  }
+  /* Label modul: lebarnya 0 saat diam, lalu mengembang bersama rail */
+  .rail-label {
+    @apply ms-0 max-w-0 origin-left -translate-x-1 text-[13px] font-semibold whitespace-nowrap opacity-0
+      transition-[max-width,opacity,transform,margin] duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)];
+  }
+  .rail:hover,
+  .rail:focus-within {
+    @apply w-56;
+  }
+  .rail:hover .rail-nav,
+  .rail:focus-within .rail-nav {
+    @apply shadow-glass-lg;
+  }
+  .rail:hover .rail-label,
+  .rail:focus-within .rail-label {
+    @apply ms-2.5 max-w-40 translate-x-0 opacity-100;
   }
   /* Layar pendek: perkecil tombol rail agar semua modul tetap muat di tengah tanpa menabrak logo */
   @media (max-height: 860px) {
     .rail-btn {
-      @apply size-9;
+      @apply h-9 px-2;
+    }
+    .rail {
+      @apply w-12 gap-2;
+    }
+    .rail:hover,
+    .rail:focus-within {
+      @apply w-52;
     }
     .rail-nav {
-      @apply gap-1.5;
+      @apply gap-1 rounded-3xl;
     }
   }
-  /* Label tooltip (nama modul) di kanan tombol rail */
-  .rail-tip {
-    @apply pointer-events-none absolute top-1/2 left-full z-50 ml-3 -translate-y-1/2 rounded-full bg-brand-900 px-3 py-1.5 text-xs font-semibold whitespace-nowrap
-      text-white opacity-0 shadow-lg shadow-sky-600/20 transition;
-  }
-  .rail-btn:hover .rail-tip,
-  .rail-btn:focus-visible .rail-tip {
-    @apply opacity-100;
+  /* Hormati prefers-reduced-motion: tetap melebar, tanpa animasi */
+  @media (prefers-reduced-motion: reduce) {
+    .rail,
+    .rail-label {
+      @apply transition-none;
+    }
   }
 
   /* ---------- Form ---------- */

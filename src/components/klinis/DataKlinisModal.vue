@@ -91,14 +91,14 @@ async function simpan() {
       <section class="space-y-2">
         <div class="flex items-center justify-between gap-2">
           <div>
-            <h3 class="text-sm font-semibold text-slate-800">Alergi</h3>
+            <h3 class="text-sm font-semibold text-slate-800 dark:text-slate-200">Alergi</h3>
             <p class="text-xs text-slate-500">Tautkan alergi obat ke master obat agar resep yang memuatnya diberi peringatan.</p>
           </div>
           <button type="button" class="btn btn-secondary btn-sm shrink-0 whitespace-nowrap" @click="tambahAlergi">+ Alergi</button>
         </div>
-        <p v-if="!form.alergis?.length" class="rounded-xl bg-white/40 px-3 py-2 text-sm text-slate-400">Belum ada alergi tercatat.</p>
+        <p v-if="!form.alergis?.length" class="rounded-xl bg-white/40 px-3 py-2 text-sm text-slate-400 dark:bg-slate-900/40">Belum ada alergi tercatat.</p>
         <!-- Grid per alergi: turun baris di layar sempit, bukan tabel yang terjepit -->
-        <div v-else class="divide-y divide-line rounded-xl border border-line bg-white/30">
+        <div v-else class="divide-y divide-line rounded-xl border border-line bg-white/30 dark:bg-slate-900/30">
           <div v-for="(a, i) in form.alergis" :key="a.id ?? `baru-${i}`" class="space-y-2 px-4 py-3">
             <!-- HP: kategori | keparahan | ×, lalu zat selebar baris. Layar lebar: kategori | zat | keparahan | × -->
             <div class="grid grid-cols-[1fr_1fr_auto] items-start gap-2 sm:grid-cols-[8rem_minmax(0,1fr)_8rem_auto]">

@@ -73,7 +73,7 @@ function lihatConsent(uuid) {
     Rekam medis kunjungan ini berakses terbatas — hanya tim yang menangani yang dapat membukanya.
   </p>
   <div v-else class="space-y-4 text-sm">
-    <p v-if="kunjungan.akses_terbatas" class="text-xs font-semibold text-rose-700">Akses terbatas</p>
+    <p v-if="kunjungan.akses_terbatas" class="text-xs font-semibold text-rose-700 dark:text-rose-400">Akses terbatas</p>
 
     <div v-if="kunjungan.pemeriksaan" class="flex flex-wrap gap-2">
       <span v-for="[key, label, unit] in vital" :key="key" class="chip">
@@ -143,7 +143,7 @@ function lihatConsent(uuid) {
       </p>
     </div>
 
-    <p v-if="kunjungan.pemeriksaan?.ditandatangani_at" class="rounded-xl bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800">
+    <p v-if="kunjungan.pemeriksaan?.ditandatangani_at" class="rounded-xl bg-emerald-600/10 px-3 py-2 text-xs text-emerald-800 dark:text-emerald-300">
       Ditandatangani secara elektronik oleh <b>{{ kunjungan.pemeriksaan.penandatangan?.name ?? '-' }}</b>
       <template v-if="kunjungan.pemeriksaan.penandatangan?.sip"> (SIP {{ kunjungan.pemeriksaan.penandatangan.sip }})</template>
       · {{ waktu(kunjungan.pemeriksaan.ditandatangani_at) }}
@@ -151,7 +151,7 @@ function lihatConsent(uuid) {
 
     <div v-if="kunjungan.pemeriksaan?.addendums?.length" class="space-y-2">
       <p class="text-xs font-semibold text-slate-500">Addendum</p>
-      <div v-for="a in kunjungan.pemeriksaan.addendums" :key="a.id" class="rounded-xl border-l-4 border-amber-400 bg-amber-50/70 px-3 py-2">
+      <div v-for="a in kunjungan.pemeriksaan.addendums" :key="a.id" class="rounded-xl border-l-4 border-amber-400 bg-amber-50/70 px-3 py-2 dark:bg-amber-950/70">
         <p class="text-xs text-slate-500">{{ BAGIAN_ADDENDUM[a.bagian] ?? a.bagian }} · {{ a.user?.name }} · {{ waktu(a.created_at) }}</p>
         <p class="whitespace-pre-line">{{ a.isi }}</p>
         <p class="text-xs text-slate-500">Alasan: {{ a.alasan }}</p>

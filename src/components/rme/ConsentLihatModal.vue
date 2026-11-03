@@ -96,12 +96,12 @@ const cetak = () => printElement('#cetak-consent', consent.value?.judul ?? 'Info
           <figure>
             <figcaption class="text-xs text-slate-500">{{ HUBUNGAN_PENANDATANGAN[consent.hubungan] }}</figcaption>
             <img :src="consent.ttd_penandatangan" alt="Tanda tangan" class="h-28 w-full object-contain" draggable="false" @contextmenu.prevent />
-            <p class="border-t border-slate-400 pt-1 text-center font-medium">{{ consent.penandatangan_nama }}</p>
+            <p class="border-t border-slate-400 pt-1 text-center font-medium dark:border-slate-600">{{ consent.penandatangan_nama }}</p>
           </figure>
           <figure v-if="consent.ttd_saksi">
             <figcaption class="text-xs text-slate-500">Saksi</figcaption>
             <img :src="consent.ttd_saksi" alt="Tanda tangan saksi" class="h-28 w-full object-contain" draggable="false" @contextmenu.prevent />
-            <p class="border-t border-slate-400 pt-1 text-center font-medium">{{ consent.saksi_nama }}</p>
+            <p class="border-t border-slate-400 pt-1 text-center font-medium dark:border-slate-600">{{ consent.saksi_nama }}</p>
           </figure>
         </div>
         <p class="text-[11px] text-slate-500">

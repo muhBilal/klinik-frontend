@@ -163,11 +163,11 @@ onMounted(muat)
     <div v-if="sistem" class="mb-5 grid gap-4 lg:grid-cols-3">
       <div class="card card-body text-sm">
         <p class="text-slate-500">Scheduler</p>
-        <p class="text-2xl font-semibold" :class="sistem.scheduler.sehat ? 'text-emerald-700' : 'text-rose-600'">{{ sistem.scheduler.sehat ? 'Berjalan' : 'Tidak berjalan' }}</p>
+        <p class="text-2xl font-semibold" :class="sistem.scheduler.sehat ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600'">{{ sistem.scheduler.sehat ? 'Berjalan' : 'Tidak berjalan' }}</p>
         <p class="text-xs text-slate-500">
           {{ sistem.scheduler.detak_terakhir ? `Detak terakhir ${waktu(sistem.scheduler.detak_terakhir)} (${sistem.scheduler.menit_lalu} menit lalu)` : 'Belum pernah berdetak' }}
         </p>
-        <p v-if="!sistem.scheduler.sehat" class="mt-1 text-xs text-rose-700">Reminder WhatsApp & pembersihan token tidak berjalan. Pastikan proses <code>schedule:work</code> aktif.</p>
+        <p v-if="!sistem.scheduler.sehat" class="mt-1 text-xs text-rose-700 dark:text-rose-400">Reminder WhatsApp & pembersihan token tidak berjalan. Pastikan proses <code>schedule:work</code> aktif.</p>
       </div>
       <div class="card card-body text-sm">
         <p class="text-slate-500">Antrean job</p>
@@ -192,7 +192,7 @@ onMounted(muat)
             <tr v-for="j in jobGagal" :key="j.uuid">
               <td class="whitespace-nowrap text-xs">{{ waktu(j.failed_at) }}</td>
               <td class="text-xs">{{ j.job.split('\\').pop() }}</td>
-              <td class="max-w-lg text-xs text-rose-700">{{ j.galat }}</td>
+              <td class="max-w-lg text-xs text-rose-700 dark:text-rose-400">{{ j.galat }}</td>
               <td class="text-right whitespace-nowrap">
                 <button class="btn btn-ghost btn-sm" :disabled="aksi === `job-${j.uuid}`" @click="aksiJob(j, 'ulang')">Coba ulang</button>
                 <button class="btn btn-ghost btn-sm text-rose-600" :disabled="aksi === `job-${j.uuid}`" @click="aksiJob(j, 'hapus')">Hapus</button>
@@ -212,7 +212,7 @@ onMounted(muat)
         <p class="text-slate-500">Status integrasi</p>
         <template v-if="ss">
           <p class="text-2xl font-semibold">{{ ss.aktif ? 'Aktif' : 'Nonaktif' }} <span class="text-sm font-normal text-slate-500">· {{ ss.env }}</span></p>
-          <p :class="ss.terkonfigurasi ? 'text-emerald-700' : 'text-rose-600'">{{ ss.terkonfigurasi ? `Kredensial terisi · Organization ${ss.organization_id}` : 'Kredensial belum diisi di .env server' }}</p>
+          <p :class="ss.terkonfigurasi ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600'">{{ ss.terkonfigurasi ? `Kredensial terisi · Organization ${ss.organization_id}` : 'Kredensial belum diisi di .env server' }}</p>
           <button class="btn btn-secondary btn-sm" :disabled="!!aksi || !ss.terkonfigurasi" @click="tesKoneksi"><AppSpinner v-if="aksi === 'tes'" size="size-3" />Tes koneksi</button>
         </template>
         <AppSpinner v-else class="text-slate-400" />
@@ -220,7 +220,7 @@ onMounted(muat)
       <div class="card card-body text-sm">
         <p class="text-slate-500">Kepatuhan 30 hari (target &gt; 98%)</p>
         <template v-if="kepatuhan">
-          <p class="text-3xl font-semibold tabular-nums" :class="kepatuhan.persen !== null && kepatuhan.persen < 98 ? 'text-rose-600' : 'text-emerald-700'">
+          <p class="text-3xl font-semibold tabular-nums" :class="kepatuhan.persen !== null && kepatuhan.persen < 98 ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'">
             {{ kepatuhan.persen === null ? '-' : `${kepatuhan.persen}%` }}
           </p>
           <p class="text-xs text-slate-500">{{ kepatuhan.terkirim }} dari {{ kepatuhan.ditandatangani }} kunjungan bertanda tangan sudah terkirim</p>
@@ -230,7 +230,7 @@ onMounted(muat)
         <p class="text-slate-500">Antrean kirim</p>
         <div v-if="ss" class="mt-2 grid grid-cols-3 gap-2 text-center">
           <div class="tile"><p class="text-xl font-semibold tabular-nums">{{ ss.per_status.menunggu }}</p><p class="text-xs text-slate-500">menunggu</p></div>
-          <div class="tile"><p class="text-xl font-semibold tabular-nums text-emerald-700">{{ ss.per_status.terkirim }}</p><p class="text-xs text-slate-500">terkirim</p></div>
+          <div class="tile"><p class="text-xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{{ ss.per_status.terkirim }}</p><p class="text-xs text-slate-500">terkirim</p></div>
           <div class="tile"><p class="text-xl font-semibold tabular-nums text-rose-600">{{ ss.per_status.gagal }}</p><p class="text-xs text-slate-500">gagal</p></div>
         </div>
       </div>
@@ -267,7 +267,7 @@ onMounted(muat)
               <td>{{ k.kunjungan?.pasien?.nama }} <span class="text-xs text-slate-500">· {{ k.kunjungan?.pasien?.no_rm }}</span></td>
               <td><StatusBadge :status="k.status" /></td>
               <td class="tabular-nums text-xs">{{ k.percobaan }}× <span v-if="k.terakhir_dicoba_at" class="block text-slate-400">{{ waktu(k.terakhir_dicoba_at) }}</span></td>
-              <td class="max-w-md text-xs" :class="k.error ? 'text-rose-700' : 'text-slate-500'">{{ k.error ?? (k.encounter_id ? `Encounter ${k.encounter_id}` : '-') }}</td>
+              <td class="max-w-md text-xs" :class="k.error ? 'text-rose-700 dark:text-rose-400' : 'text-slate-500'">{{ k.error ?? (k.encounter_id ? `Encounter ${k.encounter_id}` : '-') }}</td>
               <td class="text-right">
                 <button v-if="k.status !== 'terkirim'" class="btn btn-ghost btn-sm" :disabled="aksi === `ss-${k.id}`" @click="kirimUlang(k)"><AppSpinner v-if="aksi === `ss-${k.id}`" size="size-3" />Kirim ulang</button>
               </td>
@@ -287,9 +287,9 @@ onMounted(muat)
         <p class="text-slate-500">Status</p>
         <template v-if="wa">
           <p class="text-2xl font-semibold">{{ wa.aktif ? 'Aktif' : 'Nonaktif' }} <span class="text-sm font-normal text-slate-500">· driver {{ wa.driver }}</span></p>
-          <p v-if="wa.driver === 'log'" class="text-amber-700">Mode uji: pesan hanya dicatat di log server, tidak terkirim ke pasien.</p>
-          <p v-else :class="wa.terkonfigurasi ? 'text-emerald-700' : 'text-rose-600'">{{ wa.terkonfigurasi ? 'Kredensial WhatsApp Cloud API terisi' : 'Token / Phone Number ID belum diisi' }}</p>
-          <p :class="wa.webhook_siap ? 'text-emerald-700' : 'text-amber-700'">{{ wa.webhook_siap ? 'Webhook siap (verify token & app secret terisi)' : 'Webhook belum dikonfigurasi — status baca & tombol balasan tidak tercatat' }}</p>
+          <p v-if="wa.driver === 'log'" class="text-amber-700 dark:text-amber-400">Mode uji: pesan hanya dicatat di log server, tidak terkirim ke pasien.</p>
+          <p v-else :class="wa.terkonfigurasi ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600'">{{ wa.terkonfigurasi ? 'Kredensial WhatsApp Cloud API terisi' : 'Token / Phone Number ID belum diisi' }}</p>
+          <p :class="wa.webhook_siap ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'">{{ wa.webhook_siap ? 'Webhook siap (verify token & app secret terisi)' : 'Webhook belum dikonfigurasi — status baca & tombol balasan tidak tercatat' }}</p>
           <button class="btn btn-secondary btn-sm" :disabled="!!aksi || !wa.aktif" @click="jalankanPenjadwal"><AppSpinner v-if="aksi === 'jadwal'" size="size-3" />Jalankan penjadwal sekarang</button>
         </template>
         <AppSpinner v-else class="text-slate-400" />
@@ -325,7 +325,7 @@ onMounted(muat)
             <tr v-for="p in waList.items.value" :key="p.id">
               <td>{{ p.pasien?.nama }} <span class="block text-xs text-slate-500">{{ p.no_tujuan }}</span></td>
               <td class="whitespace-nowrap text-xs">{{ JENIS[p.jenis] ?? p.jenis }}<span class="block text-slate-400">{{ waktu(p.created_at) }}</span></td>
-              <td class="max-w-md text-xs text-slate-600">{{ p.pratinjau }}<span v-if="p.error" class="block text-rose-700">{{ p.error }}</span></td>
+              <td class="max-w-md text-xs text-slate-600">{{ p.pratinjau }}<span v-if="p.error" class="block text-rose-700 dark:text-rose-400">{{ p.error }}</span></td>
               <td><StatusBadge :status="`wa_${p.status}`" /></td>
               <td class="text-xs">{{ BALASAN[p.balasan] ?? '-' }}</td>
               <td class="text-right">

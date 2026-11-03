@@ -196,7 +196,7 @@ onMounted(muat)
         </thead>
         <tbody>
           <TableSkeleton v-if="loading && !daftarPetugas.length" :cols="10" />
-          <tr v-for="p in daftarPetugas" :key="p.id" :class="{ 'bg-white/50': terpilih?.id === p.id }">
+          <tr v-for="p in daftarPetugas" :key="p.id" :class="{ 'bg-white/50 dark:bg-slate-900/50': terpilih?.id === p.id }">
             <td>
               <p class="font-medium">{{ p.name }}</p>
               <p class="text-xs text-slate-500">{{ p.peran ?? '-' }}</p>
@@ -208,7 +208,7 @@ onMounted(muat)
               <span v-else class="text-slate-300">—</span>
             </td>
             <td class="text-xs">
-              <p v-for="c in cutiMendatang(p.id).slice(0, 2)" :key="c.id" :class="c.tipe === 'cuti' ? 'text-rose-600' : 'text-emerald-700'">
+              <p v-for="c in cutiMendatang(p.id).slice(0, 2)" :key="c.id" :class="c.tipe === 'cuti' ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'">
                 {{ c.tipe === 'cuti' ? 'Cuti' : 'Tambahan' }} {{ tanggal(c.tanggal) }}
               </p>
               <p v-if="cutiMendatang(p.id).length > 2" class="text-slate-400">+{{ cutiMendatang(p.id).length - 2 }} lagi</p>
@@ -237,7 +237,7 @@ onMounted(muat)
             <tr v-for="j in praktikTerpilih" :key="j.id">
               <td>{{ HARI[j.hari] }}</td>
               <td class="tabular-nums">{{ hhmm(j.jam_mulai) }}–{{ hhmm(j.jam_selesai) }}</td>
-              <td class="text-xs" :class="j.is_active ? 'text-emerald-700' : 'text-slate-400'">{{ j.is_active ? 'Aktif' : 'Nonaktif' }}</td>
+              <td class="text-xs" :class="j.is_active ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-400'">{{ j.is_active ? 'Aktif' : 'Nonaktif' }}</td>
               <td class="text-right whitespace-nowrap">
                 <template v-if="bisaKelola">
                   <button class="btn btn-ghost btn-sm" @click="bukaPraktik(j)">Ubah</button>
@@ -265,7 +265,7 @@ onMounted(muat)
           <tbody>
             <tr v-for="c in pengecualianTerpilih" :key="c.id" :class="{ 'opacity-50': c.tanggal < hariIni() }">
               <td class="whitespace-nowrap">{{ tanggal(c.tanggal) }}</td>
-              <td :class="c.tipe === 'cuti' ? 'text-rose-600' : 'text-emerald-700'">{{ c.tipe === 'cuti' ? 'Cuti' : 'Tambahan' }}</td>
+              <td :class="c.tipe === 'cuti' ? 'text-rose-600' : 'text-emerald-700 dark:text-emerald-400'">{{ c.tipe === 'cuti' ? 'Cuti' : 'Tambahan' }}</td>
               <td class="tabular-nums whitespace-nowrap">{{ rentangCuti(c) }}</td>
               <td class="text-slate-600">{{ c.keterangan ?? '-' }}</td>
               <td class="text-right"><button v-if="bisaKelola" class="btn btn-ghost btn-sm text-rose-600" @click="hapusCuti(c)">Hapus</button></td>

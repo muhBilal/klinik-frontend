@@ -30,7 +30,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
       >
         <div :class="size" class="glass-strong w-full motion-safe:animate-pop rounded-[1.75rem]" role="dialog" aria-modal="true">
           <div class="flex items-center justify-between border-b border-line px-6 py-4">
-            <h2 class="text-lg font-semibold tracking-tight text-slate-900">{{ title }}</h2>
+            <h2 class="text-lg font-semibold tracking-tight text-slate-900 dark:text-white">{{ title }}</h2>
             <button class="btn-icon size-9" aria-label="Tutup" @click="open = false">
               <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -38,7 +38,7 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
           <div class="p-6">
             <slot />
           </div>
-          <div v-if="$slots.footer" class="flex justify-end gap-2 rounded-b-[1.75rem] border-t border-line bg-white/50 px-6 py-4">
+          <div v-if="$slots.footer" class="flex justify-end gap-2 rounded-b-[1.75rem] border-t border-line bg-white/50 px-6 py-4 dark:bg-slate-900/50">
             <slot name="footer" />
           </div>
         </div>

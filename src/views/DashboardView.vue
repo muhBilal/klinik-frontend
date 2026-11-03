@@ -93,7 +93,7 @@ onMounted(load)
         <li v-for="z in data.izin_praktik" :key="`${z.user_id}-${z.dokumen}`">
           <b>{{ z.nama }}</b> · {{ z.dokumen }} {{ z.nomor ?? '' }}:
           <template v-if="z.sisa_hari === null">belum tercatat</template>
-          <template v-else-if="z.sisa_hari < 0"><span class="font-semibold text-rose-700">berakhir {{ tanggal(z.berlaku_sampai) }}</span></template>
+          <template v-else-if="z.sisa_hari < 0"><span class="font-semibold text-rose-700 dark:text-rose-400">berakhir {{ tanggal(z.berlaku_sampai) }}</span></template>
           <template v-else>berakhir {{ tanggal(z.berlaku_sampai) }} ({{ z.sisa_hari }} hari lagi)</template>
         </li>
       </ul>
@@ -109,11 +109,11 @@ onMounted(load)
       >
         <div class="flex items-start justify-between gap-3">
           <p :class="s.dark ? 'text-white/60' : 'text-slate-500'" class="text-sm font-medium">{{ s.label }}</p>
-          <span :class="s.dark ? 'border-white/15 bg-white/10 text-white' : ''" class="icon-circle">
+          <span :class="s.dark ? 'border-white/15 bg-white/10 text-white dark:bg-slate-900/10' : ''" class="icon-circle">
             <AppIcon :path="s.icon" size="size-4.5" />
           </span>
         </div>
-        <p :class="s.dark ? 'text-white' : 'text-slate-900'" class="mt-3 truncate text-4xl font-semibold tracking-tight">{{ s.value }}</p>
+        <p :class="s.dark ? 'text-white' : 'text-slate-900 dark:text-white'" class="mt-3 truncate text-4xl font-semibold tracking-tight">{{ s.value }}</p>
         <p :class="s.dark ? 'text-white/50' : 'text-slate-500'" class="mt-1 text-xs">{{ s.note }}</p>
       </div>
     </div>
@@ -124,12 +124,12 @@ onMounted(load)
         <div class="card-body">
           <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div v-for="c in statusCards" :key="c.label" class="tile">
-              <p class="text-3xl font-semibold tracking-tight text-slate-900">{{ c.value ?? 0 }}</p>
+              <p class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-white">{{ c.value ?? 0 }}</p>
               <p class="mt-1 flex items-center gap-1.5 text-xs text-slate-500"><span :class="c.dot" class="size-2 rounded-full" />{{ c.label }}</p>
             </div>
           </div>
 
-          <h3 class="mt-7 mb-3 text-sm font-semibold text-slate-900">Kunjungan per poli</h3>
+          <h3 class="mt-7 mb-3 text-sm font-semibold text-slate-900 dark:text-white">Kunjungan per poli</h3>
           <div class="space-y-3">
             <div v-for="p in data.kunjungan.per_poli" :key="p.id" class="flex items-center gap-3 text-sm">
               <span class="w-28 shrink-0 truncate text-slate-600">{{ p.nama }}</span>
@@ -199,14 +199,14 @@ onMounted(load)
   <div v-else class="space-y-5" aria-busy="true">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <div v-for="i in 4" :key="i" class="card card-body space-y-3">
-        <div class="h-3.5 w-1/2 animate-pulse rounded bg-slate-200/70" />
-        <div class="h-8 w-1/3 animate-pulse rounded bg-slate-200/70" />
-        <div class="h-3 w-2/3 animate-pulse rounded bg-slate-100" />
+        <div class="h-3.5 w-1/2 animate-pulse rounded bg-slate-200/70 dark:bg-slate-700/70" />
+        <div class="h-8 w-1/3 animate-pulse rounded bg-slate-200/70 dark:bg-slate-700/70" />
+        <div class="h-3 w-2/3 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
       </div>
     </div>
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-      <div class="card card-body h-72 animate-pulse bg-white/30 lg:col-span-2" />
-      <div class="card card-body h-72 animate-pulse bg-white/30" />
+      <div class="card card-body h-72 animate-pulse bg-white/30 lg:col-span-2 dark:bg-slate-900/30" />
+      <div class="card card-body h-72 animate-pulse bg-white/30 dark:bg-slate-900/30" />
     </div>
   </div>
 </template>

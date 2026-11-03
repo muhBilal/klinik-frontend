@@ -120,7 +120,7 @@ async function simpan() {
       </div>
 
       <div v-if="form.items.length" class="space-y-2">
-        <div v-for="(item, i) in form.items" :key="item.id ?? `baru-${i}`" class="rounded-2xl border border-line bg-white/40 p-3" :class="{ 'opacity-60': terkunci(item) }">
+        <div v-for="(item, i) in form.items" :key="item.id ?? `baru-${i}`" class="rounded-2xl border border-line bg-white/40 p-3 dark:bg-slate-900/40" :class="{ 'opacity-60': terkunci(item) }">
           <div class="flex flex-wrap items-start gap-2">
             <div class="w-28">
               <label class="sr-only" :for="`rp-fase-${i}`">Fase {{ item.nama }}</label>
@@ -129,7 +129,7 @@ async function simpan() {
               </select>
             </div>
             <div class="min-w-40 flex-1">
-              <p class="text-sm font-medium">{{ item.nama }} <span v-if="terkunci(item)" class="text-xs font-normal text-emerald-700">· sudah dikerjakan</span></p>
+              <p class="text-sm font-medium">{{ item.nama }} <span v-if="terkunci(item)" class="text-xs font-normal text-emerald-700 dark:text-emerald-400">· sudah dikerjakan</span></p>
               <p v-if="errors[`items.${i}.tindakan_id`]" class="field-error">{{ errors[`items.${i}.tindakan_id`] }}</p>
               <input v-model="item.keterangan" class="input mt-1 py-1 text-xs" maxlength="255" placeholder="Keterangan (opsional)" :disabled="terkunci(item)" :aria-label="`Keterangan ${item.nama}`" />
             </div>

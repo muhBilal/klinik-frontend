@@ -96,7 +96,7 @@ function onKeydown(e) {
     <AppSpinner v-if="loading" class="absolute top-2.5 right-3 text-brand-600" />
     <ul
       v-if="open"
-      class="absolute z-30 mt-1.5 max-h-72 w-full motion-safe:animate-pop overflow-auto rounded-xl border border-white/80 bg-white/95 p-1 shadow-glass-lg backdrop-blur-xl"
+      class="absolute z-30 mt-1.5 max-h-72 w-full motion-safe:animate-pop overflow-auto rounded-xl border border-white/80 bg-white/95 p-1 shadow-glass-lg backdrop-blur-xl dark:bg-slate-900/95"
     >
       <li v-if="!results.length" class="px-3 py-2 text-sm text-slate-400">Tidak ada hasil</li>
       <li
